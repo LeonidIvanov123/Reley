@@ -1,0 +1,748 @@
+
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${dialog.dialogName} + ' — Reley'">Reley</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 16px;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #252a34;
+        }
+
+        .page {
+            max-width: 850px;
+            height: calc(100vh - 60px);
+            min-height: 450px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Шапка */
+
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            background: #fff;
+            border: 1px solid #e5e9f0;
+            border-radius: 14px 14px 0 0;
+        }
+
+        .back-button {
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9px;
+            background: #f1f4f8;
+            color: #3978d5;
+            text-decoration: none;
+            font-size: 20px;
+            transition: background .2s;
+        }
+
+        .back-button:hover {
+            background: #e5edfa;
+        }
+
+        .chat-title {
+            min-width: 0;
+        }
+
+        .chat-title h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .chat-subtitle {
+            margin-top: 4px;
+            color: #8992a1;
+            font-size: 12px;
+        }
+
+        /* Область сообщений */
+
+        .chat {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid #e5e9f0;
+            border-top: none;
+            border-radius: 0 0 14px 14px;
+            box-shadow: 0 4px 18px rgba(30, 50, 80, .05);
+        }
+
+        .messages {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #f8f9fb;
+            scroll-behavior: auto;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 7px;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: #d5dce6;
+            border-radius: 10px;
+        }
+
+        .message {
+            max-width: 75%;
+            min-width: 70px;
+            padding: 11px 14px 8px;
+            border-radius: 14px;
+            overflow-wrap: anywhere;
+            cursor: default;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+        }
+
+        .message.mine {
+            align-self: flex-end;
+            background: #e5efff;
+            border: 1px solid #d7e5fb;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.theirs {
+            align-self: flex-start;
+            background: #fff;
+            border: 1px solid #e8ebf0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+            line-height: 1.45;
+            font-size: 14px;
+        }
+
+        .message.deleted .message-content {
+            text-decoration: line-through;
+            color: #8992a1;
+        }
+
+        .message-deleted-label {
+            margin-top: 5px;
+            color: #a0a6b0;
+            font-size: 11px;
+            font-style: italic;
+        }
+
+        .message-time {
+            margin-top: 6px;
+            color: #8992a1;
+            font-size: 10px;
+            text-align: right;
+        }
+
+        .loading-indicator {
+            display: none;
+            padding: 8px;
+            color: #8992a1;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        #empty-messages {
+            margin: auto;
+            padding: 20px;
+            color: #8992a1;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Отправка сообщения */
+
+        .send-area {
+            padding: 14px 18px;
+            background: #fff;
+            border-top: 1px solid #e5e9f0;
+        }
+
+        .send-form {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .send-form textarea {
+            flex: 1;
+            min-width: 0;
+            min-height: 44px;
+            max-height: 120px;
+            resize: none;
+            padding: 12px 14px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #252a34;
+            background: #f8f9fb;
+            border: 1px solid #e0e5ed;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color .2s, background .2s;
+        }
+
+        .send-form textarea:focus {
+            background: #fff;
+            border-color: #3978d5;
+        }
+
+        .send-form textarea::placeholder {
+            color: #a0a8b5;
+        }
+
+        .send-form button {
+            min-height: 44px;
+            padding: 0 22px;
+            border: none;
+            border-radius: 10px;
+            background: #3978d5;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .send-form button:hover {
+            background: #2d68c0;
+        }
+
+        .send-form button:disabled {
+            background: #aabbd4;
+            cursor: not-allowed;
+        }
+
+        .error {
+            display: none;
+            padding: 9px 18px;
+            color: #b42318;
+            background: #fff1f0;
+            font-size: 13px;
+        }
+
+        .error:not(:empty) {
+            display: block;
+        }
+
+        /* Контекстное меню */
+
+        .context-menu {
+            position: fixed;
+            display: none;
+            min-width: 180px;
+            padding: 5px;
+            background: #fff;
+            border: 1px solid #e5e9f0;
+            border-radius: 10px;
+            box-shadow: 0 6px 22px rgba(0, 0, 0, .14);
+            z-index: 1000;
+        }
+
+        .context-menu button {
+            display: block;
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 7px;
+            background: none;
+            color: #c0392b;
+            font-size: 13px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .context-menu button:hover {
+            background: #fff1f0;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+
+            .page {
+                height: 100vh;
+                min-height: 0;
+            }
+
+            .chat-header {
+                border-radius: 0;
+                padding: 13px 15px;
+            }
+
+            .chat {
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                border-bottom: none;
+            }
+
+            .messages {
+                padding: 15px 12px;
+            }
+
+            .message {
+                max-width: 88%;
+            }
+
+            .send-area {
+                padding: 10px;
+            }
+
+            .send-form {
+                gap: 8px;
+            }
+
+            .send-form button {
+                padding: 0 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="chat-header">
+        <a class="back-button" href="/" title="К списку диалогов">←</a>
+
+        <div class="chat-title">
+            <h2 th:text="${dialog.dialogName}">Диалог</h2>
+            <div class="chat-subtitle">Reley messenger</div>
+        </div>
+    </div>
+
+    <div class="chat">
+
+        <div class="messages"
+             id="messages"
+             th:data-dialog-id="${dialog.id}"
+             th:data-current-user-id="${currentUserId}">
+
+            <div id="loading-indicator" class="loading-indicator">
+                Загрузка сообщений...
+            </div>
+
+            <div th:each="message : ${messages}"
+                 class="message"
+                 th:classappend="${(message.senderId == currentUserId ? ' mine' : ' theirs')
+                                    + (message.deletedAt != null ? ' deleted' : '')}"
+                 th:data-message-id="${message.id}"
+                 th:data-sender-id="${message.senderId}"
+                 th:data-deleted-at="${message.deletedAt}">
+
+                <div class="message-content"
+                     th:text="${message.content}">
+                </div>
+
+                <div class="message-deleted-label"
+                     th:if="${message.deletedAt != null}">
+                    удалено
+                </div>
+
+                <div class="message-time"
+                     th:text="${#temporals.format(message.createdAt, 'HH:mm')}">
+                </div>
+            </div>
+
+            <div id="empty-messages"
+                 th:if="${#lists.isEmpty(messages)}">
+                Сообщений пока нет. Напишите первым!
+            </div>
+
+        </div>
+
+        <div id="send-error" class="error"></div>
+
+        <div class="send-area">
+            <form class="send-form" id="send-form">
+
+                <textarea
+                        id="message-content"
+                        placeholder="Введите сообщение..."
+                        maxlength="10000"
+                        required></textarea>
+
+                <button type="submit">Отправить</button>
+
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<!-- Контекстное меню -->
+<div id="context-menu" class="context-menu">
+    <button type="button" id="delete-message-button">
+        Удалить сообщение
+    </button>
+</div>
+
+<script>
+    const messagesContainer = document.getElementById('messages');
+    const dialogId = messagesContainer.dataset.dialogId;
+    const currentUserId = messagesContainer.dataset.currentUserId;
+
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const sendForm = document.getElementById('send-form');
+    const messageInput = document.getElementById('message-content');
+    const sendError = document.getElementById('send-error');
+
+    const contextMenu = document.getElementById('context-menu');
+    const deleteMessageButton = document.getElementById('delete-message-button');
+
+    const pageSize = 15;
+
+    let loadingOlderMessages = false;
+    let hasMoreMessages = true;
+    let selectedMessage = null;
+    let longPressTimer = null;
+
+    // Создание элемента сообщения
+
+    function createMessageElement(message) {
+        const element = document.createElement('div');
+
+        element.className = 'message ' +
+            (String(message.senderId) === String(currentUserId)
+                ? 'mine'
+                : 'theirs');
+
+        element.dataset.messageId = message.id;
+        element.dataset.senderId = message.senderId;
+        element.dataset.deletedAt = message.deletedAt || '';
+
+        if (message.deletedAt) {
+            element.classList.add('deleted');
+        }
+
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        content.textContent = message.content;
+
+        element.appendChild(content);
+
+        if (message.deletedAt) {
+            const deletedLabel = document.createElement('div');
+            deletedLabel.className = 'message-deleted-label';
+            deletedLabel.textContent = 'удалено';
+            element.appendChild(deletedLabel);
+        }
+
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = new Date(message.createdAt).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        element.appendChild(time);
+
+        return element;
+    }
+
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function getOldestMessageId() {
+        const messages = messagesContainer.querySelectorAll('[data-message-id]');
+
+        if (messages.length === 0) {
+            return null;
+        }
+
+        return messages[0].dataset.messageId;
+    }
+
+    // Загрузка предыдущих сообщений
+
+    async function loadOlderMessages() {
+        if (loadingOlderMessages || !hasMoreMessages) {
+            return;
+        }
+
+        const beforeId = getOldestMessageId();
+
+        if (!beforeId) {
+            hasMoreMessages = false;
+            return;
+        }
+
+        loadingOlderMessages = true;
+        loadingIndicator.style.display = 'block';
+
+        try {
+            const response = await fetch(
+                `/api/dialogs/${dialogId}/messages?beforeId=${beforeId}`
+            );
+
+            if (!response.ok) {
+                throw new Error('Не удалось загрузить предыдущие сообщения');
+            }
+
+            const messages = await response.json();
+
+            if (messages.length === 0) {
+                hasMoreMessages = false;
+                return;
+            }
+
+            const previousHeight = messagesContainer.scrollHeight;
+            const previousScrollTop = messagesContainer.scrollTop;
+
+            const firstMessage =
+                messagesContainer.querySelector('[data-message-id]');
+
+            messages.forEach(message => {
+                const element = createMessageElement(message);
+                messagesContainer.insertBefore(element, firstMessage);
+            });
+
+            messagesContainer.scrollTop =
+                previousScrollTop +
+                (messagesContainer.scrollHeight - previousHeight);
+
+            if (messages.length < pageSize) {
+                hasMoreMessages = false;
+            }
+
+        } catch (error) {
+            sendError.textContent = error.message;
+        } finally {
+            loadingOlderMessages = false;
+            loadingIndicator.style.display = 'none';
+        }
+    }
+
+    messagesContainer.addEventListener('scroll', () => {
+        if (messagesContainer.scrollTop <= 30) {
+            loadOlderMessages();
+        }
+    });
+
+    // Контекстное меню
+
+    function closeContextMenu() {
+        contextMenu.style.display = 'none';
+        selectedMessage = null;
+    }
+
+    function openContextMenu(messageElement, x, y) {
+        if (!messageElement.classList.contains('mine')
+            || messageElement.classList.contains('deleted')) {
+            closeContextMenu();
+            return;
+        }
+
+        selectedMessage = messageElement;
+        contextMenu.style.display = 'block';
+
+        const menuWidth = contextMenu.offsetWidth;
+        const menuHeight = contextMenu.offsetHeight;
+
+        contextMenu.style.left =
+            Math.min(x, window.innerWidth - menuWidth - 10) + 'px';
+
+        contextMenu.style.top =
+            Math.min(y, window.innerHeight - menuHeight - 10) + 'px';
+    }
+
+    // Правый клик мыши
+
+    messagesContainer.addEventListener('contextmenu', event => {
+        const messageElement = event.target.closest('[data-message-id]');
+
+        if (!messageElement) {
+            return;
+        }
+
+        event.preventDefault();
+        openContextMenu(messageElement, event.clientX, event.clientY);
+    });
+
+    // Долгое нажатие на мобильных устройствах
+
+    messagesContainer.addEventListener('touchstart', event => {
+        const messageElement = event.target.closest('[data-message-id]');
+
+        if (!messageElement || !messageElement.classList.contains('mine')) {
+            return;
+        }
+
+        longPressTimer = setTimeout(() => {
+            const touch = event.touches[0];
+
+            openContextMenu(
+                messageElement,
+                touch.clientX,
+                touch.clientY
+            );
+        }, 600);
+
+    }, {passive: true});
+
+    messagesContainer.addEventListener('touchend', () => {
+        clearTimeout(longPressTimer);
+    });
+
+    messagesContainer.addEventListener('touchmove', () => {
+        clearTimeout(longPressTimer);
+    });
+
+    // Закрытие меню при клике вне него
+
+    document.addEventListener('click', event => {
+        if (!contextMenu.contains(event.target)) {
+            closeContextMenu();
+        }
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            closeContextMenu();
+        }
+    });
+
+    // Удаление сообщения
+
+    deleteMessageButton.addEventListener('click', async () => {
+        if (!selectedMessage) {
+            return;
+        }
+
+        const messageElement = selectedMessage;
+        const messageId = messageElement.dataset.messageId;
+
+        closeContextMenu();
+        sendError.textContent = '';
+
+        try {
+            const response = await fetch(
+                `/api/dialogs/${dialogId}/messages/${messageId}`,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Не удалось удалить сообщение');
+            }
+
+            const updatedMessage = await response.json();
+
+            messageElement.dataset.deletedAt = updatedMessage.deletedAt || '';
+            messageElement.classList.add('deleted');
+
+            if (!messageElement.querySelector('.message-deleted-label')) {
+                const deletedLabel = document.createElement('div');
+                deletedLabel.className = 'message-deleted-label';
+                deletedLabel.textContent = 'удалено';
+
+                const content =
+                    messageElement.querySelector('.message-content');
+
+                content.after(deletedLabel);
+            }
+
+        } catch (error) {
+            sendError.textContent = error.message;
+        }
+    });
+
+    // Первоначальная прокрутка
+
+    scrollToBottom();
+
+    // Отправка сообщения
+
+    sendForm.addEventListener('submit', async event => {
+        event.preventDefault();
+
+        const content = messageInput.value.trim();
+
+        if (!content) {
+            return;
+        }
+
+        sendError.textContent = '';
+
+        try {
+            const response = await fetch(
+                `/api/dialogs/${dialogId}/messages`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({content})
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Не удалось отправить сообщение');
+            }
+
+            const message = await response.json();
+
+            const emptyMessage = document.getElementById('empty-messages');
+
+            if (emptyMessage) {
+                emptyMessage.remove();
+            }
+
+            messagesContainer.appendChild(createMessageElement(message));
+
+            messageInput.value = '';
+            scrollToBottom();
+            messageInput.focus();
+
+        } catch (error) {
+            sendError.textContent = error.message;
+        }
+    });
+
+    // Enter — отправка, Shift + Enter — новая строка
+
+    messageInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendForm.requestSubmit();
+        }
+    });
+</script>
+
+</body>
+</html>

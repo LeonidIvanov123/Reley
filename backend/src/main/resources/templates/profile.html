@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль — Reley</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #252a34;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            margin: 0;
+        }
+
+        .back-link {
+            color: #3978d5;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e5e9f0;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 4px 16px rgba(30, 50, 80, 0.04);
+        }
+
+        .avatar {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: #e8efff;
+            color: #3978d5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 18px;
+        }
+
+        .profile-name {
+            font-size: 21px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .profile-email {
+            color: #7b8493;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .field {
+            padding: 16px 0;
+            border-top: 1px solid #edf0f4;
+        }
+
+        .field-label {
+            color: #8992a1;
+            font-size: 13px;
+            margin-bottom: 7px;
+        }
+
+        .field-value {
+            font-size: 15px;
+            font-weight: 500;
+            overflow-wrap: anywhere;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+        }
+
+        .button-primary {
+            background: #3978d5;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #2864bd;
+        }
+
+        .button-secondary {
+            background: #edf1f6;
+            color: #424b5a;
+        }
+
+        .button-secondary:hover {
+            background: #e1e6ee;
+        }
+
+        .button-danger {
+            background: #fff0f0;
+            color: #d04444;
+        }
+
+        .button-danger:hover {
+            background: #ffe1e1;
+        }
+
+        .logout-form {
+            margin: 0;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .card {
+                padding: 22px 18px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>Мой профиль</h1>
+        <a href="/" class="back-link">← К диалогам</a>
+    </div>
+
+    <div th:replace="~{fragments/show_error :: show-error}"></div>
+
+    <div class="card">
+
+        <div class="avatar"
+             th:text="${#strings.substring(user.name != null and !user.name.isEmpty() ? user.name : user.email, 0, 1).toUpperCase()}">
+            U
+        </div>
+
+        <div class="profile-name"
+             th:text="${user.name != null and !user.name.isEmpty() ? user.name : 'Пользователь'}">
+            Имя пользователя
+        </div>
+
+        <div class="profile-email" th:text="${user.email}">
+            user@example.com
+        </div>
+
+        <div class="field">
+            <div class="field-label">Email</div>
+            <div class="field-value" th:text="${user.email}">user@example.com</div>
+        </div>
+
+        <div class="field">
+            <div class="field-label">Имя</div>
+            <div class="field-value"
+                 th:text="${user.name != null and !user.name.isEmpty() ? user.name : 'Не указано'}">
+                Имя
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-label">Телефон</div>
+            <div class="field-value"
+                 th:text="${user.phone != null and !user.phone.isEmpty() ? user.phone : 'Не указан'}">
+                +7 900 000-00-00
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="field-label">Видимость в списке пользователей</div>
+            <div class="field-value"
+                 th:text="${user.hiddenFromDirectory ? 'Скрыт' : 'Виден'}">
+                Виден
+            </div>
+        </div>
+
+        <div class="actions">
+
+            <a href="/profile/edit" class="button button-primary">
+                Редактировать профиль
+            </a>
+
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <button type="submit" class="button button-danger">
+                    Выйти
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

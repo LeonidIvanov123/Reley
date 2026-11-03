@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reley Messenger</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fa;
+            color: #20242c;
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .brand {
+            margin: 0 0 10px;
+            font-size: 27px;
+            letter-spacing: -0.7px;
+        }
+
+        .user-info {
+            font-size: 13px;
+            color: #858b98;
+        }
+
+        .user-email {
+            color: #424b5a;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .profile-link {
+            text-decoration: none;
+            color: #4f65d9;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 9px 14px;
+            border-radius: 9px;
+            background: #f0f2ff;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+
+        .profile-link:hover {
+            background: #e3e7ff;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .create-button {
+            border: none;
+            border-radius: 9px;
+            background: #586fe5;
+            color: white;
+            padding: 11px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .create-button:hover {
+            background: #465bd0;
+            transform: translateY(-1px);
+        }
+
+        .dialog-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dialog {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            border: 1px solid #edf0f5;
+            border-radius: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.2s, border-color 0.2s,
+                        transform 0.2s;
+        }
+
+        .dialog:hover {
+            background: #f8f9ff;
+            border-color: #dce2ff;
+            transform: translateY(-1px);
+        }
+
+        .avatar {
+            width: 46px;
+            height: 46px;
+            min-width: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e9edff;
+            color: #586fe5;
+            font-size: 19px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .dialog-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dialog-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #292e38;
+            overflow-wrap: anywhere;
+        }
+
+        .dialog-email {
+            color: #858b98;
+            font-size: 12px;
+            font-weight: normal;
+            margin-left: 4px;
+        }
+
+        .dialog-date {
+            margin-top: 6px;
+            color: #9299a6;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 45px 20px;
+            color: #9299a6;
+        }
+
+        .empty-icon {
+            font-size: 38px;
+            margin-bottom: 12px;
+        }
+
+        .empty-title {
+            color: #454c59;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 7px;
+        }
+
+        .empty-description {
+            font-size: 13px;
+        }
+
+        .error {
+            color: #b00020;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px 10px;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+
+            .brand {
+                font-size: 23px;
+            }
+
+            .section-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .create-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <div>
+            <h1 class="brand">Reley Messenger</h1>
+
+            <div class="user-info">
+                Вы вошли как:
+                <span class="user-email" th:text="${user.email}">
+                    user@example.com
+                </span>
+            </div>
+        </div>
+
+        <a href="/profile" class="profile-link">
+            Профиль
+        </a>
+    </div>
+
+    <div th:replace="~{fragments/show_error :: show-error}"></div>
+
+    <div class="section-header">
+        <h2 class="section-title">Диалоги</h2>
+
+        <form method="get" action="/dialogs/new">
+            <button type="submit" class="create-button">
+                + Новый диалог
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(dialogs)}"
+         class="empty-state">
+
+        <div class="empty-icon">💬</div>
+
+        <div class="empty-title">
+            Пока здесь пусто
+        </div>
+
+        <div class="empty-description">
+            Создайте новый диалог, чтобы начать общение.
+        </div>
+    </div>
+
+    <div th:unless="${#lists.isEmpty(dialogs)}"
+         class="dialog-list">
+
+        <a class="dialog"
+           th:each="dialog : ${dialogs}"
+           th:href="@{/dialogs/{id}(id=${dialog.id})}">
+
+            <div class="avatar"
+                 th:text="${dialog.otherUserName != null
+                            and !#strings.isEmpty(dialog.otherUserName)
+                            ? #strings.substring(dialog.otherUserName, 0, 1)
+                            : #strings.substring(dialog.otherUserEmail, 0, 1)}">
+                U
+            </div>
+
+            <div class="dialog-content">
+
+                <div class="dialog-title">
+
+                    <span th:if="${dialog.dialogName != null}"
+                          th:text="${dialog.dialogName}">
+                        Избранное
+                    </span>
+
+                    <th:block th:if="${dialog.dialogName == null}">
+
+                        <span th:if="${dialog.otherUserName != null
+                                      and !#strings.isEmpty(dialog.otherUserName)}"
+                              th:text="${dialog.otherUserName}">
+                            Иван Иванов
+                        </span>
+
+                        <span class="dialog-email"
+                              th:if="${dialog.otherUserName != null
+                                      and !#strings.isEmpty(dialog.otherUserName)}"
+                              th:text="'(' + ${dialog.otherUserEmail} + ')'">
+                            (user@example.com)
+                        </span>
+
+                        <span th:if="${dialog.otherUserName == null
+                                      or #strings.isEmpty(dialog.otherUserName)}"
+                              th:text="${dialog.otherUserEmail}">
+                            user@example.com
+                        </span>
+
+                    </th:block>
+
+                </div>
+
+                <div class="dialog-date"
+                     th:if="${dialog.lastMessageAt != null}"
+                     th:text="${#temporals.format(dialog.lastMessageAt, 'dd.MM.yyyy HH:mm')}">
+                    03.11.2026 12:45
+                </div>
+
+                <div class="dialog-date"
+                     th:if="${dialog.lastMessageAt == null}">
+                    Нет сообщений
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

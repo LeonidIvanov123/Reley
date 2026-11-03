@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактирование профиля — Reley</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #252a34;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            margin: 0;
+        }
+
+        .back-link {
+            color: #3978d5;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e5e9f0;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 4px 16px rgba(30, 50, 80, 0.04);
+        }
+
+        .subtitle {
+            color: #8992a1;
+            font-size: 14px;
+            margin: 0 0 25px;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 9px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="tel"],
+        .form-group input[type="email"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dce2eb;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #3978d5;
+            box-shadow: 0 0 0 3px rgba(57, 120, 213, 0.12);
+        }
+
+        .form-group input[readonly] {
+            background: #f4f6f9;
+            color: #8992a1;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            color: #8992a1;
+            font-size: 12px;
+            margin-top: 7px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 16px;
+            background: #f7f9fc;
+            border: 1px solid #e5e9f0;
+            border-radius: 8px;
+        }
+
+        .checkbox-group input {
+            width: 17px;
+            height: 17px;
+            margin: 1px 0 0;
+            accent-color: #3978d5;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .checkbox-description {
+            display: block;
+            color: #8992a1;
+            font-size: 12px;
+            font-weight: normal;
+            margin-top: 5px;
+            line-height: 1.5;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+        }
+
+        .button-primary {
+            background: #3978d5;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #2864bd;
+        }
+
+        .button-secondary {
+            background: #edf1f6;
+            color: #424b5a;
+        }
+
+        .button-secondary:hover {
+            background: #e1e6ee;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .card {
+                padding: 22px 18px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>Редактирование профиля</h1>
+        <a href="/profile" class="back-link">← Назад</a>
+    </div>
+
+    <div th:replace="~{fragments/show_error :: show-error}"></div>
+
+    <div class="card">
+
+        <p class="subtitle">
+            Обновите информацию о себе.
+        </p>
+
+        <form th:action="@{/profile}" method="post">
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       th:value="${user.email}"
+                       readonly>
+                <div class="hint">
+                    Email используется для входа и не может быть изменён здесь.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="name">Имя</label>
+                <input type="text"
+                       id="name"
+                       name="name"
+                       th:value="${user.name}"
+                       maxlength="100"
+                       placeholder="Введите ваше имя">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Телефон</label>
+                <input type="tel"
+                       id="phone"
+                       name="phone"
+                       th:value="${user.phone}"
+                       maxlength="30"
+                       placeholder="+7 900 000-00-00">
+            </div>
+
+            <div class="checkbox-group">
+                <input type="hidden" name="hiddenFromDirectory" value="false">
+
+                <input type="checkbox"
+                       id="hiddenFromDirectory"
+                       name="hiddenFromDirectory"
+                       value="true"
+                       th:checked="${user.hiddenFromDirectory}">
+
+                <label for="hiddenFromDirectory">
+                    Скрыть меня из списка пользователей
+                    <span class="checkbox-description">
+                        Другие пользователи не будут видеть вас в списке при создании нового диалога.
+                        При этом создать диалог с вами по email по-прежнему можно.
+                    </span>
+                </label>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="button button-primary">
+                    Сохранить изменения
+                </button>
+
+                <a href="/profile" class="button button-secondary">
+                    Отмена
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

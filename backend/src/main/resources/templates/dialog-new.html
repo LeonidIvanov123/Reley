@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новый диалог — Reley</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #252a34;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            margin: 0;
+        }
+
+        .back-link {
+            color: #3978d5;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e5e9f0;
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 4px 16px rgba(30, 50, 80, 0.04);
+        }
+
+        .subtitle {
+            color: #8992a1;
+            font-size: 14px;
+            margin: 0 0 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 9px;
+        }
+
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dce2eb;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="email"]:focus {
+            border-color: #3978d5;
+            box-shadow: 0 0 0 3px rgba(57, 120, 213, 0.12);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .button-primary {
+            background: #3978d5;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #2864bd;
+        }
+
+        .button-secondary {
+            background: #edf1f6;
+            color: #424b5a;
+        }
+
+        .button-secondary:hover {
+            background: #e1e6ee;
+        }
+
+        .section {
+            margin-top: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .user-count {
+            color: #8992a1;
+            font-size: 13px;
+        }
+
+        .user-list {
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid #e5e9f0;
+            border-radius: 10px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 13px 15px;
+            border-bottom: 1px solid #edf0f4;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-item:hover {
+            background: #f5f8fd;
+        }
+
+        .user-item.selected {
+            background: #eaf2ff;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #e8efff;
+            color: #3978d5;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .user-email {
+            color: #8992a1;
+            font-size: 13px;
+            margin-top: 4px;
+            overflow-wrap: anywhere;
+        }
+
+        .empty-list {
+            padding: 25px 15px;
+            color: #8992a1;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .hint {
+            color: #8992a1;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .card {
+                padding: 22px 18px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>Новый диалог</h1>
+        <a th:href="@{/}" class="back-link">← К диалогам</a>
+    </div>
+
+    <div th:replace="~{fragments/show_error :: show-error}"></div>
+
+    <div class="card">
+
+        <p class="subtitle">
+            Найдите пользователя по email или выберите его из списка.
+        </p>
+
+        <form th:action="@{/dialogs/new}" method="post" id="dialog-form">
+
+            <div class="form-group">
+                <label for="email">Email пользователя</label>
+
+                <input type="email"
+                       id="email"
+                       name="email"
+                       placeholder="Введите email пользователя"
+                       autocomplete="off"
+                       required>
+
+                <div class="hint">
+                    Можно указать email пользователя, даже если он скрыт из общего списка.
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="button button-primary">
+                    Создать диалог
+                </button>
+
+                <button type="button"
+                        class="button button-secondary"
+                        onclick="createFavorites()">
+                    ★ Избранное
+                </button>
+            </div>
+
+        </form>
+
+        <div class="section">
+
+            <div class="section-header">
+                <h2 class="section-title">Пользователи</h2>
+
+                <span class="user-count"
+                      th:text="${#lists.size(users)} + ' пользователей'">
+                    0 пользователей
+                </span>
+            </div>
+
+            <div class="user-list">
+
+                <div th:each="user : ${users}"
+                     class="user-item"
+                     th:data-email="${user.email}"
+                     onclick="selectUser(this)">
+
+                    <div class="user-avatar"
+                         th:text="${#strings.substring(user.name != null and !user.name.isBlank() ? user.name : user.email, 0, 1).toUpperCase()}">
+                        U
+                    </div>
+
+                    <div class="user-info">
+                        <div class="user-name"
+                             th:text="${user.name != null and !user.name.isBlank() ? user.name : user.email}">
+                            Имя пользователя
+                        </div>
+
+                        <div class="user-email"
+                             th:if="${user.name != null and !user.name.isBlank()}"
+                             th:text="${user.email}">
+                            user@example.com
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="empty-list"
+                     th:if="${#lists.isEmpty(users)}">
+                    Пока нет пользователей в списке
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+
+    const currentUserEmail = /*[[${currentUserEmail}]]*/ '';
+
+    function selectUser(element) {
+        const email = element.dataset.email;
+
+        document.getElementById('email').value = email;
+
+        document.querySelectorAll('.user-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+
+        element.classList.add('selected');
+    }
+
+    function createFavorites() {
+        const emailInput = document.getElementById('email');
+
+        emailInput.value = currentUserEmail;
+        emailInput.form.requestSubmit();
+    }
+
+</script>
+
+</body>
+</html>
