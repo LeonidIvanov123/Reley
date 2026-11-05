@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<div th:fragment="show-error"
+     th:if="${error != null}">
+
+    <div class="error-overlay">
+        <div class="error-modal">
+
+            <div class="error-title">
+                Ошибка
+            </div>
+
+            <div class="error-text"
+                 th:text="${error}">
+            </div>
+
+            <button type="button"
+                    class="error-button"
+                    onclick="closeErrorModal()">
+                OK
+            </button>
+
+        </div>
+    </div>
+
+    <style>
+        .error-overlay {
+            position: fixed;
+            inset: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: rgba(0, 0, 0, 0.35);
+
+            z-index: 1000;
+        }
+
+        .error-modal {
+            width: min(400px, calc(100% - 40px));
+            padding: 24px;
+
+            background: #ffffff;
+            border: 1px solid #e05a5a;
+            border-radius: 14px;
+
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+
+            text-align: center;
+        }
+
+        .error-title {
+            margin-bottom: 12px;
+
+            color: #c62828;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .error-text {
+            margin-bottom: 20px;
+
+            color: #444;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .error-button {
+            min-width: 90px;
+            padding: 9px 20px;
+
+            border: none;
+            border-radius: 8px;
+
+            background: #3978d5;
+            color: white;
+
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .error-button:hover {
+            background: #2f68bd;
+        }
+    </style>
+
+    <script>
+        function closeErrorModal() {
+            const overlay = document.querySelector('.error-overlay');
+
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+    </script>
+
+</div>
+
+</body>
+</html>

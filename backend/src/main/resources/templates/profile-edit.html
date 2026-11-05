@@ -61,6 +61,58 @@
             margin: 0 0 25px;
         }
 
+        /* Аватар */
+
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+
+            margin-bottom: 28px;
+            padding-bottom: 25px;
+
+            border-bottom: 1px solid #e5e9f0;
+        }
+
+        .avatar {
+            width: 96px;
+            height: 96px;
+
+            flex-shrink: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+            overflow: hidden;
+
+            background: #3978d5;
+            color: white;
+
+            font-size: 36px;
+            font-weight: 600;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 7px;
+        }
+
+        .avatar-file-input {
+            display: none;
+        }
+
+        /* Поля */
+
         .form-group {
             margin-bottom: 22px;
         }
@@ -77,10 +129,13 @@
         .form-group input[type="email"] {
             width: 100%;
             padding: 12px 14px;
+
             border: 1px solid #dce2eb;
             border-radius: 8px;
+
             font-size: 15px;
             outline: none;
+
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
@@ -101,11 +156,15 @@
             margin-top: 7px;
         }
 
+        /* Checkbox */
+
         .checkbox-group {
             display: flex;
             align-items: flex-start;
             gap: 10px;
+
             padding: 16px;
+
             background: #f7f9fc;
             border: 1px solid #e5e9f0;
             border-radius: 8px;
@@ -114,26 +173,34 @@
         .checkbox-group input {
             width: 17px;
             height: 17px;
+
             margin: 1px 0 0;
+
             accent-color: #3978d5;
             cursor: pointer;
         }
 
         .checkbox-group label {
             margin: 0;
+
             font-size: 14px;
             font-weight: 500;
+
             cursor: pointer;
         }
 
         .checkbox-description {
             display: block;
+
             color: #8992a1;
             font-size: 12px;
             font-weight: normal;
+
             margin-top: 5px;
             line-height: 1.5;
         }
+
+        /* Кнопки */
 
         .actions {
             display: flex;
@@ -145,13 +212,18 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+
             padding: 11px 18px;
+
             border-radius: 8px;
+            border: none;
+
             font-size: 14px;
             font-weight: 600;
+
             text-decoration: none;
             cursor: pointer;
-            border: none;
+
             transition: background 0.2s;
         }
 
@@ -173,7 +245,10 @@
             background: #e1e6ee;
         }
 
+        /* Mobile */
+
         @media (max-width: 480px) {
+
             body {
                 padding: 20px 12px;
             }
@@ -184,6 +259,16 @@
 
             .header h1 {
                 font-size: 22px;
+            }
+
+            .avatar-section {
+                align-items: flex-start;
+            }
+
+            .avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 30px;
             }
 
             .actions {
@@ -203,7 +288,10 @@
 
     <div class="header">
         <h1>Редактирование профиля</h1>
-        <a href="/profile" class="back-link">← Назад</a>
+
+        <a href="/profile" class="back-link">
+            ← Назад
+        </a>
     </div>
 
     <div th:replace="~{fragments/show_error :: show-error}"></div>
@@ -214,42 +302,115 @@
             Обновите информацию о себе.
         </p>
 
-        <form th:action="@{/profile}" method="post">
+        <!-- Аватар -->
+
+        <div class="avatar-section">
+
+            <div class="avatar">
+
+                <img th:if="${user.avatar != null and !user.avatar.isEmpty()}"
+                     th:src="'data:' + ${user.avatarContentType} + ';base64,' + ${user.avatar}"
+                     alt="Аватар">
+
+                <span th:unless="${user.avatar != null and !user.avatar.isEmpty()}"
+                      th:text="${#strings.substring(
+                          user.name != null and !user.name.isEmpty()
+                              ? user.name
+                              : user.email,
+                          0,
+                          1
+                      ).toUpperCase()}">
+                    U
+                </span>
+
+            </div>
+
+            <div class="avatar-actions">
+
+                <form th:action="@{/profile/avatar}"
+                      method="post"
+                      enctype="multipart/form-data">
+
+                    <label for="avatar"
+                           class="button button-secondary">
+                        Выбрать изображение
+                    </label>
+
+                    <input type="file"
+                           id="avatar"
+                           name="avatar"
+                           class="avatar-file-input"
+                           accept="image/jpeg,image/png,image/webp"
+                           onchange="this.form.submit()">
+
+                </form>
+
+                <div class="hint">
+                    JPG, PNG или WebP. Максимальный размер — 2 МБ.
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Основная форма профиля -->
+
+        <form th:action="@{/profile}"
+              method="post">
 
             <div class="form-group">
-                <label for="email">Email</label>
+
+                <label for="email">
+                    Email
+                </label>
+
                 <input type="email"
                        id="email"
                        name="email"
                        th:value="${user.email}"
                        readonly>
+
                 <div class="hint">
                     Email используется для входа и не может быть изменён здесь.
                 </div>
+
             </div>
 
             <div class="form-group">
-                <label for="name">Имя</label>
+
+                <label for="name">
+                    Имя
+                </label>
+
                 <input type="text"
                        id="name"
                        name="name"
                        th:value="${user.name}"
                        maxlength="100"
                        placeholder="Введите ваше имя">
+
             </div>
 
             <div class="form-group">
-                <label for="phone">Телефон</label>
+
+                <label for="phone">
+                    Телефон
+                </label>
+
                 <input type="tel"
                        id="phone"
                        name="phone"
                        th:value="${user.phone}"
                        maxlength="30"
                        placeholder="+7 900 000-00-00">
+
             </div>
 
             <div class="checkbox-group">
-                <input type="hidden" name="hiddenFromDirectory" value="false">
+
+                <input type="hidden"
+                       name="hiddenFromDirectory"
+                       value="false">
 
                 <input type="checkbox"
                        id="hiddenFromDirectory"
@@ -258,22 +419,32 @@
                        th:checked="${user.hiddenFromDirectory}">
 
                 <label for="hiddenFromDirectory">
+
                     Скрыть меня из списка пользователей
+
                     <span class="checkbox-description">
-                        Другие пользователи не будут видеть вас в списке при создании нового диалога.
-                        При этом создать диалог с вами по email по-прежнему можно.
+                        Другие пользователи не будут видеть вас в списке
+                        при создании нового диалога.
+                        При этом создать диалог с вами по email
+                        по-прежнему можно.
                     </span>
+
                 </label>
+
             </div>
 
             <div class="actions">
-                <button type="submit" class="button button-primary">
+
+                <button type="submit"
+                        class="button button-primary">
                     Сохранить изменения
                 </button>
 
-                <a href="/profile" class="button button-secondary">
+                <a href="/profile"
+                   class="button button-secondary">
                     Отмена
                 </a>
+
             </div>
 
         </form>

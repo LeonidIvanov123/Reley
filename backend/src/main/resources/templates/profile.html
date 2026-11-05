@@ -55,18 +55,30 @@
             box-shadow: 0 4px 16px rgba(30, 50, 80, 0.04);
         }
 
-        .avatar {
-            width: 76px;
-            height: 76px;
+        .reley-avatar {
+            width: var(--avatar-size);
+            height: var(--avatar-size);
+            flex-shrink: 0;
+
             border-radius: 50%;
             background: #e8efff;
             color: #3978d5;
+
             display: flex;
             align-items: center;
             justify-content: center;
+
+            overflow: hidden;
+
             font-size: 30px;
             font-weight: bold;
-            margin-bottom: 18px;
+        }
+
+        .reley-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .profile-name {
@@ -187,10 +199,7 @@
 
     <div class="card">
 
-        <div class="avatar"
-             th:text="${#strings.substring(user.name != null and !user.name.isEmpty() ? user.name : user.email, 0, 1).toUpperCase()}">
-            U
-        </div>
+        <div th:replace="~{fragments/avatar :: avatar(${user}, 76)}"></div>
 
         <div class="profile-name"
              th:text="${user.name != null and !user.name.isEmpty() ? user.name : 'Пользователь'}">

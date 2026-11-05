@@ -13,6 +13,8 @@
     <include file="db/changelog/changes/004-create-messages.xml"/>
     <include file="db/changelog/changes/005-add-users-privacy.xml"/>
     <include file="db/changelog/changes/006-create-user-sessions.xml"/>
+    <include file="db/changelog/changes/007-create-email-verification-codes.xml"/>
+    <include file="db/changelog/changes/008-add-user-avatar.xml"/>
 
 
 

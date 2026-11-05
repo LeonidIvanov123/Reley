@@ -11,16 +11,17 @@ import reactor.core.publisher.Mono;
 
 @Controller
 @RequiredArgsConstructor
-public class RegistrationController {
+@Deprecated
+public class RegistrationController_old {
 
     private final UserService userService;
 
-    @GetMapping("/register")
+    @GetMapping("/register_old")
     public Mono<String> registerPage() {
         return Mono.just("register");
     }
 
-    @PostMapping("/register")
+    @PostMapping("/register_old")
     public Mono<String> register(
             @ModelAttribute CreateUserRequest request) {
 

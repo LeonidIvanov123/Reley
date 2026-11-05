@@ -26,6 +26,12 @@ public class User {
 
     private String phone;
 
+    @Column("avatar")
+    private String avatar;
+
+    @Column("avatar_content_type")
+    private String avatarContentType;
+
     @Column("hidden_from_directory")
     private boolean hiddenFromDirectory = false;
 

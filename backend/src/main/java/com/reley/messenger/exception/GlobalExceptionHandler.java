@@ -14,6 +14,19 @@ public class GlobalExceptionHandler {
     ) {
         model.addAttribute("error", exception.getDescription());
 
+        exception.getAttributes()
+                .forEach(model::addAttribute);
+
+        if ("register".equals(exception.getView())) {
+            if (!model.containsAttribute("codeSent")) {
+                model.addAttribute("codeSent", false);
+            }
+
+            if (!model.containsAttribute("verified")) {
+                model.addAttribute("verified", false);
+            }
+        }
+
         return exception.getView();
     }
 

@@ -27,6 +27,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(
                                 "/register",
+                                "/register/**",
                                 "/login",
                                 "/auth/refresh",
                                 "/actuator/health"

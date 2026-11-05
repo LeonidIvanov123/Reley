@@ -5,6 +5,7 @@ import com.reley.messenger.user.dto.UpdateProfileRequest;
 import com.reley.messenger.user.dto.UserDirectoryResponse;
 import com.reley.messenger.user.dto.UserResponse;
 import com.reley.messenger.user.entity.User;
+import org.springframework.http.codec.multipart.FilePart;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,5 +22,7 @@ public interface UserService {
     Flux<UserDirectoryResponse> getDirectoryUsers();
 
     Mono<User> findByEmail(String email);
+
+    Mono<Void> updateAvatar(FilePart avatar);
 
 }

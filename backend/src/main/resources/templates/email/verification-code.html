@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Подтверждение email — Reley</title>
+</head>
+
+<body style="
+    margin: 0;
+    padding: 0;
+    background-color: #f4f6f9;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #252a34;
+">
+
+<table width="100%"
+       cellpadding="0"
+       cellspacing="0"
+       border="0"
+       style="background-color: #f4f6f9; padding: 40px 20px;">
+
+    <tr>
+        <td align="center">
+
+            <!-- Main card -->
+            <table width="100%"
+                   cellpadding="0"
+                   cellspacing="0"
+                   border="0"
+                   style="
+                       max-width: 440px;
+                       background-color: #ffffff;
+                       border: 1px solid #e5e9f0;
+                       border-radius: 14px;
+                       box-shadow: 0 4px 16px rgba(30, 40, 60, 0.06);
+                       overflow: hidden;
+                   ">
+
+                <!-- Header -->
+                <tr>
+                    <td align="center"
+                        style="padding: 32px 32px 12px;">
+
+                        <div style="
+                            font-size: 30px;
+                            line-height: 36px;
+                            font-weight: 700;
+                            color: #3978d5;
+                        ">
+                            Reley
+                        </div>
+
+                        <div style="
+                            margin-top: 6px;
+                            font-size: 14px;
+                            line-height: 20px;
+                            color: #8992a1;
+                        ">
+                            Общайтесь без границ
+                        </div>
+
+                    </td>
+                </tr>
+
+                <!-- Content -->
+                <tr>
+                    <td style="padding: 20px 32px 32px;">
+
+                        <h1 style="
+                            margin: 0 0 10px;
+                            font-size: 24px;
+                            line-height: 32px;
+                            font-weight: 600;
+                            text-align: center;
+                            color: #252a34;
+                        ">
+                            Подтвердите email
+                        </h1>
+
+                        <p style="
+                            margin: 0 0 24px;
+                            font-size: 15px;
+                            line-height: 22px;
+                            text-align: center;
+                            color: #697386;
+                        ">
+                            Для завершения регистрации введите код
+                            подтверждения.
+                        </p>
+
+                        <!-- Code -->
+                        <table width="100%"
+                               cellpadding="0"
+                               cellspacing="0"
+                               border="0">
+
+                            <tr>
+                                <td align="center">
+
+                                    <div style="
+                                        display: inline-block;
+                                        padding: 14px 24px;
+                                        background-color: #f4f6f9;
+                                        border: 1px solid #e5e9f0;
+                                        border-radius: 10px;
+                                        font-size: 28px;
+                                        line-height: 34px;
+                                        letter-spacing: 6px;
+                                        font-weight: 700;
+                                        color: #252a34;
+                                        font-family: monospace;
+                                    "
+                                         th:text="${code}">
+                                        123456
+                                    </div>
+
+                                </td>
+                            </tr>
+
+                        </table>
+
+                        <p style="
+    margin: 12px 0 24px;
+    font-size: 13px;
+    line-height: 20px;
+    text-align: center;
+    color: #8992a1;
+">
+                            Код действителен в течение
+                            <span th:text="${codeTtl}">1 часа</span>.
+                        </p>
+
+                        <!-- Button -->
+                        <table width="100%"
+                               cellpadding="0"
+                               cellspacing="0"
+                               border="0">
+
+                            <tr>
+                                <td align="center">
+
+                                    <a th:href="${verificationUrl}"
+                                       href="#"
+                                       style="
+                                           display: inline-block;
+                                           padding: 12px 24px;
+                                           background-color: #3978d5;
+                                           color: #ffffff;
+                                           text-decoration: none;
+                                           border-radius: 8px;
+                                           font-size: 15px;
+                                           line-height: 20px;
+                                           font-weight: 600;
+                                       ">
+                                        Подтвердить email
+                                    </a>
+
+                                </td>
+                            </tr>
+
+                        </table>
+
+                        <p style="
+                            margin: 24px 0 0;
+                            font-size: 13px;
+                            line-height: 20px;
+                            text-align: center;
+                            color: #8992a1;
+                        ">
+                            Если кнопка не работает, откройте ссылку:
+                        </p>
+
+                        <p style="
+                            margin: 6px 0 0;
+                            font-size: 12px;
+                            line-height: 18px;
+                            text-align: center;
+                            word-break: break-all;
+                        ">
+                            <a th:href="${verificationUrl}"
+                               th:text="${verificationUrl}"
+                               href="#"
+                               style="
+                                   color: #3978d5;
+                                   text-decoration: none;
+                               ">
+                                verification link
+                            </a>
+                        </p>
+
+                    </td>
+                </tr>
+
+            </table>
+
+            <!-- Footer -->
+            <table width="100%"
+                   cellpadding="0"
+                   cellspacing="0"
+                   border="0"
+                   style="max-width: 440px;">
+
+                <tr>
+                    <td align="center"
+                        style="
+                            padding: 20px 20px 0;
+                            font-size: 12px;
+                            line-height: 18px;
+                            color: #a0a7b4;
+                        ">
+
+                        Если вы не регистрировались в Reley,
+                        просто проигнорируйте это письмо.
+
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+
+</table>
+
+</body>
+</html>

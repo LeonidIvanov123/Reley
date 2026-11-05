@@ -1,5 +1,20 @@
 <div th:fragment="show-error"
-     th:if="${error}"
-     class="error"
+     th:if="${error != null}"
+     class="error-message"
      th:text="${error}">
 </div>
+
+<style>
+    .error-message {
+        margin-bottom: 20px;
+        padding: 12px 14px;
+
+        background: #fff1f1;
+        border: 1px solid #e05a5a;
+        border-radius: 8px;
+
+        color: #c62828;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+</style>

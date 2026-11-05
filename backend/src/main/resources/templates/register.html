@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Регистрация — Reley</title>
 
     <style>
@@ -12,170 +14,289 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            color: #252a34;
             margin: 0;
             min-height: 100vh;
+
             display: flex;
             align-items: center;
             justify-content: center;
+
+            font-family: Arial, sans-serif;
+
+            background: #f4f6f9;
+            color: #252a34;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 420px;
             padding: 20px;
         }
 
-        .container {
-            width: 100%;
-            max-width: 440px;
-        }
-
-        .brand {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .brand-name {
-            font-size: 32px;
-            font-weight: 700;
-            color: #3978d5;
-            letter-spacing: -1px;
-        }
-
-        .brand-description {
-            color: #8992a1;
-            font-size: 14px;
-            margin-top: 7px;
-        }
-
-        .card {
-            background: #fff;
+        .register-card {
+            background: #ffffff;
             border: 1px solid #e5e9f0;
             border-radius: 14px;
             padding: 32px;
-            box-shadow: 0 4px 16px rgba(30, 50, 80, 0.04);
+
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
         }
 
-        h1 {
-            font-size: 23px;
-            margin: 0 0 8px;
+        .logo {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #3978d5;
+            margin-bottom: 8px;
         }
 
         .subtitle {
-            color: #8992a1;
+            text-align: center;
+            color: #7b8494;
+            margin-bottom: 28px;
             font-size: 14px;
-            margin: 0 0 28px;
+        }
+
+        h1 {
+            margin: 0 0 24px;
+            text-align: center;
+            font-size: 22px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         label {
             display: block;
+            margin-bottom: 7px;
             font-size: 14px;
             font-weight: 600;
-            margin-bottom: 9px;
         }
 
         input {
             width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #dce2eb;
+            height: 44px;
+            padding: 0 12px;
+
+            border: 1px solid #d8dee8;
             border-radius: 8px;
+
             font-size: 15px;
+            color: #252a34;
+
             outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: border-color 0.15s;
         }
 
         input:focus {
             border-color: #3978d5;
-            box-shadow: 0 0 0 3px rgba(57, 120, 213, 0.12);
+        }
+
+        input:disabled {
+            background: #f1f3f6;
+            color: #6f7785;
+            cursor: not-allowed;
         }
 
         button {
             width: 100%;
-            padding: 13px;
-            margin-top: 8px;
-            background: #3978d5;
-            color: white;
+            height: 44px;
+
             border: none;
             border-radius: 8px;
+
+            background: #3978d5;
+            color: white;
+
             font-size: 15px;
             font-weight: 600;
+
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.15s;
         }
 
         button:hover {
-            background: #2864bd;
+            background: #2f69c0;
+        }
+
+        .info {
+            margin-top: 12px;
+            text-align: center;
+            color: #7b8494;
+            font-size: 13px;
+            line-height: 1.5;
         }
 
         .login-link {
+            margin-top: 22px;
             text-align: center;
-            margin: 25px 0 0;
             font-size: 14px;
-            color: #7b8493;
         }
 
         .login-link a {
             color: #3978d5;
-            font-weight: 600;
             text-decoration: none;
-            margin-left: 4px;
+            font-weight: 600;
         }
 
         .login-link a:hover {
             text-decoration: underline;
-        }
-
-        @media (max-width: 480px) {
-            .card {
-                padding: 25px 20px;
-            }
-
-            .brand-name {
-                font-size: 28px;
-            }
         }
     </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="register-container">
 
-    <div class="brand">
-        <div class="brand-name">Reley</div>
-        <div class="brand-description"></div>
-    </div>
+    <div class="register-card">
 
-    <div class="card">
+        <div class="logo">
+            Reley Messenger
+        </div>
 
-        <h1>Создать аккаунт</h1>
-        <p class="subtitle">Зарегистрируйтесь, чтобы начать общение.</p>
+        <div class="subtitle">
 
-        <div th:replace="~{fragments/show_error :: show-error}"></div>
+        </div>
 
-        <form method="post" th:action="@{/register}">
+        <h1>Регистрация</h1>
+
+
+        <!-- ========================= -->
+        <!-- ШАГ 1. Ввод email          -->
+        <!-- ========================= -->
+
+        <form th:if="${!codeSent && !verified}"
+              method="post"
+              action="/register/code">
 
             <div class="form-group">
-                <label for="email">Email</label>
+                <label for="email">
+                    Email
+                </label>
+
                 <input
                         id="email"
                         name="email"
                         type="email"
                         placeholder="user@example.com"
-                        autocomplete="username"
+                        autocomplete="email"
+                        th:value="${email}"
+                        required
+                        autofocus>
+            </div>
+
+            <button type="submit">
+                Получить код
+            </button>
+
+        </form>
+
+
+        <!-- ========================= -->
+        <!-- ШАГ 2. Ввод кода           -->
+        <!-- ========================= -->
+
+        <form th:if="${codeSent && !verified}"
+              method="post"
+              action="/register/verify">
+
+            <div class="form-group">
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                        id="email"
+                        type="email"
+                        th:value="${email}"
+                        disabled>
+
+                <!-- disabled input не отправляется -->
+                <input
+                        type="hidden"
+                        name="email"
+                        th:value="${email}">
+            </div>
+
+            <div class="form-group">
+                <label for="code">
+                    Код подтверждения
+                </label>
+
+                <input
+                        id="code"
+                        name="code"
+                        type="text"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        maxlength="6"
+                        placeholder="Введите 6-значный код"
+                        autocomplete="one-time-code"
+                        required
+                        autofocus>
+            </div>
+
+            <button type="submit">
+                Подтвердить код
+            </button>
+
+            <div class="info">
+                Мы отправили код подтверждения на ваш email.
+            </div>
+
+        </form>
+
+
+        <!-- ========================= -->
+        <!-- ШАГ 3. Создание пароля     -->
+        <!-- ========================= -->
+
+        <form th:if="${verified}"
+              method="post"
+              action="/register/password">
+
+            <div class="form-group">
+                <label for="verifiedEmail">
+                    Email
+                </label>
+
+                <input
+                        id="verifiedEmail"
+                        type="email"
+                        th:value="${email}"
+                        disabled>
+
+                <input
+                        type="hidden"
+                        name="email"
+                        th:value="${email}">
+            </div>
+
+            <div class="form-group">
+                <label for="password">
+                    Пароль
+                </label>
+
+                <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        autocomplete="new-password"
                         required
                         autofocus>
             </div>
 
             <div class="form-group">
-                <label for="password">Пароль</label>
+                <label for="passwordConfirmation">
+                    Подтверждение пароля
+                </label>
+
                 <input
-                        id="password"
-                        name="password"
+                        id="passwordConfirmation"
+                        name="passwordConfirmation"
                         type="password"
-                        placeholder="Придумайте пароль"
                         autocomplete="new-password"
                         required>
             </div>
@@ -186,12 +307,19 @@
 
         </form>
 
-        <p class="login-link">
+
+        <!-- ========================= -->
+        <!-- Ссылка на авторизацию      -->
+        <!-- ========================= -->
+
+        <div class="login-link">
             Уже есть аккаунт?
             <a href="/login">Войти</a>
-        </p>
+        </div>
 
     </div>
+
+    <div th:replace="~{fragments/show_error :: show-error}"></div>
 
 </div>
 

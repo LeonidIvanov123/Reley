@@ -11,6 +11,8 @@ import com.reley.messenger.user.entity.User;
 import com.reley.messenger.user.repository.CredentialRepository;
 import com.reley.messenger.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -18,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
+import java.util.Base64;
 import java.util.Optional;
 
 @Service
@@ -62,7 +65,9 @@ public class UserServiceImpl implements UserService {
                         user.getEmail(),
                         user.getName(),
                         user.getPhone(),
-                        user.isHiddenFromDirectory())
+                        user.isHiddenFromDirectory(),
+                        user.getAvatar(),
+                        user.getAvatarContentType())
                 ).as(transactionalOperator::transactional);
     }
 
@@ -98,7 +103,9 @@ public class UserServiceImpl implements UserService {
                                 user.getEmail(),
                                 user.getName(),
                                 user.getPhone(),
-                                user.isHiddenFromDirectory())
+                                user.isHiddenFromDirectory(),
+                                user.getAvatar(),
+                                user.getAvatarContentType())
                 );
     }
 
@@ -123,5 +130,38 @@ public class UserServiceImpl implements UserService {
     @Override
     public Mono<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public Mono<Void> updateAvatar(FilePart avatar) {
+
+        return DataBufferUtils.join(avatar.content())
+                .map(dataBuffer -> {
+
+                    byte[] bytes = new byte[dataBuffer.readableByteCount()];
+
+                    dataBuffer.read(bytes);
+
+                    DataBufferUtils.release(dataBuffer);
+
+                    return Base64.getEncoder().encodeToString(bytes);
+                })
+                .flatMap(base64 ->
+                        userServiceInfo.getCurrentUser()
+                                .flatMap(currentUser ->
+                                        userRepository.findById(currentUser.userId())
+                                )
+                                .flatMap(user -> {
+
+                                    user.setAvatar(base64);
+                                    user.setAvatarContentType(
+                                            avatar.headers()
+                                                    .getContentType()
+                                                    .toString());
+
+                                    return userRepository.save(user);
+                                })
+                )
+                .then();
     }
 }

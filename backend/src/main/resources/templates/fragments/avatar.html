@@ -1,0 +1,20 @@
+<div th:fragment="avatar(user, size)"
+     class="reley-avatar"
+     th:style="|--avatar-size: ${size}px;|">
+
+    <img th:if="${user.avatar != null and !user.avatar.isEmpty()}"
+         th:src="'data:' + ${user.avatarContentType} + ';base64,' + ${user.avatar}"
+         alt="Аватар">
+
+    <span th:unless="${user.avatar != null and !user.avatar.isEmpty()}"
+          th:text="${#strings.substring(
+              user.name != null and !user.name.isEmpty()
+                  ? user.name
+                  : user.email,
+              0,
+              1
+          ).toUpperCase()}">
+        U
+    </span>
+
+</div>

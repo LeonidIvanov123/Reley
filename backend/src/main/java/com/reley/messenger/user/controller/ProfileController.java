@@ -6,11 +6,14 @@ import com.reley.messenger.user.service.HydrateUserInfo;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import reactor.core.publisher.Mono;
 
 @Controller
@@ -49,6 +52,13 @@ public class ProfileController {
                         model.addAttribute("user", user)
                 )
                 .thenReturn("profile");
+    }
+
+    @PostMapping(value = "/profile/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<String> updateAvatar(@RequestPart("avatar") FilePart avatar) {
+        return userService
+                .updateAvatar(avatar)
+                .thenReturn("redirect:/profile/edit");
     }
 
 }
