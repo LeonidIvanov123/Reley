@@ -153,7 +153,7 @@
         <h1>Добро пожаловать!</h1>
         <p class="subtitle">Войдите в свой аккаунт, чтобы продолжить.</p>
 
-        <div th:replace="~{fragments/show_error :: show-error}"></div>
+        <div th:replace="~{fragments/show_error_popup :: show-error}"></div>
 
         <form method="post" th:action="@{/login}">
 

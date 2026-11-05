@@ -2,7 +2,7 @@
      class="reley-avatar"
      th:style="|--avatar-size: ${size}px;|">
 
-    <img th:if="${user.avatar != null and !user.avatar.isEmpty()}"
+    <img th:if="${user != null and user.avatar != null and !user.avatar.isEmpty()}"
          th:src="'data:' + ${user.avatarContentType} + ';base64,' + ${user.avatar}"
          alt="Аватар">
 

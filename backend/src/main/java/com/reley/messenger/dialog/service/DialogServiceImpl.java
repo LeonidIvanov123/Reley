@@ -112,9 +112,7 @@ public class DialogServiceImpl implements DialogService {
                                                 return new DialogListItem(
                                                         dialog.getId(),
                                                         dialog.getDialogName(),
-                                                        otherUserId,
-                                                        otherUser.getName(),
-                                                        otherUser.getEmail(),
+                                                        otherUser,
                                                         lastMessageAt.equals(OffsetDateTime.MIN)
                                                                 ? null
                                                                 : lastMessageAt

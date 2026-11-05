@@ -2,16 +2,15 @@ spring:
   application:
     name: Reley-messenger-backend
 
-  # PostgreSQL через R2DBC
   r2dbc:
-    url: ${DB_URL:r2dbc:postgresql://localhost:5432/reley}
-    username: ${DB_USERNAME:reley}
-    password: ${DB_PASSWORD:reley}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   liquibase:
-    url: ${LIQUIBASE_DB_URL:jdbc:postgresql://localhost:5432/reley}
-    user: ${DB_USERNAME:reley}
-    password: ${DB_PASSWORD:reley}
+    url: ${LIQUIBASE_DB_URL}
+    user: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     change-log: classpath:db/changelog/db.changelog-master.xml
 
   # Thymeleaf
@@ -51,6 +50,17 @@ logging:
     #org.springframework.security: TRACE
 
 reley:
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    smtp:
+      auth: true
+      starttls:
+        enable: true
+  registration:
+    base-url: ${RELEY_BASE_URL}
   security:
     refresh-token:
       ttl: 5d
@@ -58,45 +68,5 @@ reley:
     jwt:
       issuer: reley
       access-token-ttl: 5m
-      #private-key: ${JWT_PRIVATE_KEY}
-      #public-key: ${JWT_PUBLIC_KEY}
-      private-key: |
-        -----BEGIN PRIVATE KEY-----
-        MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQD4j8M8iSSlLtua
-        eDy/KY+AN/HcDOuNk/z99KgmZgzYiVN8h7s3HsvqDC/IDqaLVCBp7sBVyXSLuSSo
-        zp33h5zawS6cSb4jlPHASDp+kbs0Rjjcb74vZZe0hMBj26zfMwfKdw08g7wCUfjO
-        v5yq9Te4V/usD/jDK2lwo4DT3GsGkLuCwdeAtPad3PGl2hNgZaZJ63t+rPqCZYWQ
-        ZCNSSB+mylokEFw/r7Ao9ZVHStT/WEKJeUZGmeyfuy9eIrBCiaaQJXQLurpWFef9
-        OVUEwbHKgLtM92Sm4wLmFeegQoHh9jTQNazV4edO1nGBj3AhUqmkpc9hRVB43Hjr
-        eZaKfBu/AgMBAAECggEAVSTd4pMx99l8xUWxvWPtsaS4V0IfwFA0xgN0RC8J8HTe
-        IdbW5TNJ86L4DSYjm6+WKONthBVttF0X9zFLwFp2eyLYphXGqaagR1cWnnuqLmZt
-        nOk0M0UwOdiNlMdPyOdQoGS2poeTtBHDUoMllhRI4X9WCSMxeh2ZUUnY2/nxuX3W
-        w7AN30YyQKChRMV2sqDMFjUsvFZlwaELuJPNj0nSdEmt1l74Bd0842340be6hbtk
-        4Fbx+iDDTxLvmhfuDol+AioF6hbN/0EjSAmJqi+g8VMy7e6B7t6AoZheGP7/ipVb
-        Poysv5Gg+onfqcOJ6rJPT/WzqAt9u/mkdpe9zpuGrQKBgQD8jnA+6k0z/j9uAkcS
-        oczoXwsh5PttwsvrRiuRGJjrcy8yRy+oeneBBF/PGAmnmXMcRpm46sHFkMp25v/i
-        51LGXE+Hq8pyUaOVoXiIJqfkrX3YqARiEV8uhtQ3aJkytCkxB6Vs6d76IHKb4fsn
-        cS5n5hVJPjclvqOYRpikQt8NhQKBgQD782FJUaXc2m9q0hX/3wFNeXeDhN6WGscm
-        Q9FVvC+Y8A6Cw6N6jk21+Xb86D7JHIyxOFU22hmI1qOabyualsA0wbdN7HLNpx6t
-        dTxsAq9mjUr/UoPXFOK6esjLFdf0UN+B3yG1LJ/UpRtBYjcjnmPDGHCn6qcPZNi2
-        rU2vNPK1cwKBgBuSpXiI9gLOKDincQD8vzVDYyDBMh4KnV7DW3BM4i0adzWjBfX7
-        4N4qDxe6BRvSKfoVTyUcJCmgpCoVECzCmovjeh9SxxhyB00HwvQCXGQf+NRVi5z1
-        TpHy0Gp4NfmOJ80di5b3dYuTTU/tfREST0GyofJMI5MwXAX89x8/2cBNAoGBAL73
-        iEPUeQ1fG5gxyK76Trh0Wtv69+N6RHyCZsa/LqyTN8xxkRWxisFlZoTnW79/vjwN
-        YLmEsln/pl3F6ZzwqprSQaf0kkfCZgQ/mh6cImpuqevAlWGO2RNTQaJ82gS6z85W
-        W+xA+Jxq0K/MS9LZmPAlNC5yM1H9tC0ySnGEhnp1AoGBAOh2AdLr+YehDlQzfJzh
-        zEDM97HQvxGVF788+bt0Bpe1Pmvo/1mptlQW+MHZNfIURlphnRxHfNDjLuQ75tlO
-        jAZEbsAFLfwOpkj26LmLxOqW+oU5fZzXqGNLHiOjur/EQ5P5fuRsbeKxlx7pqsBD
-        Pc26mJ2L1uiLU1lhJWUoDSeB
-        -----END PRIVATE KEY-----
-
-      public-key: |
-        -----BEGIN PUBLIC KEY-----
-        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA+I/DPIkkpS7bmng8vymP
-        gDfx3AzrjZP8/fSoJmYM2IlTfIe7Nx7L6gwvyA6mi1Qgae7AVcl0i7kkqM6d94ec
-        2sEunEm+I5TxwEg6fpG7NEY43G++L2WXtITAY9us3zMHyncNPIO8AlH4zr+cqvU3
-        uFf7rA/4wytpcKOA09xrBpC7gsHXgLT2ndzxpdoTYGWmSet7fqz6gmWFkGQjUkgf
-        pspaJBBcP6+wKPWVR0rU/1hCiXlGRpnsn7svXiKwQommkCV0C7q6VhXn/TlVBMGx
-        yoC7TPdkpuMC5hXnoEKB4fY00DWs1eHnTtZxgY9wIVKppKXPYUVQeNx463mWinwb
-        vwIDAQAB
-        -----END PUBLIC KEY-----
+      private-key: ${JWT_PRIVATE_KEY}
+      public-key: ${JWT_PUBLIC_KEY}

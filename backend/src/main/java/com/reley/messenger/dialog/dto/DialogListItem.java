@@ -1,13 +1,13 @@
 package com.reley.messenger.dialog.dto;
 
+import com.reley.messenger.user.entity.User;
+
 import java.time.OffsetDateTime;
 
 public record DialogListItem(
         Long id,
         String dialogName,
-        Long otherUserId,
-        String otherUserName,
-        String otherUserEmail,
+        User otherParty,
         OffsetDateTime lastMessageAt
 ) {
 }

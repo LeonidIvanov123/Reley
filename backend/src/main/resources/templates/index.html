@@ -114,7 +114,8 @@
             border-radius: 12px;
             text-decoration: none;
             color: inherit;
-            transition: background 0.2s, border-color 0.2s,
+            transition: background 0.2s,
+                        border-color 0.2s,
                         transform 0.2s;
         }
 
@@ -122,21 +123,6 @@
             background: #f8f9ff;
             border-color: #dce2ff;
             transform: translateY(-1px);
-        }
-
-        .avatar {
-            width: 46px;
-            height: 46px;
-            min-width: 46px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #e9edff;
-            color: #586fe5;
-            font-size: 19px;
-            font-weight: 700;
-            text-transform: uppercase;
         }
 
         .dialog-content {
@@ -191,6 +177,30 @@
             margin-bottom: 20px;
         }
 
+        /* Avatar */
+
+        .reley-avatar {
+            width: var(--avatar-size);
+            height: var(--avatar-size);
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #e8efff;
+            color: #3978d5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .reley-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
         @media (max-width: 480px) {
             body {
                 padding: 15px 10px;
@@ -226,13 +236,15 @@
 
             <div class="user-info">
                 Вы вошли как:
-                <span class="user-email" th:text="${user.email}">
+                <span class="user-email"
+                      th:text="${user.email}">
                     user@example.com
                 </span>
             </div>
         </div>
 
-        <a href="/profile" class="profile-link">
+        <a href="/profile"
+           class="profile-link">
             Профиль
         </a>
     </div>
@@ -240,19 +252,31 @@
     <div th:replace="~{fragments/show_error :: show-error}"></div>
 
     <div class="section-header">
-        <h2 class="section-title">Диалоги</h2>
 
-        <form method="get" action="/dialogs/new">
-            <button type="submit" class="create-button">
+        <h2 class="section-title">
+            Диалоги
+        </h2>
+
+        <form method="get"
+              action="/dialogs/new">
+
+            <button type="submit"
+                    class="create-button">
                 + Новый диалог
             </button>
+
         </form>
+
     </div>
+
+    <!-- Нет диалогов -->
 
     <div th:if="${#lists.isEmpty(dialogs)}"
          class="empty-state">
 
-        <div class="empty-icon">💬</div>
+        <div class="empty-icon">
+            💬
+        </div>
 
         <div class="empty-title">
             Пока здесь пусто
@@ -261,7 +285,10 @@
         <div class="empty-description">
             Создайте новый диалог, чтобы начать общение.
         </div>
+
     </div>
+
+    <!-- Список диалогов -->
 
     <div th:unless="${#lists.isEmpty(dialogs)}"
          class="dialog-list">
@@ -270,41 +297,41 @@
            th:each="dialog : ${dialogs}"
            th:href="@{/dialogs/{id}(id=${dialog.id})}">
 
-            <div class="avatar"
-                 th:text="${dialog.otherUserName != null
-                            and !#strings.isEmpty(dialog.otherUserName)
-                            ? #strings.substring(dialog.otherUserName, 0, 1)
-                            : #strings.substring(dialog.otherUserEmail, 0, 1)}">
-                U
+            <div th:replace="~{fragments/avatar :: avatar(
+                ${dialog.otherParty != null ? dialog.otherParty : user},
+                48
+                )}">
             </div>
 
             <div class="dialog-content">
 
                 <div class="dialog-title">
 
+                    <!-- Избранное -->
                     <span th:if="${dialog.dialogName != null}"
                           th:text="${dialog.dialogName}">
                         Избранное
                     </span>
 
+                    <!-- Обычный диалог -->
                     <th:block th:if="${dialog.dialogName == null}">
 
-                        <span th:if="${dialog.otherUserName != null
-                                      and !#strings.isEmpty(dialog.otherUserName)}"
-                              th:text="${dialog.otherUserName}">
+                        <span th:if="${dialog.otherParty.name != null
+                                      and !#strings.isEmpty(dialog.otherParty.name)}"
+                              th:text="${dialog.otherParty.name}">
                             Иван Иванов
                         </span>
 
                         <span class="dialog-email"
-                              th:if="${dialog.otherUserName != null
-                                      and !#strings.isEmpty(dialog.otherUserName)}"
-                              th:text="'(' + ${dialog.otherUserEmail} + ')'">
+                              th:if="${dialog.otherParty.name != null
+                                      and !#strings.isEmpty(dialog.otherParty.name)}"
+                              th:text="'(' + ${dialog.otherParty.email} + ')'">
                             (user@example.com)
                         </span>
 
-                        <span th:if="${dialog.otherUserName == null
-                                      or #strings.isEmpty(dialog.otherUserName)}"
-                              th:text="${dialog.otherUserEmail}">
+                        <span th:if="${dialog.otherParty.name == null
+                                      or #strings.isEmpty(dialog.otherParty.name)}"
+                              th:text="${dialog.otherParty.email}">
                             user@example.com
                         </span>
 
@@ -312,9 +339,14 @@
 
                 </div>
 
+                <!-- Последнее сообщение -->
+
                 <div class="dialog-date"
                      th:if="${dialog.lastMessageAt != null}"
-                     th:text="${#temporals.format(dialog.lastMessageAt, 'dd.MM.yyyy HH:mm')}">
+                     th:text="${#temporals.format(
+                         dialog.lastMessageAt,
+                         'dd.MM.yyyy HH:mm'
+                     )}">
                     03.11.2026 12:45
                 </div>
 

@@ -2,6 +2,7 @@ package com.reley.messenger.user.controller;
 
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
+import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 public class HomeController {
 
     private final HydrateUserInfoApi userServiceInfo;
+    private final UserService userService;
     private final DialogService dialogService;
 
 
