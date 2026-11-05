@@ -25,4 +25,6 @@ public interface UserService {
 
     Mono<Void> updateAvatar(FilePart avatar);
 
+    Mono<Void> deleteAvatar();
+
 }

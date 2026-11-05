@@ -61,4 +61,11 @@ public class ProfileController {
                 .thenReturn("redirect:/profile/edit");
     }
 
+    @PostMapping("/profile/avatar/delete")
+    public Mono<String> deleteAvatar() {
+        return userService
+                .deleteAvatar()
+                .thenReturn("redirect:/profile/edit");
+    }
+
 }

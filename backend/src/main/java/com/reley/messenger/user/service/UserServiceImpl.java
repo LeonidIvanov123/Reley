@@ -164,4 +164,18 @@ public class UserServiceImpl implements UserService {
                 )
                 .then();
     }
+
+    @Override
+    public Mono<Void> deleteAvatar() {
+        return userServiceInfo.getCurrentUser()
+                .flatMap(currentUser -> userRepository.findById(currentUser.userId()))
+                .flatMap(user -> {
+                    user.setAvatar(null);
+                    user.setAvatarContentType(null);
+
+                    return userRepository.save(user);
+                })
+                .then();
+    }
+
 }

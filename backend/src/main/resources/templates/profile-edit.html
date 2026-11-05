@@ -62,42 +62,38 @@
         }
 
         /* Аватар */
-
-        .avatar-section {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-
-            margin-bottom: 28px;
-            padding-bottom: 25px;
-
-            border-bottom: 1px solid #e5e9f0;
-        }
-
-        .avatar {
-            width: 96px;
-            height: 96px;
-
+        .reley-avatar {
+            width: var(--avatar-size);
+            height: var(--avatar-size);
             flex-shrink: 0;
+
+            border-radius: 50%;
+            background: #e8efff;
+            color: #3978d5;
 
             display: flex;
             align-items: center;
             justify-content: center;
 
-            border-radius: 50%;
             overflow: hidden;
-
-            background: #3978d5;
-            color: white;
 
             font-size: 36px;
             font-weight: 600;
         }
 
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .reley-avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+        .avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 28px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #e5e9f0;
         }
 
         .avatar-actions {
@@ -129,13 +125,10 @@
         .form-group input[type="email"] {
             width: 100%;
             padding: 12px 14px;
-
             border: 1px solid #dce2eb;
             border-radius: 8px;
-
             font-size: 15px;
             outline: none;
-
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
@@ -162,9 +155,7 @@
             display: flex;
             align-items: flex-start;
             gap: 10px;
-
             padding: 16px;
-
             background: #f7f9fc;
             border: 1px solid #e5e9f0;
             border-radius: 8px;
@@ -173,29 +164,23 @@
         .checkbox-group input {
             width: 17px;
             height: 17px;
-
             margin: 1px 0 0;
-
             accent-color: #3978d5;
             cursor: pointer;
         }
 
         .checkbox-group label {
             margin: 0;
-
             font-size: 14px;
             font-weight: 500;
-
             cursor: pointer;
         }
 
         .checkbox-description {
             display: block;
-
             color: #8992a1;
             font-size: 12px;
             font-weight: normal;
-
             margin-top: 5px;
             line-height: 1.5;
         }
@@ -212,18 +197,13 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-
             padding: 11px 18px;
-
             border-radius: 8px;
             border: none;
-
             font-size: 14px;
             font-weight: 600;
-
             text-decoration: none;
             cursor: pointer;
-
             transition: background 0.2s;
         }
 
@@ -245,6 +225,15 @@
             background: #e1e6ee;
         }
 
+        .button-danger {
+            background: #fff0f0;
+            color: #d04444;
+        }
+
+        .button-danger:hover {
+            background: #ffe1e1;
+        }
+
         /* Mobile */
 
         @media (max-width: 480px) {
@@ -263,12 +252,6 @@
 
             .avatar-section {
                 align-items: flex-start;
-            }
-
-            .avatar {
-                width: 80px;
-                height: 80px;
-                font-size: 30px;
             }
 
             .actions {
@@ -306,26 +289,11 @@
 
         <div class="avatar-section">
 
-            <div class="avatar">
-
-                <img th:if="${user.avatar != null and !user.avatar.isEmpty()}"
-                     th:src="'data:' + ${user.avatarContentType} + ';base64,' + ${user.avatar}"
-                     alt="Аватар">
-
-                <span th:unless="${user.avatar != null and !user.avatar.isEmpty()}"
-                      th:text="${#strings.substring(
-                          user.name != null and !user.name.isEmpty()
-                              ? user.name
-                              : user.email,
-                          0,
-                          1
-                      ).toUpperCase()}">
-                    U
-                </span>
-
-            </div>
+            <div th:replace="~{fragments/avatar :: avatar(${user}, 96)}"></div>
 
             <div class="avatar-actions">
+
+                <!-- Загрузка нового аватара -->
 
                 <form th:action="@{/profile/avatar}"
                       method="post"
@@ -342,6 +310,20 @@
                            class="avatar-file-input"
                            accept="image/jpeg,image/png,image/webp"
                            onchange="this.form.submit()">
+
+                </form>
+
+                <!-- Удаление аватара -->
+
+                <form th:if="${user.avatar != null and !user.avatar.isEmpty()}"
+                      th:action="@{/profile/avatar/delete}"
+                      method="post"
+                      onsubmit="return confirm('Удалить аватар?');">
+
+                    <button type="submit"
+                            class="button button-danger">
+                        Удалить аватар
+                    </button>
 
                 </form>
 
