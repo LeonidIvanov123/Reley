@@ -62,3 +62,8 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+version = project.property('appVersion')
+tasks.named('bootJar') {
+    archiveFileName = "reley-${version}.jar"
+}
