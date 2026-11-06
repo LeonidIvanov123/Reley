@@ -7,15 +7,13 @@ import com.reley.messenger.dialog.repository.DialogParticipantRepository;
 import com.reley.messenger.dialog.repository.DialogRepository;
 import com.reley.messenger.exception.ChatHaveNoAccess;
 import com.reley.messenger.exception.CreateDialogException;
-import com.reley.messenger.message.repository.MessageRepository;
 import com.reley.messenger.message.service.MessageReaderService;
-import com.reley.messenger.message.service.MessageService;
 import com.reley.messenger.user.entity.User;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -23,11 +21,10 @@ import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DialogServiceImpl implements DialogService {
 
     public final static String FAVORITE_DIALOG = "Избранное";
@@ -150,12 +147,6 @@ public class DialogServiceImpl implements DialogService {
                 );
     }
 
-    /*    @Override
-    public Mono<Dialog> findById(Long id) {
-        return userServiceInfo.getCurrentUser()
-                .flatMap(user -> this.checkAccessAndReturnDialog(id, user.userId()));
-    }*/
-
     @Override
     public Mono<Dialog> findById(Long id) {
         return userServiceInfo.getCurrentUser()
@@ -255,7 +246,7 @@ public class DialogServiceImpl implements DialogService {
         OffsetDateTime now = OffsetDateTime.now();
 
         Dialog dialog = Dialog.builder()
-                .dialogName(otherUser.getEmail())
+                .dialogName(null)
                 .ownerId(currentUserId)
                 .participantId(otherUser.getId())
                 .groupChat(false)

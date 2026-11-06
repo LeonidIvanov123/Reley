@@ -325,12 +325,14 @@
                 <div class="dialog-title">
 
                     <!-- Избранное -->
+
                     <span th:if="${dialog.dialogName != null}"
                           th:text="${dialog.dialogName}">
                         Избранное
                     </span>
 
                     <!-- Обычный диалог -->
+
                     <th:block th:if="${dialog.dialogName == null}">
 
                         <span th:if="${dialog.otherParty.name != null
@@ -375,6 +377,7 @@
             </div>
 
             <!-- Непрочитанные сообщения -->
+
             <span th:if="${dialog.unreadCount > 0}"
                   class="unread-badge"
                   th:text="${dialog.unreadCount}">
@@ -389,6 +392,10 @@
 
 <script>
 
+    /*
+     * WebSocket
+     */
+
     const wsProtocol =
         window.location.protocol === 'https:'
             ? 'wss:'
@@ -399,20 +406,31 @@
             `${wsProtocol}//${window.location.host}/ws`
         );
 
+
     socket.onopen = () => {
-        console.log('WebSocket connected');
+
+        console.log(
+            'WebSocket connected'
+        );
     };
+
 
     socket.onclose = () => {
-        console.log('WebSocket disconnected');
+
+        console.log(
+            'WebSocket disconnected'
+        );
     };
 
+
     socket.onerror = error => {
+
         console.error(
             'WebSocket error:',
             error
         );
     };
+
 
     socket.onmessage = event => {
 
@@ -429,7 +447,10 @@
             if (
                 wsEvent.type === 'DIALOG_UPDATED'
             ) {
-                handleDialogUpdated(wsEvent);
+
+                handleDialogUpdated(
+                    wsEvent
+                );
             }
 
         } catch (error) {
@@ -441,6 +462,10 @@
         }
     };
 
+
+    /*
+     * Обработка обновления диалога
+     */
 
     function handleDialogUpdated(wsEvent) {
 
@@ -459,21 +484,51 @@
                 `[data-dialog-id="${dialogId}"]`
             );
 
-        if (!dialogElement) {
+
+        /*
+         * Диалог уже есть в списке.
+         *
+         * Просто обновляем:
+         * - дату последнего сообщения
+         * - количество непрочитанных
+         */
+
+        if (dialogElement) {
+
+            updateDialogDate(
+                dialogElement,
+                payload.lastMessageAt
+            );
+
+            updateUnreadCount(
+                dialogElement,
+                payload.unreadCount
+            );
+
             return;
         }
 
-        updateDialogDate(
-            dialogElement,
-            payload.lastMessageAt
-        );
 
-        updateUnreadCount(
-            dialogElement,
-            payload.unreadCount
-        );
+        /*
+         * Диалога ещё нет.
+         *
+         * Например, пользователь получил
+         * первое сообщение от нового пользователя.
+         *
+         * Перезагружаем страницу, чтобы:
+         * - появился новый диалог
+         * - подтянулся пользователь
+         * - посчитался unreadCount
+         * - диалог оказался в правильном порядке
+         */
+
+        window.location.reload();
     }
 
+
+    /*
+     * Обновление даты последнего сообщения
+     */
 
     function updateDialogDate(
         dialogElement,
@@ -510,6 +565,10 @@
     }
 
 
+    /*
+     * Обновление unread badge
+     */
+
     function updateUnreadCount(
         dialogElement,
         unreadCount
@@ -523,9 +582,13 @@
                 '.unread-badge'
             );
 
+
         /*
-         * Если unread = 0, badge можно удалить.
+         * unread = 0
+         *
+         * Удаляем badge.
          */
+
         if (count === 0) {
 
             if (badge) {
@@ -535,10 +598,13 @@
             return;
         }
 
+
         /*
-         * Если badge уже существует —
-         * просто обновляем число.
+         * Badge уже существует.
+         *
+         * Просто меняем число.
          */
+
         if (badge) {
 
             badge.textContent =
@@ -547,12 +613,17 @@
             return;
         }
 
+
         /*
-         * Badge отсутствовал,
-         * создаём его.
+         * Badge отсутствует.
+         *
+         * Создаём его.
          */
+
         badge =
-            document.createElement('span');
+            document.createElement(
+                'span'
+            );
 
         badge.className =
             'unread-badge';

@@ -151,7 +151,11 @@ public class MessageServiceImpl implements MessageService {
                                                 MessageResponse response =
                                                         MessageResponse.fromEntity(savedMessage, false);
 
-                                                eventPublisher.publishEvent(NewMessageDomainEvent.fromMessageResponse(response, otherUserId));
+                                                if (otherUserId != null) {
+                                                    eventPublisher.publishEvent(
+                                                            NewMessageDomainEvent.fromMessageResponse(
+                                                                    response, otherUserId));
+                                                }
 
                                                 return Mono.just(response);
                                             });
