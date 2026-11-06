@@ -65,5 +65,5 @@ tasks.named('test') {
 
 version = project.property('appVersion')
 tasks.named('bootJar') {
-    archiveFileName = "reley-${version}.jar"
+    archiveFileName = "reley.jar"
 }
