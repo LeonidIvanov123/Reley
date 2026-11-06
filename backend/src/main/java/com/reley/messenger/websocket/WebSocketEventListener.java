@@ -1,8 +1,10 @@
 package com.reley.messenger.websocket;
 
 import com.reley.messenger.dialog.repository.DialogRepository;
+import com.reley.messenger.dialog.service.DialogReadStateService;
 import com.reley.messenger.message.dto.MessageReadDomainEvent;
 import com.reley.messenger.message.dto.NewMessageDomainEvent;
+import com.reley.messenger.websocket.event.DialogUpdatedEvent;
 import com.reley.messenger.websocket.event.MessageReadEvent;
 import com.reley.messenger.websocket.event.NewMessageEvent;
 import com.reley.messenger.websocket.event.WebSocketEvent;
@@ -12,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Component
@@ -21,6 +24,7 @@ public class WebSocketEventListener {
 
     private final DialogRepository dialogRepository;
     private final ReleyWebSocketService webSocketService;
+    private final DialogReadStateService dialogReadStateService;
 
     @EventListener
     public void handle(NewMessageDomainEvent event) {
@@ -41,6 +45,10 @@ public class WebSocketEventListener {
         webSocketService
                 .sendToUser(event.otherUserId(), webSocketEvent)
                 .subscribe();
+
+        sendDialogUpdated(event.dialogId(), event.otherUserId(), event.createdAt());
+        sendDialogUpdated(event.dialogId(), event.senderId(), event.createdAt());
+
     }
 
     @EventListener
@@ -80,4 +88,25 @@ public class WebSocketEventListener {
                 )
                 .subscribe();
     }
+
+    private void sendDialogUpdated(Long dialogId, Long userId, OffsetDateTime lastMessageAt) {
+
+        dialogReadStateService
+                .getUnreadCount(dialogId, userId)
+                .map(unreadCount ->
+                        new WebSocketEvent(
+                                WebSocketEventType.DIALOG_UPDATED,
+                                dialogId,
+                                new DialogUpdatedEvent(dialogId, unreadCount, lastMessageAt)
+                        )
+                )
+                .flatMap(event ->
+                        webSocketService.sendToUser(
+                                userId,
+                                event
+                        )
+                )
+                .subscribe();
+    }
+
 }

@@ -311,6 +311,7 @@
 
         <a class="dialog"
            th:each="dialog : ${dialogs}"
+           th:attr="data-dialog-id=${dialog.id}"
            th:href="@{/dialogs/{id}(id=${dialog.id})}">
 
             <div th:replace="~{fragments/avatar :: avatar(
@@ -385,6 +386,186 @@
     </div>
 
 </div>
+
+<script>
+
+    const wsProtocol =
+        window.location.protocol === 'https:'
+            ? 'wss:'
+            : 'ws:';
+
+    const socket =
+        new WebSocket(
+            `${wsProtocol}//${window.location.host}/ws`
+        );
+
+    socket.onopen = () => {
+        console.log('WebSocket connected');
+    };
+
+    socket.onclose = () => {
+        console.log('WebSocket disconnected');
+    };
+
+    socket.onerror = error => {
+        console.error(
+            'WebSocket error:',
+            error
+        );
+    };
+
+    socket.onmessage = event => {
+
+        try {
+
+            const wsEvent =
+                JSON.parse(event.data);
+
+            console.log(
+                'WebSocket event:',
+                wsEvent
+            );
+
+            if (
+                wsEvent.type === 'DIALOG_UPDATED'
+            ) {
+                handleDialogUpdated(wsEvent);
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Failed to process WebSocket event:',
+                error
+            );
+        }
+    };
+
+
+    function handleDialogUpdated(wsEvent) {
+
+        const dialogId =
+            Number(wsEvent.dialogId);
+
+        const payload =
+            wsEvent.payload;
+
+        if (!dialogId || !payload) {
+            return;
+        }
+
+        const dialogElement =
+            document.querySelector(
+                `[data-dialog-id="${dialogId}"]`
+            );
+
+        if (!dialogElement) {
+            return;
+        }
+
+        updateDialogDate(
+            dialogElement,
+            payload.lastMessageAt
+        );
+
+        updateUnreadCount(
+            dialogElement,
+            payload.unreadCount
+        );
+    }
+
+
+    function updateDialogDate(
+        dialogElement,
+        lastMessageAt
+    ) {
+
+        if (!lastMessageAt) {
+            return;
+        }
+
+        const dateElement =
+            dialogElement.querySelector(
+                '.dialog-date'
+            );
+
+        if (!dateElement) {
+            return;
+        }
+
+        const date =
+            new Date(lastMessageAt);
+
+        dateElement.textContent =
+            date.toLocaleString(
+                'ru-RU',
+                {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }
+            );
+    }
+
+
+    function updateUnreadCount(
+        dialogElement,
+        unreadCount
+    ) {
+
+        const count =
+            Number(unreadCount) || 0;
+
+        let badge =
+            dialogElement.querySelector(
+                '.unread-badge'
+            );
+
+        /*
+         * Если unread = 0, badge можно удалить.
+         */
+        if (count === 0) {
+
+            if (badge) {
+                badge.remove();
+            }
+
+            return;
+        }
+
+        /*
+         * Если badge уже существует —
+         * просто обновляем число.
+         */
+        if (badge) {
+
+            badge.textContent =
+                count;
+
+            return;
+        }
+
+        /*
+         * Badge отсутствовал,
+         * создаём его.
+         */
+        badge =
+            document.createElement('span');
+
+        badge.className =
+            'unread-badge';
+
+        badge.textContent =
+            count;
+
+        dialogElement.appendChild(
+            badge
+        );
+    }
+
+</script>
 
 </body>
 </html>
