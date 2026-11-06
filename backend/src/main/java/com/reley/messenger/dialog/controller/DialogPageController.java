@@ -1,5 +1,6 @@
 package com.reley.messenger.dialog.controller;
 
+import com.reley.messenger.dialog.service.DialogReadStateService;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.message.service.MessageService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
@@ -17,22 +18,33 @@ public class DialogPageController {
     private final DialogService dialogService;
     private final MessageService messageService;
     private final HydrateUserInfoApi userServiceInfo;
+    private final DialogReadStateService dialogReadStateService;
 
     @GetMapping("/dialogs/{dialogId}")
-    public Mono<String> openDialog(@PathVariable Long dialogId, Model model) {
-
+    public Mono<String> openDialog(
+            @PathVariable Long dialogId,
+            Model model
+    ) {
         return userServiceInfo.getCurrentUserId()
                 .flatMap(userId ->
                         dialogService.findById(dialogId)
                                 .flatMap(dialog -> {
+
                                     model.addAttribute("dialog", dialog);
                                     model.addAttribute("currentUserId", userId);
 
-                                    return messageService
-                                            .getMessages(dialogId, null)
-                                            .collectList()
-                                            .doOnNext(messages ->
-                                                    model.addAttribute("messages", messages)
+                                    return dialogReadStateService
+                                            .markAsRead(dialogId, userId)
+                                            .then(
+                                                    messageService
+                                                            .getMessages(dialogId, null)
+                                                            .collectList()
+                                                            .doOnNext(messages ->
+                                                                    model.addAttribute(
+                                                                            "messages",
+                                                                            messages
+                                                                    )
+                                                            )
                                             )
                                             .thenReturn("dialog");
                                 })

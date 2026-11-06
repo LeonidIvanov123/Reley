@@ -1,6 +1,7 @@
 package com.reley.messenger.message.service;
 
 import com.reley.messenger.dialog.entity.Dialog;
+import com.reley.messenger.dialog.service.DialogReadStateService;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.exception.ChatHaveNoAccess;
 import com.reley.messenger.message.dto.MessageResponse;
@@ -24,9 +25,16 @@ public class MessageServiceImpl implements MessageService {
     private final DialogService dialogService;
     private final MessageRepository messageRepository;
     private final HydrateUserInfoApi userServiceInfo;
+    private final DialogReadStateService dialogReadStateService;
+
+    @Override
+    public Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId) {
+        return messageRepository.findTopByDialogIdOrderByIdDesc(dialogId);
+    }
 
     @Override
     public Flux<MessageResponse> getMessages(Long dialogId, Long beforeId) {
+
         return userServiceInfo.getCurrentUserId()
                 .flatMapMany(userId ->
                         checkAccess(dialogId, userId)
@@ -42,12 +50,44 @@ public class MessageServiceImpl implements MessageService {
                                 )
                                 .collectList()
                                 .flatMapMany(messages -> {
+
                                     Collections.reverse(messages);
 
-                                    return Flux.fromIterable(messages);
+                                    return dialogService.findById(dialogId)
+                                            .flatMapMany(dialog -> {
+
+                                                Long otherUserId;
+
+                                                if (Objects.equals(
+                                                        dialog.getOwnerId(),
+                                                        userId
+                                                )) {
+                                                    otherUserId = dialog.getParticipantId();
+                                                } else {
+                                                    otherUserId = dialog.getOwnerId();
+                                                }
+
+                                                return dialogReadStateService
+                                                        .getLastReadMessageId(dialogId, otherUserId)
+                                                        .map(lastReadMessageId ->
+                                                                messages.stream()
+                                                                        .map(message -> {
+
+                                                                            boolean readByOther =
+                                                                                    Objects.equals(message.getSenderId(), userId)
+                                                                                            && message.getId() <= lastReadMessageId;
+
+                                                                            return MessageResponse.fromEntity(
+                                                                                    message,
+                                                                                    readByOther
+                                                                            );
+                                                                        })
+                                                                        .toList()
+                                                        )
+                                                        .flatMapMany(Flux::fromIterable);
+                                            });
                                 })
-                )
-                .map(MessageResponse::fromEntity);
+                );
     }
 
     private Mono<Void> checkAccess(Long dialogId, Long userId) {

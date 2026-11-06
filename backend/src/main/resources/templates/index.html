@@ -150,6 +150,22 @@
             font-size: 12px;
         }
 
+        .unread-badge {
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 50%;
+            background: #e53935;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
         .empty-state {
             text-align: center;
             padding: 45px 20px;
@@ -356,6 +372,13 @@
                 </div>
 
             </div>
+
+            <!-- Непрочитанные сообщения -->
+            <span th:if="${dialog.unreadCount > 0}"
+                  class="unread-badge"
+                  th:text="${dialog.unreadCount}">
+                3
+            </span>
 
         </a>
 

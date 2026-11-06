@@ -20,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,6 +37,7 @@ public class DialogServiceImpl implements DialogService {
     private final DialogRepository dialogRepository;
     private final DialogParticipantRepository participantRepository;
     private final MessageReaderService messageReaderService;
+    private final DialogReadStateService dialogReadStateService;
 
     @Override
     public Mono<DialogResponse> createDialog(Long otherUserId) {
@@ -103,22 +105,27 @@ public class DialogServiceImpl implements DialogService {
 
                                     return Mono.zip(
                                                     userService.findById(otherUserId),
-                                                    messageReaderService.findLastMessageDateByDialogId(dialog.getId())
+                                                    messageReaderService.findLastMessageDateByDialogId(dialog.getId()),
+                                                    dialogReadStateService.getUnreadCount(dialog.getId(), user.userId())
                                             )
                                             .map(tuple -> {
                                                 User otherUser = tuple.getT1();
                                                 OffsetDateTime lastMessageAt = tuple.getT2();
 
                                                 return new DialogListItem(
-                                                        dialog.getId(),
-                                                        dialog.getDialogName(),
-                                                        otherUser,
+                                                        dialog.getId(), dialog.getDialogName(), otherUser,
                                                         lastMessageAt.equals(OffsetDateTime.MIN)
                                                                 ? null
-                                                                : lastMessageAt
+                                                                : lastMessageAt,
+                                                        tuple.getT3()
                                                 );
                                             });
                                 })
+                                .sort(Comparator.comparing(
+                                        DialogListItem::lastMessageAt,
+                                        Comparator.nullsLast(Comparator.reverseOrder())
+                                ))
+
                 );
     }
 

@@ -8,6 +8,7 @@ public record DialogListItem(
         Long id,
         String dialogName,
         User otherParty,
-        OffsetDateTime lastMessageAt
+        OffsetDateTime lastMessageAt,
+        long unreadCount
 ) {
 }

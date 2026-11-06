@@ -12,7 +12,8 @@ public record MessageResponse(
         String content,
         OffsetDateTime createdAt,
         OffsetDateTime editedAt,
-        OffsetDateTime deletedAt
+        OffsetDateTime deletedAt,
+        boolean readByOther
 ) {
 
     public static MessageResponse fromEntity(Message message) {
@@ -24,7 +25,22 @@ public record MessageResponse(
                 message.getContent(),
                 message.getCreatedAt(),
                 message.getEditedAt(),
-                message.getDeletedAt()
+                message.getDeletedAt(),
+                false
+        );
+    }
+
+    public static MessageResponse fromEntity(Message message, boolean readByOther) {
+        return new MessageResponse(
+                message.getId(),
+                message.getDialogId(),
+                message.getSenderId(),
+                null,
+                message.getContent(),
+                message.getCreatedAt(),
+                message.getEditedAt(),
+                message.getDeletedAt(),
+                readByOther
         );
     }
 

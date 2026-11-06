@@ -10,6 +10,8 @@ import java.time.OffsetDateTime;
 
 public interface MessageService {
 
+    Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId);
+
     Flux<MessageResponse> getMessages(Long dialogId, Long beforeId);
 
     Mono<MessageResponse> sendMessage(Long dialogId, SendMessageRequest request);

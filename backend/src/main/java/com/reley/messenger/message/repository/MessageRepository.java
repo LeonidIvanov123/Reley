@@ -13,6 +13,8 @@ import java.time.OffsetDateTime;
 @Repository
 public interface MessageRepository extends ReactiveCrudRepository<Message, Long> {
 
+    Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId);
+
     Flux<Message> findTop15ByDialogIdOrderByIdDesc(Long dialogId);
 
     Flux<Message> findTop15ByDialogIdAndIdLessThanOrderByIdDesc(Long dialogId, Long beforeId);
@@ -31,5 +33,15 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
 
     @Query("SELECT MAX(created_at) FROM messages WHERE dialog_id = :dialogId")
     Mono<OffsetDateTime> findLastMessageDate(Long dialogId);
+
+    @Query("""
+    SELECT *
+    FROM messages WHERE dialog_id = :dialogId AND sender_id <> :userId
+    ORDER BY id DESC LIMIT 1
+    """)
+    Mono<Message> findLastIncomingMessage(
+            Long dialogId,
+            Long userId
+    );
 
 }
