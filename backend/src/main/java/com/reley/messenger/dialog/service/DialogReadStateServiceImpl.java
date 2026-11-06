@@ -2,8 +2,10 @@ package com.reley.messenger.dialog.service;
 
 import com.reley.messenger.dialog.entity.DialogReadState;
 import com.reley.messenger.dialog.repository.DialogReadStateRepository;
+import com.reley.messenger.message.dto.MessageReadDomainEvent;
 import com.reley.messenger.message.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -15,52 +17,69 @@ public class DialogReadStateServiceImpl implements DialogReadStateService {
 
     private final DialogReadStateRepository readStateRepository;
     private final MessageRepository messageRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Mono<Void> markAsRead(Long dialogId, Long userId) {
 
         return messageRepository
                 .findLastIncomingMessage(dialogId, userId)
-                .flatMap(lastIncomingMessage ->
+                .flatMap(lastIncomingMessage -> {
 
-                        readStateRepository
-                                .findByDialogIdAndUserId(dialogId, userId)
-                                .flatMap(state -> {
+                    Long lastReadMessageId =
+                            lastIncomingMessage.getId();
 
-                                    Long currentLastReadId =
-                                            state.getLastReadMessageId();
+                    return readStateRepository
+                            .findByDialogIdAndUserId(dialogId, userId)
+                            .flatMap(state -> {
 
-                                    if (currentLastReadId != null
-                                            && currentLastReadId >= lastIncomingMessage.getId()) {
+                                Long currentLastReadId =
+                                        state.getLastReadMessageId();
 
-                                        return Mono.just(state);
-                                    }
+                                if (currentLastReadId != null
+                                        && currentLastReadId >= lastReadMessageId) {
 
-                                    state.setLastReadMessageId(
-                                            lastIncomingMessage.getId()
-                                    );
+                                    return Mono.empty();
+                                }
 
-                                    state.setUpdatedAt(
-                                            OffsetDateTime.now()
-                                    );
-
-                                    return readStateRepository.save(state);
-                                })
-                                .switchIfEmpty(Mono.defer(() ->
-                                        readStateRepository.save(
-                                                DialogReadState.builder()
-                                                        .dialogId(dialogId)
-                                                        .userId(userId)
-                                                        .lastReadMessageId(
-                                                                lastIncomingMessage.getId()
-                                                        )
-                                                        .updatedAt(
-                                                                OffsetDateTime.now()
-                                                        )
-                                                        .build()
+                                return readStateRepository
+                                        .upsertReadState(
+                                                dialogId,
+                                                userId,
+                                                lastReadMessageId,
+                                                OffsetDateTime.now()
                                         )
-                                ))
-                )
+                                        .doOnSuccess(result ->
+                                                eventPublisher.publishEvent(
+                                                        new MessageReadDomainEvent(
+                                                                dialogId,
+                                                                userId,
+                                                                lastReadMessageId
+                                                        )
+                                                )
+                                        )
+                                        .then();
+                            })
+                            .switchIfEmpty(
+                                    readStateRepository
+                                            .upsertReadState(
+                                                    dialogId,
+                                                    userId,
+                                                    lastReadMessageId,
+                                                    OffsetDateTime.now()
+                                            )
+                                            .doOnSuccess(result ->
+                                                    eventPublisher.publishEvent(
+                                                            new MessageReadDomainEvent(
+                                                                    dialogId,
+                                                                    userId,
+                                                                    lastReadMessageId
+                                                            )
+                                                    )
+                                            )
+                                            .then()
+                            );
+                })
                 .then();
     }
 

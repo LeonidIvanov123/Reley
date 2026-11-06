@@ -6,6 +6,8 @@ import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import java.time.OffsetDateTime;
+
 @Repository
 public interface DialogReadStateRepository extends ReactiveCrudRepository<DialogReadState, Long> {
 
@@ -24,5 +26,33 @@ public interface DialogReadStateRepository extends ReactiveCrudRepository<Dialog
           )
         """)
     Mono<Long> countUnreadMessages(Long dialogId, Long userId);
+
+    @Query("""
+    INSERT INTO dialog_read_state (
+        dialog_id,
+        user_id,
+        last_read_message_id,
+        updated_at
+    )
+    VALUES (
+        :dialogId,
+        :userId,
+        :lastReadMessageId,
+        :updatedAt
+    )
+    ON CONFLICT (dialog_id, user_id)
+    DO UPDATE SET
+        last_read_message_id = GREATEST(
+            dialog_read_state.last_read_message_id,
+            EXCLUDED.last_read_message_id
+        ),
+        updated_at = EXCLUDED.updated_at
+    """)
+    Mono<Integer> upsertReadState(
+            Long dialogId,
+            Long userId,
+            Long lastReadMessageId,
+            OffsetDateTime updatedAt
+    );
 
 }

@@ -1,15 +1,16 @@
 package com.reley.messenger.message.service;
 
-import com.reley.messenger.dialog.entity.Dialog;
 import com.reley.messenger.dialog.service.DialogReadStateService;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.exception.ChatHaveNoAccess;
 import com.reley.messenger.message.dto.MessageResponse;
+import com.reley.messenger.message.dto.NewMessageDomainEvent;
 import com.reley.messenger.message.dto.SendMessageRequest;
 import com.reley.messenger.message.entity.Message;
 import com.reley.messenger.message.repository.MessageRepository;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,6 +27,7 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final HydrateUserInfoApi userServiceInfo;
     private final DialogReadStateService dialogReadStateService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId) {
@@ -115,26 +117,47 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Mono<MessageResponse> sendMessage(Long dialogId, SendMessageRequest request) {
+        return userServiceInfo.getCurrentUserId()
+                .flatMap(userId ->
+                        checkAccess(dialogId, userId)
+                                .then(dialogService.findById(dialogId))
+                                .flatMap(dialog -> {
 
-            return userServiceInfo.getCurrentUserId()
-                    .flatMap(userId ->
-                            checkAccess(dialogId, userId)
-                                    .then(Mono.defer(() -> {
+                                    Long otherUserId;
 
-                                        OffsetDateTime now = OffsetDateTime.now();
+                                    if (Objects.equals(
+                                            dialog.getOwnerId(),
+                                            userId
+                                    )) {
+                                        otherUserId = dialog.getParticipantId();
+                                    } else {
+                                        otherUserId = dialog.getOwnerId();
+                                    }
 
-                                        Message message = Message.builder()
-                                                .dialogId(dialogId)
-                                                .senderId(userId)
-                                                .content(request.content().trim())
-                                                .createdAt(now)
-                                                .build();
+                                    OffsetDateTime now = OffsetDateTime.now();
 
-                                        return messageRepository.save(message);
-                                    }))
-                                    .map(MessageResponse::fromEntity)
-                    );
-        }
+                                    Message message = Message.builder()
+                                            .dialogId(dialogId)
+                                            .senderId(userId)
+                                            .content(request.content().trim())
+                                            .createdAt(now)
+                                            .build();
+
+                                    return dialogReadStateService
+                                            .markAsRead(dialogId, userId)
+                                            .then(messageRepository.save(message))
+                                            .flatMap(savedMessage -> {
+
+                                                MessageResponse response =
+                                                        MessageResponse.fromEntity(savedMessage, false);
+
+                                                eventPublisher.publishEvent(NewMessageDomainEvent.fromMessageResponse(response, otherUserId));
+
+                                                return Mono.just(response);
+                                            });
+                                })
+                );
+    }
 
     @Override
     public Mono<MessageResponse> deleteMessage(Long dialogId, Long messageId) {

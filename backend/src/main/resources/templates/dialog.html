@@ -520,6 +520,154 @@
 
 
     /*
+     * WebSocket
+     */
+
+    const wsProtocol =
+        window.location.protocol === 'https:'
+            ? 'wss:'
+            : 'ws:';
+
+    const socket =
+        new WebSocket(
+            `${wsProtocol}//${window.location.host}/ws`
+        );
+
+
+    socket.onopen = () => {
+        console.log('WebSocket connected');
+    };
+
+
+    socket.onclose = () => {
+        console.log('WebSocket disconnected');
+    };
+
+
+    socket.onerror = error => {
+        console.error(
+            'WebSocket error:',
+            error
+        );
+    };
+
+
+    socket.onmessage = event => {
+
+        try {
+
+            const wsEvent =
+                JSON.parse(event.data);
+
+            console.log(
+                'WebSocket event:',
+                wsEvent
+            );
+
+            if (
+                wsEvent.type === 'NEW_MESSAGE'
+            ) {
+                handleNewMessage(wsEvent);
+            }
+
+        } catch (error) {
+
+            console.error(
+                'Failed to process WebSocket event:',
+                error
+            );
+
+        }
+    };
+
+
+    /*
+     * Новое сообщение через WebSocket
+     */
+
+    function handleNewMessage(wsEvent) {
+
+        if (
+            Number(wsEvent.dialogId) !==
+            Number(dialogId)
+        ) {
+            return;
+        }
+
+        const message =
+            wsEvent.payload;
+
+        if (!message) {
+            return;
+        }
+
+        /*
+         * Защита от дубликатов.
+         *
+         * Например, если сообщение уже есть
+         * в DOM после загрузки страницы.
+         */
+
+        const existingMessage =
+            messagesContainer.querySelector(
+                `[data-message-id="${message.id}"]`
+            );
+
+        if (existingMessage) {
+            return;
+        }
+
+        /*
+         * NewMessageEvent не содержит readByOther.
+         *
+         * Для входящего сообщения это значение
+         * нам не нужно, но createMessageElement()
+         * ожидает его.
+         */
+
+        const messageForUi = {
+            ...message,
+            readByOther: false
+        };
+
+        const emptyMessage =
+            document.getElementById(
+                'empty-messages'
+            );
+
+        if (emptyMessage) {
+            emptyMessage.remove();
+        }
+
+        /*
+         * Проверяем, находится ли пользователь
+         * примерно внизу чата.
+         *
+         * Если он читает старые сообщения,
+         * не будем насильно прокручивать его вниз.
+         */
+
+        const isNearBottom =
+            messagesContainer.scrollHeight -
+            messagesContainer.scrollTop -
+            messagesContainer.clientHeight < 100;
+
+        const element =
+            createMessageElement(
+                messageForUi
+            );
+
+        messagesContainer.appendChild(
+            element
+        );
+
+        if (isNearBottom) {
+            scrollToBottom();
+        }
+    }
+
+
+    /*
      * Создание элемента сообщения
      */
 
@@ -529,10 +677,12 @@
             document.createElement('div');
 
         const mine =
-            String(message.senderId) === String(currentUserId);
+            String(message.senderId) ===
+            String(currentUserId);
 
         element.className =
-            'message ' + (mine ? 'mine' : 'theirs');
+            'message ' +
+            (mine ? 'mine' : 'theirs');
 
         element.dataset.messageId =
             message.id;
@@ -579,7 +729,9 @@
             deletedLabel.textContent =
                 'удалено';
 
-            element.appendChild(deletedLabel);
+            element.appendChild(
+                deletedLabel
+            );
         }
 
 
@@ -618,10 +770,14 @@
 
             status.className =
                 'message-status ' +
-                (message.readByOther ? 'read' : 'unread');
+                (message.readByOther
+                    ? 'read'
+                    : 'unread');
 
             status.textContent =
-                message.readByOther ? '✓✓' : '✓';
+                message.readByOther
+                    ? '✓✓'
+                    : '✓';
 
             time.appendChild(status);
         }
@@ -661,7 +817,10 @@
 
     async function loadOlderMessages() {
 
-        if (loadingOlderMessages || !hasMoreMessages) {
+        if (
+            loadingOlderMessages ||
+            !hasMoreMessages
+        ) {
             return;
         }
 
@@ -688,6 +847,7 @@
                 );
 
             if (!response.ok) {
+
                 throw new Error(
                     'Не удалось загрузить предыдущие сообщения'
                 );
@@ -717,7 +877,9 @@
             messages.forEach(message => {
 
                 const element =
-                    createMessageElement(message);
+                    createMessageElement(
+                        message
+                    );
 
                 messagesContainer.insertBefore(
                     element,
@@ -759,7 +921,9 @@
         'scroll',
         () => {
 
-            if (messagesContainer.scrollTop <= 30) {
+            if (
+                messagesContainer.scrollTop <= 30
+            ) {
                 loadOlderMessages();
             }
 
@@ -788,7 +952,8 @@
 
         if (
             !messageElement.classList.contains('mine')
-            || messageElement.classList.contains('deleted')
+            ||
+            messageElement.classList.contains('deleted')
         ) {
 
             closeContextMenu();
@@ -811,13 +976,17 @@
         contextMenu.style.left =
             Math.min(
                 x,
-                window.innerWidth - menuWidth - 10
+                window.innerWidth -
+                menuWidth -
+                10
             ) + 'px';
 
         contextMenu.style.top =
             Math.min(
                 y,
-                window.innerHeight - menuHeight - 10
+                window.innerHeight -
+                menuHeight -
+                10
             ) + 'px';
     }
 
@@ -865,7 +1034,8 @@
 
             if (
                 !messageElement
-                || !messageElement.classList.contains('mine')
+                ||
+                !messageElement.classList.contains('mine')
             ) {
                 return;
             }
@@ -966,6 +1136,7 @@
                     );
 
                 if (!response.ok) {
+
                     throw new Error(
                         'Не удалось удалить сообщение'
                     );
@@ -1080,8 +1251,20 @@
                     emptyMessage.remove();
                 }
 
+                /*
+                 * Сообщение отправителя добавляем
+                 * сразу из ответа POST.
+                 *
+                 * WebSocket NEW_MESSAGE сейчас
+                 * отправляется только второму
+                 * пользователю, поэтому дубликата
+                 * здесь не будет.
+                 */
+
                 messagesContainer.appendChild(
-                    createMessageElement(message)
+                    createMessageElement(
+                        message
+                    )
                 );
 
                 messageInput.value = '';
@@ -1110,7 +1293,8 @@
 
             if (
                 event.key === 'Enter'
-                && !event.shiftKey
+                &&
+                !event.shiftKey
             ) {
 
                 event.preventDefault();
@@ -1123,5 +1307,4 @@
 </script>
 
 </body>
-
 </html>
