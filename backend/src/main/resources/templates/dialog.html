@@ -570,6 +570,12 @@
                 handleNewMessage(wsEvent);
             }
 
+            if (
+                wsEvent.type === 'MESSAGE_READ'
+            ) {
+                handleMessageRead(wsEvent);
+            }
+
         } catch (error) {
 
             console.error(
@@ -664,6 +670,81 @@
         if (isNearBottom) {
             scrollToBottom();
         }
+    }
+
+
+    /*
+     * Сообщения прочитаны
+     */
+
+    function handleMessageRead(wsEvent) {
+
+        if (
+            Number(wsEvent.dialogId) !==
+            Number(dialogId)
+        ) {
+            return;
+        }
+
+        const lastReadMessageId =
+            Number(
+                wsEvent.payload?.lastReadMessageId
+            );
+
+        if (!lastReadMessageId) {
+            return;
+        }
+
+        /*
+         * Меняем статус только у моих сообщений.
+         */
+
+        const messageElements =
+            messagesContainer.querySelectorAll(
+                '.message.mine'
+            );
+
+        messageElements.forEach(
+            messageElement => {
+
+                const messageId =
+                    Number(
+                        messageElement.dataset.messageId
+                    );
+
+                /*
+                 * Все мои сообщения до
+                 * lastReadMessageId включительно
+                 * считаются прочитанными.
+                 */
+
+                if (
+                    messageId >
+                    lastReadMessageId
+                ) {
+                    return;
+                }
+
+                const status =
+                    messageElement.querySelector(
+                        '.message-status'
+                    );
+
+                if (!status) {
+                    return;
+                }
+
+                status.textContent = '✓✓';
+
+                status.classList.remove(
+                    'unread'
+                );
+
+                status.classList.add(
+                    'read'
+                );
+            }
+        );
     }
 
 
