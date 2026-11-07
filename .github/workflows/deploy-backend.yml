@@ -38,6 +38,7 @@ jobs:
           source: "backend/build/libs/*.jar"
           target: "/projects/reley/app/"
           strip_components: 3
+          overwrite: true
 
       - name: Restart backend container
         uses: appleboy/ssh-action@v1
