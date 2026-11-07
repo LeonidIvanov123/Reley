@@ -26,6 +26,8 @@ spring:
 
 server:
   port: 8890
+  compression:
+    enabled: true
 
 management:
   endpoints:

@@ -412,6 +412,10 @@
 
 </div>
 
+<audio id="messageSound" preload="auto">
+    <source src="/sounds/message.mp3" type="audio/mpeg">
+</audio>
+
 <script>
 
     /*
@@ -475,6 +479,13 @@
                 );
             }
 
+            if (
+                wsEvent.type === 'NEW_MESSAGE'
+            ) {
+
+                playMessageSound();
+            }
+
         } catch (error) {
 
             console.error(
@@ -483,6 +494,79 @@
             );
         }
     };
+
+
+    /*
+     * Звуковое уведомление
+     * о новом сообщении
+     */
+
+    let audioUnlocked = false;
+
+    function playMessageSound() {
+
+        const sound =
+            document.getElementById(
+                'messageSound'
+            );
+
+        if (!sound) {
+            return;
+        }
+
+        sound.currentTime = 0;
+
+        sound.play()
+            .catch(error => {
+
+                console.debug(
+                    'Message sound was blocked by browser:',
+                    error
+                );
+            });
+    }
+
+
+    /*
+     * Разрешаем браузеру воспроизводить звук
+     * после первого взаимодействия пользователя
+     */
+
+    document.addEventListener(
+        'click',
+        () => {
+
+            if (audioUnlocked) {
+                return;
+            }
+
+            const sound =
+                document.getElementById(
+                    'messageSound'
+                );
+
+            if (!sound) {
+                return;
+            }
+
+            sound.volume = 0;
+
+            sound.play()
+                .then(() => {
+
+                    sound.pause();
+                    sound.currentTime = 0;
+                    sound.volume = 1;
+
+                    audioUnlocked = true;
+                })
+                .catch(() => {
+                    // Браузер пока не разрешил воспроизведение
+                });
+
+        },
+        { once: true }
+    );
 
 
     /*
