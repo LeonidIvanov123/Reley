@@ -1,8 +1,11 @@
 package com.reley.messenger.message.dto;
 
+import com.reley.messenger.attachment.dto.AttachmentResponse;
 import com.reley.messenger.message.entity.Message;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
+import java.util.UUID;
 
 public record MessageResponse(
         Long id,
@@ -13,7 +16,8 @@ public record MessageResponse(
         OffsetDateTime createdAt,
         OffsetDateTime editedAt,
         OffsetDateTime deletedAt,
-        boolean readByOther
+        boolean readByOther,
+        Map<UUID, AttachmentResponse> attachments
 ) {
 
     public static MessageResponse fromEntity(Message message) {
@@ -26,7 +30,8 @@ public record MessageResponse(
                 message.getCreatedAt(),
                 message.getEditedAt(),
                 message.getDeletedAt(),
-                false
+                false,
+                Map.of()
         );
     }
 
@@ -40,7 +45,8 @@ public record MessageResponse(
                 message.getCreatedAt(),
                 message.getEditedAt(),
                 message.getDeletedAt(),
-                readByOther
+                readByOther,
+                Map.of()
         );
     }
 

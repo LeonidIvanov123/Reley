@@ -16,6 +16,7 @@
     <include file="db/changelog/changes/007-create-email-verification-codes.xml"/>
     <include file="db/changelog/changes/008-add-user-avatar.xml"/>
     <include file="db/changelog/changes/009-create-dialog-read-state.xml"/>
+    <include file="db/changelog/changes/010-create-attachments-table.xml"/>
 
 
 </databaseChangeLog>
