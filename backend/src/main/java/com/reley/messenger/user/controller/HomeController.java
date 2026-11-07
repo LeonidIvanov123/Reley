@@ -1,8 +1,8 @@
 package com.reley.messenger.user.controller;
 
+import com.reley.messenger.configuration.AppVersion;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
-import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,8 +14,8 @@ import reactor.core.publisher.Mono;
 public class HomeController {
 
     private final HydrateUserInfoApi userServiceInfo;
-    private final UserService userService;
     private final DialogService dialogService;
+    private final AppVersion appVersion;
 
 
     @GetMapping("/")
@@ -23,6 +23,7 @@ public class HomeController {
         return userServiceInfo.getCurrentUser()
                 .flatMap(user -> {
                     model.addAttribute("user", user);
+                    model.addAttribute("appVersion", appVersion.getVersion());
 
                     return dialogService.getMyDialogs()
                             .collectList()

@@ -38,8 +38,20 @@
 
         .brand {
             margin: 0 0 10px;
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
             font-size: 27px;
+            font-weight: 700;
+            color: #3978d5;
             letter-spacing: -0.7px;
+        }
+
+        .app-version {
+            font-size: 11px;
+            font-weight: normal;
+            color: #999;
+            letter-spacing: 0;
         }
 
         .user-info {
@@ -247,8 +259,16 @@
 <div class="container">
 
     <div class="header">
+
         <div>
-            <h1 class="brand">Reley Messenger</h1>
+
+            <h1 class="brand">
+                <span>Reley Messenger</span>
+                <span class="app-version"
+                      th:text="'v' + ${appVersion}">
+                    v0.1.0
+                </span>
+            </h1>
 
             <div class="user-info">
                 Вы вошли как:
@@ -257,12 +277,14 @@
                     user@example.com
                 </span>
             </div>
+
         </div>
 
         <a href="/profile"
            class="profile-link">
             Профиль
         </a>
+
     </div>
 
     <div th:replace="~{fragments/show_error :: show-error}"></div>
@@ -317,7 +339,7 @@
             <div th:replace="~{fragments/avatar :: avatar(
                 ${dialog.otherParty != null ? dialog.otherParty : user},
                 48
-                )}">
+            )}">
             </div>
 
             <div class="dialog-content">

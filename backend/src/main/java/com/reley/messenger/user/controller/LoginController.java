@@ -1,5 +1,6 @@
 package com.reley.messenger.user.controller;
 
+import com.reley.messenger.configuration.AppVersion;
 import com.reley.messenger.configuration.SecurityUtils;
 import com.reley.messenger.user.dto.LoginRequest;
 import com.reley.messenger.user.service.AuthenticationService;
@@ -8,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +18,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -31,9 +31,13 @@ public class LoginController {
 
     private final AuthenticationService authenticationService;
     private final RefreshSessionService refreshSessionService;
+    private final AppVersion appVersion;
+
 
     @GetMapping("/login")
-    public Mono<String> loginPage() {
+    public Mono<String> login(Model model) {
+        model.addAttribute("appVersion", appVersion.getVersion());
+
         return Mono.just("login");
     }
 

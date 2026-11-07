@@ -64,6 +64,11 @@ tasks.named('test') {
 }
 
 version = project.property('appVersion')
+
+springBoot {
+    buildInfo()
+}
+
 tasks.named('bootJar') {
     archiveFileName = "reley.jar"
 }

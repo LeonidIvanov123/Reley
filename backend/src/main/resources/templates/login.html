@@ -122,6 +122,12 @@
             text-decoration: none;
             margin-left: 4px;
         }
+        .app-version {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 11px;
+            color: #999;
+        }
 
         .register-link a:hover {
             text-decoration: underline;
@@ -192,6 +198,9 @@
             <a href="/register">Создать аккаунт</a>
         </p>
 
+        <div class="app-version"
+             th:text="'v' + ${appVersion}">
+        </div>
     </div>
 
 </div>
