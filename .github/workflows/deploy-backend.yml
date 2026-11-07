@@ -34,7 +34,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          password: ${{ secrets.SERVER_SSH_KEY }}
           source: "backend/build/libs/*.jar"
           target: "/projects/reley/app/"
           strip_components: 3
@@ -45,7 +45,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           port: ${{ secrets.SERVER_PORT }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
+          password: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /projects/reley
             docker-compose up -d --no-deps --force-recreate app
