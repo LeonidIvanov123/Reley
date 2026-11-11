@@ -6,7 +6,8 @@ public enum WebSocketEventType {
     MESSAGE_READ,
     MESSAGE_DELETED,
     MESSAGE_EDITED,
-    DIALOG_UPDATED;
+    DIALOG_UPDATED,
+    MESSAGE_REACTION_CHANGED;
 
     @Override
     public String toString() {

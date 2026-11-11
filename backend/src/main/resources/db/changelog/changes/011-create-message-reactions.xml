@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="create-message-reaction-table" author="reley">
+
+        <createTable tableName="message_reaction">
+
+            <column name="message_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="reaction" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addPrimaryKey
+                tableName="message_reaction"
+                columnNames="message_id, user_id"
+                constraintName="pk_message_reaction"/>
+
+        <addForeignKeyConstraint
+                baseTableName="message_reaction"
+                baseColumnNames="message_id"
+                referencedTableName="messages"
+                referencedColumnNames="id"
+                constraintName="fk_message_reaction_message"/>
+
+        <addForeignKeyConstraint
+                baseTableName="message_reaction"
+                baseColumnNames="user_id"
+                referencedTableName="users"
+                referencedColumnNames="id"
+                constraintName="fk_message_reaction_user"/>
+
+        <createIndex
+                tableName="message_reaction"
+                indexName="idx_message_reaction_message">
+            <column name="message_id"/>
+        </createIndex>
+
+        <createIndex
+                tableName="message_reaction"
+                indexName="idx_message_reaction_user">
+            <column name="user_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

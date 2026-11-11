@@ -4,7 +4,9 @@ import com.reley.messenger.dialog.repository.DialogRepository;
 import com.reley.messenger.dialog.service.DialogReadStateService;
 import com.reley.messenger.message.dto.MessageReadDomainEvent;
 import com.reley.messenger.message.dto.NewMessageDomainEvent;
+import com.reley.messenger.message.reaction.dto.MessageReactionChangedDomainEvent;
 import com.reley.messenger.websocket.event.DialogUpdatedEvent;
+import com.reley.messenger.websocket.event.MessageReactionChangedWebSocketEvent;
 import com.reley.messenger.websocket.event.MessageReadEvent;
 import com.reley.messenger.websocket.event.NewMessageEvent;
 import com.reley.messenger.websocket.event.WebSocketEvent;
@@ -104,6 +106,54 @@ public class WebSocketEventListener {
                         webSocketService.sendToUser(
                                 userId,
                                 event
+                        )
+                )
+                .subscribe();
+    }
+
+    @EventListener
+    public void handleMessageReactionChanged(MessageReactionChangedDomainEvent event) {
+
+        dialogRepository.findById(event.dialogId())
+                .flatMap(dialog -> {
+
+                    Long recipientUserId;
+
+                    if (Objects.equals(
+                            dialog.getOwnerId(),
+                            event.userId()
+                    )) {
+                        recipientUserId = dialog.getParticipantId();
+                    } else {
+                        recipientUserId = dialog.getOwnerId();
+                    }
+
+                    WebSocketEvent webSocketEvent =
+                            new WebSocketEvent(
+                                    WebSocketEventType.MESSAGE_REACTION_CHANGED,
+                                    event.dialogId(),
+                                    new MessageReactionChangedWebSocketEvent(
+                                            event.messageId(),
+                                            event.userId(),
+                                            event.oldReaction(),
+                                            event.newReaction(),
+                                            event.reactions()
+                                    )
+                            );
+
+                    return webSocketService.sendToUser(
+                            recipientUserId,
+                            webSocketEvent
+                    );
+                })
+                .doOnError(error ->
+                        log.error(
+                                "Failed to send MESSAGE_REACTION_CHANGED event: " +
+                                        "dialogId={}, messageId={}, userId={}",
+                                event.dialogId(),
+                                event.messageId(),
+                                event.userId(),
+                                error
                         )
                 )
                 .subscribe();

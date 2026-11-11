@@ -9,6 +9,7 @@
     <title th:text="${dialog.dialogName} + ' — Reley'">Reley</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -31,7 +32,9 @@
             flex-direction: column;
         }
 
-        /* Шапка */
+        /* =========================
+           Шапка
+           ========================= */
 
         .chat-header {
             display: flex;
@@ -79,7 +82,9 @@
             font-size: 12px;
         }
 
-        /* Область сообщений */
+        /* =========================
+           Область сообщений
+           ========================= */
 
         .chat {
             flex: 1;
@@ -115,7 +120,12 @@
             border-radius: 10px;
         }
 
+        /* =========================
+           Сообщение
+           ========================= */
+
         .message {
+            position: relative;
             max-width: 75%;
             min-width: 70px;
             padding: 11px 14px 8px;
@@ -164,7 +174,9 @@
             text-align: right;
         }
 
-        /* Статус прочтения */
+        /* =========================
+           Статус прочтения
+           ========================= */
 
         .message-status {
             margin-left: 4px;
@@ -182,6 +194,155 @@
             color: #8992a1;
         }
 
+        /* =========================
+           Реакции
+           ========================= */
+
+        .message-reactions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 7px;
+        }
+
+        .reaction-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            min-height: 24px;
+            padding: 2px 7px;
+            border: 1px solid #dfe4eb;
+            border-radius: 12px;
+            background: #fff;
+            color: #4d5663;
+            font-size: 13px;
+            line-height: 1;
+            cursor: pointer;
+            user-select: none;
+            transition: background .15s,
+                        border-color .15s,
+                        transform .1s;
+        }
+
+        .reaction-item:hover {
+            background: #f1f5fa;
+            border-color: #cbd5e3;
+        }
+
+        .reaction-item:active {
+            transform: scale(.96);
+        }
+
+        .reaction-item.reacted {
+            background: #e5efff;
+            border-color: #3978d5;
+            color: #245da8;
+        }
+
+        .reaction-count {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* =========================
+           Кнопка добавления реакции
+           ========================= */
+
+        .reaction-trigger {
+            position: absolute;
+            top: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: 1px solid #dfe4eb;
+            border-radius: 50%;
+            background: #fff;
+            color: #7d8795;
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(-50%);
+            transition: opacity .15s,
+                        background .15s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+            z-index: 10;
+        }
+
+        .message:hover .reaction-trigger {
+            opacity: 1;
+        }
+
+        .message.theirs .reaction-trigger {
+            right: -38px;
+        }
+
+        .message.mine .reaction-trigger {
+            left: -38px;
+        }
+
+        .reaction-trigger:hover {
+            background: #f1f4f8;
+        }
+
+        /* =========================
+           Панель выбора реакции
+           ========================= */
+
+        .reaction-picker {
+            position: absolute;
+            bottom: calc(100% + 6px);
+            display: none;
+            align-items: center;
+            gap: 3px;
+            padding: 5px;
+            background: #fff;
+            border: 1px solid #e2e6ed;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, .14);
+            z-index: 20;
+        }
+
+        .message.mine .reaction-picker {
+            right: 0;
+        }
+
+        .message.theirs .reaction-picker {
+            left: 0;
+        }
+
+        .reaction-picker.open {
+            display: flex;
+        }
+
+        .reaction-picker button {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            font-size: 19px;
+            cursor: pointer;
+            transition: background .15s,
+                        transform .1s;
+        }
+
+        .reaction-picker button:hover {
+            background: #f1f4f8;
+            transform: scale(1.15);
+        }
+
+        .reaction-picker button:active {
+            transform: scale(.95);
+        }
+
+        /* =========================
+           Индикатор загрузки
+           ========================= */
+
         .loading-indicator {
             display: none;
             padding: 8px;
@@ -198,7 +359,9 @@
             text-align: center;
         }
 
-        /* Отправка сообщения */
+        /* =========================
+           Отправка сообщения
+           ========================= */
 
         .send-area {
             padding: 14px 18px;
@@ -273,7 +436,9 @@
             display: block;
         }
 
-        /* Контекстное меню */
+        /* =========================
+           Контекстное меню
+           ========================= */
 
         .context-menu {
             position: fixed;
@@ -303,6 +468,10 @@
         .context-menu button:hover {
             background: #fff1f0;
         }
+
+        /* =========================
+           Mobile
+           ========================= */
 
         @media (max-width: 600px) {
 
@@ -346,13 +515,39 @@
             .send-form button {
                 padding: 0 14px;
             }
+
+            .reaction-trigger {
+                opacity: 1;
+            }
+
+            .message.theirs .reaction-trigger {
+                right: 2px;
+                top: -12px;
+                transform: none;
+            }
+
+            .message.mine .reaction-trigger {
+                left: auto;
+                right: 2px;
+                top: -12px;
+                transform: none;
+            }
+
+            .reaction-picker {
+                bottom: calc(100% + 8px);
+            }
         }
+
     </style>
 </head>
 
 <body>
 
 <div class="page">
+
+    <!-- =========================
+         Шапка
+         ========================= -->
 
     <div class="chat-header">
 
@@ -376,7 +571,12 @@
 
     </div>
 
+
     <div class="chat">
+
+        <!-- =========================
+             Сообщения
+             ========================= -->
 
         <div class="messages"
              id="messages"
@@ -388,6 +588,7 @@
                 Загрузка сообщений...
             </div>
 
+
             <!-- Сообщения -->
 
             <div th:each="message : ${messages}"
@@ -398,14 +599,93 @@
                  th:data-sender-id="${message.senderId}"
                  th:data-deleted-at="${message.deletedAt}">
 
+                <!-- Кнопка реакции -->
+
+                <button type="button"
+                        class="reaction-trigger"
+                        title="Поставить реакцию">
+                    ☺
+                </button>
+
+
+                <!-- Панель выбора реакции -->
+
+                <div class="reaction-picker">
+
+                    <button type="button"
+                            data-reaction="👍">
+                        👍
+                    </button>
+
+                    <button type="button"
+                            data-reaction="❤️">
+                        ❤️
+                    </button>
+
+                    <button type="button"
+                            data-reaction="😂">
+                        😂
+                    </button>
+
+                    <button type="button"
+                            data-reaction="😮">
+                        😮
+                    </button>
+
+                    <button type="button"
+                            data-reaction="😢">
+                        😢
+                    </button>
+
+                    <button type="button"
+                            data-reaction="😡">
+                        😡
+                    </button>
+
+                </div>
+
+
+                <!-- Текст -->
+
                 <div class="message-content"
                      th:text="${message.content}">
                 </div>
+
+
+                <!-- Удалено -->
 
                 <div class="message-deleted-label"
                      th:if="${message.deletedAt != null}">
                     удалено
                 </div>
+
+
+                <!-- Реакции -->
+
+                <div class="message-reactions"
+                     th:if="${message.reactions != null && !message.reactions.isEmpty()}">
+
+                    <button type="button"
+                            class="reaction-item"
+                            th:each="reaction : ${message.reactions}"
+                            th:classappend="${reaction.reactedByMe ? ' reacted' : ''}"
+                            th:data-reaction="${reaction.reaction}">
+
+                        <span th:text="${reaction.reaction}">
+                            👍
+                        </span>
+
+                        <span class="reaction-count"
+                              th:text="${reaction.count}">
+                            1
+                        </span>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Время -->
 
                 <div class="message-time">
 
@@ -413,7 +693,8 @@
                         12:30
                     </span>
 
-                    <!-- Статус сообщения -->
+
+                    <!-- Статус -->
 
                     <span th:if="${message.senderId == currentUserId}"
                           class="message-status"
@@ -433,6 +714,7 @@
 
             </div>
 
+
             <div id="empty-messages"
                  th:if="${#lists.isEmpty(messages)}">
                 Сообщений пока нет. Напишите первым!
@@ -440,9 +722,15 @@
 
         </div>
 
+
         <div id="send-error"
              class="error">
         </div>
+
+
+        <!-- =========================
+             Отправка сообщения
+             ========================= -->
 
         <div class="send-area">
 
@@ -467,7 +755,10 @@
 
 </div>
 
-<!-- Контекстное меню -->
+
+<!-- =========================
+     Контекстное меню
+     ========================= -->
 
 <div id="context-menu"
      class="context-menu">
@@ -478,6 +769,7 @@
     </button>
 
 </div>
+
 
 <script>
 
@@ -520,7 +812,23 @@
 
 
     /*
+     * Разрешённые реакции
+     */
+
+    const allowedReactions = [
+        '👍',
+        '❤️',
+        '😂',
+        '😮',
+        '😢',
+        '😡'
+    ];
+
+
+    /*
+     * =========================
      * WebSocket
+     * =========================
      */
 
     const wsProtocol =
@@ -564,17 +872,27 @@
                 wsEvent
             );
 
+
             if (
                 wsEvent.type === 'NEW_MESSAGE'
             ) {
                 handleNewMessage(wsEvent);
             }
 
+
             if (
                 wsEvent.type === 'MESSAGE_READ'
             ) {
                 handleMessageRead(wsEvent);
             }
+
+
+            if (
+                wsEvent.type === 'MESSAGE_REACTION_CHANGED'
+            ) {
+                handleMessageReactionChanged(wsEvent);
+            }
+
 
         } catch (error) {
 
@@ -586,9 +904,103 @@
         }
     };
 
+    function handleMessageReactionChanged(wsEvent) {
+
+        const messageId =
+            wsEvent.data.messageId;
+
+        const messageElement =
+            messagesContainer.querySelector(
+                `[data-message-id="${messageId}"]`
+            );
+
+        if (!messageElement) {
+            return;
+        }
+
+        renderWebSocketReactions(
+            messageElement,
+            wsEvent.data.reactions
+        );
+    }
+
+    function renderWebSocketReactions(
+        messageElement,
+        reactions
+    ) {
+        let container =
+            messageElement.querySelector('.message-reactions');
+
+        if (!reactions || reactions.length === 0) {
+            if (container) {
+                container.remove();
+            }
+
+            return;
+        }
+
+        if (!container) {
+            container =
+                document.createElement('div');
+
+            container.className =
+                'message-reactions';
+
+            messageElement.appendChild(container);
+        }
+
+        const existingReacted =
+            new Set(
+                Array.from(
+                    container.querySelectorAll('.reaction-item.reacted')
+                ).map(button =>
+                    button.dataset.reaction
+                )
+            );
+
+        container.innerHTML = '';
+
+        reactions.forEach(reaction => {
+
+            const button =
+                document.createElement('button');
+
+            button.type = 'button';
+            button.className = 'reaction-item';
+
+            button.dataset.reaction =
+                reaction.reaction;
+
+            if (existingReacted.has(reaction.reaction)) {
+                button.classList.add('reacted');
+            }
+
+            const emoji =
+                document.createElement('span');
+
+            emoji.textContent =
+                reaction.reaction;
+
+            const count =
+                document.createElement('span');
+
+            count.className =
+                'reaction-count';
+
+            count.textContent =
+                reaction.count;
+
+            button.appendChild(emoji);
+            button.appendChild(count);
+
+            container.appendChild(button);
+        });
+    }
 
     /*
-     * Новое сообщение через WebSocket
+     * =========================
+     * Новое сообщение
+     * =========================
      */
 
     function handleNewMessage(wsEvent) {
@@ -607,11 +1019,9 @@
             return;
         }
 
+
         /*
          * Защита от дубликатов.
-         *
-         * Например, если сообщение уже есть
-         * в DOM после загрузки страницы.
          */
 
         const existingMessage =
@@ -623,18 +1033,18 @@
             return;
         }
 
+
         /*
-         * NewMessageEvent не содержит readByOther.
-         *
-         * Для входящего сообщения это значение
-         * нам не нужно, но createMessageElement()
-         * ожидает его.
+         * NewMessageEvent может не содержать
+         * readByOther.
          */
 
         const messageForUi = {
             ...message,
-            readByOther: false
+            readByOther: false,
+            reactions: message.reactions || []
         };
+
 
         const emptyMessage =
             document.getElementById(
@@ -645,12 +1055,11 @@
             emptyMessage.remove();
         }
 
+
         /*
-         * Проверяем, находится ли пользователь
-         * примерно внизу чата.
-         *
-         * Если он читает старые сообщения,
-         * не будем насильно прокручивать его вниз.
+         * Если пользователь находится
+         * примерно внизу чата —
+         * прокручиваем вниз.
          */
 
         const isNearBottom =
@@ -658,14 +1067,17 @@
             messagesContainer.scrollTop -
             messagesContainer.clientHeight < 100;
 
+
         const element =
             createMessageElement(
                 messageForUi
             );
 
+
         messagesContainer.appendChild(
             element
         );
+
 
         if (isNearBottom) {
             scrollToBottom();
@@ -674,7 +1086,9 @@
 
 
     /*
+     * =========================
      * Сообщения прочитаны
+     * =========================
      */
 
     function handleMessageRead(wsEvent) {
@@ -686,23 +1100,28 @@
             return;
         }
 
+
         const lastReadMessageId =
             Number(
                 wsEvent.payload?.lastReadMessageId
             );
 
+
         if (!lastReadMessageId) {
             return;
         }
 
+
         /*
-         * Меняем статус только у моих сообщений.
+         * Меняем статус только
+         * у моих сообщений.
          */
 
         const messageElements =
             messagesContainer.querySelectorAll(
                 '.message.mine'
             );
+
 
         messageElements.forEach(
             messageElement => {
@@ -712,11 +1131,6 @@
                         messageElement.dataset.messageId
                     );
 
-                /*
-                 * Все мои сообщения до
-                 * lastReadMessageId включительно
-                 * считаются прочитанными.
-                 */
 
                 if (
                     messageId >
@@ -725,14 +1139,17 @@
                     return;
                 }
 
+
                 const status =
                     messageElement.querySelector(
                         '.message-status'
                     );
 
+
                 if (!status) {
                     return;
                 }
+
 
                 status.textContent = '✓✓';
 
@@ -743,13 +1160,75 @@
                 status.classList.add(
                     'read'
                 );
+
             }
         );
     }
 
 
     /*
-     * Создание элемента сообщения
+     * =========================
+     * Изменение реакций через WebSocket
+     * =========================
+     */
+
+    function handleMessageReactionChanged(wsEvent) {
+
+        if (
+            Number(wsEvent.dialogId) !==
+            Number(dialogId)
+        ) {
+            return;
+        }
+
+
+        const payload =
+            wsEvent.payload;
+
+        if (!payload) {
+            return;
+        }
+
+
+        const messageId =
+            payload.messageId;
+
+        if (!messageId) {
+            return;
+        }
+
+
+        const messageElement =
+            messagesContainer.querySelector(
+                `[data-message-id="${messageId}"]`
+            );
+
+
+        /*
+         * Сообщения может не быть в текущей
+         * загруженной странице.
+         */
+
+        if (!messageElement) {
+            return;
+        }
+
+
+        const reactions =
+            payload.reactions || [];
+
+
+        renderReactions(
+            messageElement,
+            reactions
+        );
+    }
+
+
+    /*
+     * =========================
+     * Создание сообщения
+     * =========================
      */
 
     function createMessageElement(message) {
@@ -757,13 +1236,16 @@
         const element =
             document.createElement('div');
 
+
         const mine =
             String(message.senderId) ===
             String(currentUserId);
 
+
         element.className =
             'message ' +
             (mine ? 'mine' : 'theirs');
+
 
         element.dataset.messageId =
             message.id;
@@ -774,9 +1256,72 @@
         element.dataset.deletedAt =
             message.deletedAt || '';
 
+
         if (message.deletedAt) {
             element.classList.add('deleted');
         }
+
+
+        /*
+         * Кнопка реакции
+         */
+
+        const reactionTrigger =
+            document.createElement('button');
+
+        reactionTrigger.type =
+            'button';
+
+        reactionTrigger.className =
+            'reaction-trigger';
+
+        reactionTrigger.title =
+            'Поставить реакцию';
+
+        reactionTrigger.textContent =
+            '☺';
+
+        element.appendChild(
+            reactionTrigger
+        );
+
+
+        /*
+         * Панель выбора реакции
+         */
+
+        const reactionPicker =
+            document.createElement('div');
+
+        reactionPicker.className =
+            'reaction-picker';
+
+
+        allowedReactions.forEach(
+            reaction => {
+
+                const button =
+                    document.createElement('button');
+
+                button.type =
+                    'button';
+
+                button.dataset.reaction =
+                    reaction;
+
+                button.textContent =
+                    reaction;
+
+                reactionPicker.appendChild(
+                    button
+                );
+            }
+        );
+
+
+        element.appendChild(
+            reactionPicker
+        );
 
 
         /*
@@ -792,7 +1337,9 @@
         content.textContent =
             message.content;
 
-        element.appendChild(content);
+        element.appendChild(
+            content
+        );
 
 
         /*
@@ -817,6 +1364,27 @@
 
 
         /*
+         * Реакции
+         */
+
+        const reactionsContainer =
+            document.createElement('div');
+
+        reactionsContainer.className =
+            'message-reactions';
+
+        element.appendChild(
+            reactionsContainer
+        );
+
+
+        renderReactions(
+            element,
+            message.reactions || []
+        );
+
+
+        /*
          * Время + статус
          */
 
@@ -837,7 +1405,10 @@
                     minute: '2-digit'
                 });
 
-        time.appendChild(timeText);
+
+        time.appendChild(
+            timeText
+        );
 
 
         /*
@@ -860,15 +1431,146 @@
                     ? '✓✓'
                     : '✓';
 
-            time.appendChild(status);
+            time.appendChild(
+                status
+            );
         }
 
 
-        element.appendChild(time);
+        element.appendChild(
+            time
+        );
+
 
         return element;
     }
 
+
+    /*
+     * =========================
+     * Отрисовка реакций
+     * =========================
+     */
+
+    function renderReactions(
+        messageElement,
+        reactions
+    ) {
+
+        let reactionsContainer =
+            messageElement.querySelector(
+                '.message-reactions'
+            );
+
+
+        /*
+         * Если контейнера ещё нет —
+         * создаём его.
+         */
+
+        if (!reactionsContainer) {
+
+            reactionsContainer =
+                document.createElement('div');
+
+            reactionsContainer.className =
+                'message-reactions';
+
+
+            const messageTime =
+                messageElement.querySelector(
+                    '.message-time'
+                );
+
+
+            messageElement.insertBefore(
+                reactionsContainer,
+                messageTime
+            );
+        }
+
+
+        reactionsContainer.innerHTML = '';
+
+
+        if (
+            !reactions ||
+            reactions.length === 0
+        ) {
+            reactionsContainer.style.display =
+                'none';
+
+            return;
+        }
+
+
+        reactionsContainer.style.display =
+            'flex';
+
+
+        reactions.forEach(
+            reaction => {
+
+                const button =
+                    document.createElement('button');
+
+                button.type =
+                    'button';
+
+                button.className =
+                    'reaction-item';
+
+
+                if (reaction.reactedByMe) {
+                    button.classList.add(
+                        'reacted'
+                    );
+                }
+
+
+                button.dataset.reaction =
+                    reaction.reaction;
+
+
+                const emoji =
+                    document.createElement('span');
+
+                emoji.textContent =
+                    reaction.reaction;
+
+
+                const count =
+                    document.createElement('span');
+
+                count.className =
+                    'reaction-count';
+
+                count.textContent =
+                    reaction.count;
+
+
+                button.appendChild(
+                    emoji
+                );
+
+                button.appendChild(
+                    count
+                );
+
+
+                reactionsContainer.appendChild(
+                    button
+                );
+            }
+        );
+    }
+
+
+    /*
+     * =========================
+     * Прокрутка вниз
+     * =========================
+     */
 
     function scrollToBottom() {
 
@@ -877,6 +1579,12 @@
     }
 
 
+    /*
+     * =========================
+     * Самое старое сообщение
+     * =========================
+     */
+
     function getOldestMessageId() {
 
         const messages =
@@ -884,16 +1592,20 @@
                 '[data-message-id]'
             );
 
+
         if (messages.length === 0) {
             return null;
         }
+
 
         return messages[0].dataset.messageId;
     }
 
 
     /*
+     * =========================
      * Загрузка предыдущих сообщений
+     * =========================
      */
 
     async function loadOlderMessages() {
@@ -905,20 +1617,26 @@
             return;
         }
 
+
         const beforeId =
             getOldestMessageId();
 
+
         if (!beforeId) {
 
-            hasMoreMessages = false;
+            hasMoreMessages =
+                false;
 
             return;
         }
 
-        loadingOlderMessages = true;
+
+        loadingOlderMessages =
+            true;
 
         loadingIndicator.style.display =
             'block';
+
 
         try {
 
@@ -927,6 +1645,7 @@
                     `/api/dialogs/${dialogId}/messages?beforeId=${beforeId}`
                 );
 
+
             if (!response.ok) {
 
                 throw new Error(
@@ -934,15 +1653,19 @@
                 );
             }
 
+
             const messages =
                 await response.json();
 
+
             if (messages.length === 0) {
 
-                hasMoreMessages = false;
+                hasMoreMessages =
+                    false;
 
                 return;
             }
+
 
             const previousHeight =
                 messagesContainer.scrollHeight;
@@ -950,23 +1673,29 @@
             const previousScrollTop =
                 messagesContainer.scrollTop;
 
+
             const firstMessage =
                 messagesContainer.querySelector(
                     '[data-message-id]'
                 );
 
-            messages.forEach(message => {
 
-                const element =
-                    createMessageElement(
-                        message
+            messages.forEach(
+                message => {
+
+                    const element =
+                        createMessageElement(
+                            message
+                        );
+
+
+                    messagesContainer.insertBefore(
+                        element,
+                        firstMessage
                     );
+                }
+            );
 
-                messagesContainer.insertBefore(
-                    element,
-                    firstMessage
-                );
-            });
 
             messagesContainer.scrollTop =
                 previousScrollTop +
@@ -974,6 +1703,7 @@
                     messagesContainer.scrollHeight -
                     previousHeight
                 );
+
 
             if (messages.length < pageSize) {
                 hasMoreMessages = false;
@@ -986,7 +1716,8 @@
 
         } finally {
 
-            loadingOlderMessages = false;
+            loadingOlderMessages =
+                false;
 
             loadingIndicator.style.display =
                 'none';
@@ -995,7 +1726,9 @@
 
 
     /*
+     * =========================
      * Infinite scroll
+     * =========================
      */
 
     messagesContainer.addEventListener(
@@ -1013,7 +1746,9 @@
 
 
     /*
+     * =========================
      * Контекстное меню
+     * =========================
      */
 
     function closeContextMenu() {
@@ -1021,7 +1756,8 @@
         contextMenu.style.display =
             'none';
 
-        selectedMessage = null;
+        selectedMessage =
+            null;
     }
 
 
@@ -1042,17 +1778,21 @@
             return;
         }
 
+
         selectedMessage =
             messageElement;
 
+
         contextMenu.style.display =
             'block';
+
 
         const menuWidth =
             contextMenu.offsetWidth;
 
         const menuHeight =
             contextMenu.offsetHeight;
+
 
         contextMenu.style.left =
             Math.min(
@@ -1061,6 +1801,7 @@
                 menuWidth -
                 10
             ) + 'px';
+
 
         contextMenu.style.top =
             Math.min(
@@ -1073,7 +1814,9 @@
 
 
     /*
+     * =========================
      * Правый клик мыши
+     * =========================
      */
 
     messagesContainer.addEventListener(
@@ -1085,11 +1828,14 @@
                     '[data-message-id]'
                 );
 
+
             if (!messageElement) {
                 return;
             }
 
+
             event.preventDefault();
+
 
             openContextMenu(
                 messageElement,
@@ -1101,7 +1847,9 @@
 
 
     /*
-     * Долгое нажатие на мобильных устройствах
+     * =========================
+     * Долгое нажатие
+     * =========================
      */
 
     messagesContainer.addEventListener(
@@ -1113,6 +1861,7 @@
                     '[data-message-id]'
                 );
 
+
             if (
                 !messageElement
                 ||
@@ -1121,11 +1870,13 @@
                 return;
             }
 
+
             longPressTimer =
                 setTimeout(() => {
 
                     const touch =
                         event.touches[0];
+
 
                     openContextMenu(
                         messageElement,
@@ -1157,7 +1908,317 @@
 
 
     /*
-     * Закрытие меню при клике вне него
+     * =========================
+     * Реакции
+     * =========================
+     */
+
+    messagesContainer.addEventListener(
+        'click',
+        async event => {
+
+            /*
+             * Нажали кнопку открытия
+             * панели реакций.
+             */
+
+            const trigger =
+                event.target.closest(
+                    '.reaction-trigger'
+                );
+
+
+            if (trigger) {
+
+                const messageElement =
+                    trigger.closest(
+                        '[data-message-id]'
+                    );
+
+
+                if (!messageElement) {
+                    return;
+                }
+
+
+                const picker =
+                    messageElement.querySelector(
+                        '.reaction-picker'
+                    );
+
+
+                if (!picker) {
+                    return;
+                }
+
+
+                /*
+                 * Закрываем все остальные
+                 * панели.
+                 */
+
+                document
+                    .querySelectorAll(
+                        '.reaction-picker.open'
+                    )
+                    .forEach(
+                        element => {
+
+                            if (element !== picker) {
+                                element.classList.remove(
+                                    'open'
+                                );
+                            }
+
+                        }
+                    );
+
+
+                picker.classList.toggle(
+                    'open'
+                );
+
+
+                return;
+            }
+
+
+            /*
+             * Нажали на конкретную реакцию
+             * в панели выбора.
+             */
+
+            const pickerButton =
+                event.target.closest(
+                    '.reaction-picker button'
+                );
+
+
+            if (pickerButton) {
+
+                const messageElement =
+                    pickerButton.closest(
+                        '[data-message-id]'
+                    );
+
+
+                if (!messageElement) {
+                    return;
+                }
+
+
+                const reaction =
+                    pickerButton.dataset.reaction;
+
+
+                await setMessageReaction(
+                    messageElement,
+                    reaction
+                );
+
+
+                return;
+            }
+
+
+            /*
+             * Нажали на уже существующую
+             * реакцию под сообщением.
+             *
+             * Сервер сам решит:
+             * - если это наша реакция -> удалить;
+             * - если другая -> заменить.
+             */
+
+            const reactionButton =
+                event.target.closest(
+                    '.reaction-item'
+                );
+
+
+            if (reactionButton) {
+
+                const messageElement =
+                    reactionButton.closest(
+                        '[data-message-id]'
+                    );
+
+
+                if (!messageElement) {
+                    return;
+                }
+
+
+                const reaction =
+                    reactionButton.dataset.reaction;
+
+
+                await setMessageReaction(
+                    messageElement,
+                    reaction
+                );
+            }
+
+        }
+    );
+
+
+    /*
+     * =========================
+     * Установка / снятие реакции
+     * =========================
+     */
+
+    async function setMessageReaction(
+        messageElement,
+        reaction
+    ) {
+
+        if (
+            !allowedReactions.includes(
+                reaction
+            )
+        ) {
+            return;
+        }
+
+
+        const messageId =
+            messageElement.dataset.messageId;
+
+
+        sendError.textContent = '';
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/dialogs/${dialogId}/messages/${messageId}/reaction`,
+                    {
+                        method: 'PUT',
+
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
+
+                        body:
+                            JSON.stringify({
+                                reaction
+                            })
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                let message =
+                    'Не удалось установить реакцию';
+
+                try {
+
+                    const body =
+                        await response.json();
+
+                    if (body.message) {
+                        message =
+                            body.message;
+                    }
+
+                } catch (_) {
+                    // Ответ может быть не JSON.
+                }
+
+
+                throw new Error(
+                    message
+                );
+            }
+
+
+            const reactions =
+                await response.json();
+
+
+            renderReactions(
+                messageElement,
+                reactions
+            );
+
+
+            /*
+             * Закрываем picker.
+             */
+
+            const picker =
+                messageElement.querySelector(
+                    '.reaction-picker'
+                );
+
+
+            if (picker) {
+                picker.classList.remove(
+                    'open'
+                );
+            }
+
+        } catch (error) {
+
+            sendError.textContent =
+                error.message;
+        }
+    }
+
+
+    /*
+     * =========================
+     * Закрытие панели реакций
+     * =========================
+     */
+
+    document.addEventListener(
+        'click',
+        event => {
+
+            /*
+             * Не закрываем picker,
+             * если клик был внутри него
+             * или по кнопке открытия.
+             */
+
+            if (
+                event.target.closest(
+                    '.reaction-picker'
+                )
+                ||
+                event.target.closest(
+                    '.reaction-trigger'
+                )
+            ) {
+                return;
+            }
+
+
+            document
+                .querySelectorAll(
+                    '.reaction-picker.open'
+                )
+                .forEach(
+                    picker =>
+                        picker.classList.remove(
+                            'open'
+                        )
+                );
+
+        }
+    );
+
+
+    /*
+     * =========================
+     * Закрытие контекстного меню
+     * =========================
      */
 
     document.addEventListener(
@@ -1177,7 +2238,20 @@
         event => {
 
             if (event.key === 'Escape') {
+
                 closeContextMenu();
+
+
+                document
+                    .querySelectorAll(
+                        '.reaction-picker.open'
+                    )
+                    .forEach(
+                        picker =>
+                            picker.classList.remove(
+                                'open'
+                            )
+                    );
             }
 
         }
@@ -1185,7 +2259,9 @@
 
 
     /*
+     * =========================
      * Удаление сообщения
+     * =========================
      */
 
     deleteMessageButton.addEventListener(
@@ -1196,15 +2272,20 @@
                 return;
             }
 
+
             const messageElement =
                 selectedMessage;
+
 
             const messageId =
                 messageElement.dataset.messageId;
 
+
             closeContextMenu();
 
+
             sendError.textContent = '';
+
 
             try {
 
@@ -1216,6 +2297,7 @@
                         }
                     );
 
+
                 if (!response.ok) {
 
                     throw new Error(
@@ -1223,15 +2305,19 @@
                     );
                 }
 
+
                 const updatedMessage =
                     await response.json();
+
 
                 messageElement.dataset.deletedAt =
                     updatedMessage.deletedAt || '';
 
+
                 messageElement.classList.add(
                     'deleted'
                 );
+
 
                 if (
                     !messageElement.querySelector(
@@ -1248,10 +2334,12 @@
                     deletedLabel.textContent =
                         'удалено';
 
+
                     const content =
                         messageElement.querySelector(
                             '.message-content'
                         );
+
 
                     content.after(
                         deletedLabel
@@ -1268,14 +2356,18 @@
 
 
     /*
+     * =========================
      * Первоначальная прокрутка
+     * =========================
      */
 
     scrollToBottom();
 
 
     /*
+     * =========================
      * Отправка сообщения
+     * =========================
      */
 
     sendForm.addEventListener(
@@ -1284,14 +2376,18 @@
 
             event.preventDefault();
 
+
             const content =
                 messageInput.value.trim();
+
 
             if (!content) {
                 return;
             }
 
+
             sendError.textContent = '';
+
 
             try {
 
@@ -1313,6 +2409,7 @@
                         }
                     );
 
+
                 if (!response.ok) {
 
                     throw new Error(
@@ -1320,26 +2417,29 @@
                     );
                 }
 
+
                 const message =
                     await response.json();
+
 
                 const emptyMessage =
                     document.getElementById(
                         'empty-messages'
                     );
 
+
                 if (emptyMessage) {
                     emptyMessage.remove();
                 }
 
+
                 /*
-                 * Сообщение отправителя добавляем
-                 * сразу из ответа POST.
+                 * Сообщение отправителя
+                 * добавляем сразу из POST.
                  *
                  * WebSocket NEW_MESSAGE сейчас
                  * отправляется только второму
-                 * пользователю, поэтому дубликата
-                 * здесь не будет.
+                 * пользователю.
                  */
 
                 messagesContainer.appendChild(
@@ -1347,6 +2447,7 @@
                         message
                     )
                 );
+
 
                 messageInput.value = '';
 
@@ -1364,8 +2465,10 @@
 
 
     /*
-     * Enter — отправка,
+     * =========================
+     * Enter — отправка
      * Shift + Enter — новая строка
+     * =========================
      */
 
     messageInput.addEventListener(
