@@ -44,4 +44,17 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
             Long userId
     );
 
+    @Query("""
+        SELECT EXISTS (
+            SELECT 1
+            FROM messages
+            WHERE id = :messageId
+              AND dialog_id = :dialogId
+        )
+        """)
+    Mono<Boolean> existsByIdAndDialogId(
+            Long messageId,
+            Long dialogId
+    );
+
 }

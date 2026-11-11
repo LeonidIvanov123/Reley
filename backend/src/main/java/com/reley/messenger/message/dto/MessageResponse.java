@@ -1,8 +1,10 @@
 package com.reley.messenger.message.dto;
 
 import com.reley.messenger.message.entity.Message;
+import com.reley.messenger.message.reaction.dto.MessageReactionResponse;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public record MessageResponse(
         Long id,
@@ -13,7 +15,8 @@ public record MessageResponse(
         OffsetDateTime createdAt,
         OffsetDateTime editedAt,
         OffsetDateTime deletedAt,
-        boolean readByOther
+        boolean readByOther,
+        List<MessageReactionResponse> reactions
 ) {
 
     public static MessageResponse fromEntity(Message message) {
@@ -26,7 +29,8 @@ public record MessageResponse(
                 message.getCreatedAt(),
                 message.getEditedAt(),
                 message.getDeletedAt(),
-                false
+                false,
+                List.of()
         );
     }
 
@@ -40,7 +44,25 @@ public record MessageResponse(
                 message.getCreatedAt(),
                 message.getEditedAt(),
                 message.getDeletedAt(),
-                readByOther
+                readByOther,
+                List.of()
+        );
+    }
+
+    public static MessageResponse fromEntity(Message message,
+                                             boolean readByOther,
+                                             List<MessageReactionResponse> reactions) {
+        return new MessageResponse(
+                message.getId(),
+                message.getDialogId(),
+                message.getSenderId(),
+                null,
+                message.getContent(),
+                message.getCreatedAt(),
+                message.getEditedAt(),
+                message.getDeletedAt(),
+                readByOther,
+                reactions
         );
     }
 
