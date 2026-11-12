@@ -1,5 +1,6 @@
 package com.reley.messenger.message.service;
 
+import com.reley.messenger.dialog.repository.DialogParticipantRepository;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.exception.ChatHaveNoAccess;
 import com.reley.messenger.message.dto.MessageResponse;
@@ -31,6 +32,7 @@ public class MessageServiceImpl implements MessageService {
     private final HydrateUserInfoApi userServiceInfo;
     private final ApplicationEventPublisher eventPublisher;
     private final MessageReactionService messageReactionService;
+    private final DialogParticipantRepository participantRepository;
 
     @Override
     public Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId) {
@@ -139,29 +141,6 @@ public class MessageServiceImpl implements MessageService {
                 );
     }
 
-    private Mono<Void> checkAccess(Long dialogId, Long userId) {
-
-        return dialogService.findById(dialogId)
-                .switchIfEmpty(Mono.error(
-                        new ChatHaveNoAccess(
-                                "Диалог с id %s не найден".formatted(dialogId)
-                        )
-                ))
-                .flatMap(dialog -> {
-
-                        boolean isParticipant =
-                                Objects.equals(userId, dialog.getOwnerId())
-                                        || Objects.equals(userId, dialog.getParticipantId());
-
-                        return isParticipant
-                                ? Mono.empty()
-                                : Mono.error(
-                                        new ChatHaveNoAccess("Нет доступа к диалогу c id [%s]".formatted(dialogId)
-                        ));
-                });
-    }
-
-
     @Override
     public Mono<MessageResponse> sendMessage(
             Long dialogId,
@@ -193,12 +172,19 @@ public class MessageServiceImpl implements MessageService {
                                                                 false
                                                         );
 
-                                                    eventPublisher.publishEvent(
-                                                            NewMessageDomainEvent
-                                                                    .fromMessageResponse(response)
-                                                    );
-
-                                                return Mono.just(response);
+                                                return participantRepository
+                                                        .updateLastReadMessageId(
+                                                                dialogId,
+                                                                userId,
+                                                                savedMessage.getId()
+                                                        )
+                                                        .then(Mono.fromRunnable(() ->
+                                                                eventPublisher.publishEvent(
+                                                                        NewMessageDomainEvent
+                                                                                .fromMessageResponse(response)
+                                                                )
+                                                        ))
+                                                        .thenReturn(response);
                                             });
                                 })
                 );
