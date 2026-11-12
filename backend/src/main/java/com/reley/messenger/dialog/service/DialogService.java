@@ -2,6 +2,7 @@ package com.reley.messenger.dialog.service;
 
 import com.reley.messenger.dialog.dto.DialogListItem;
 import com.reley.messenger.dialog.dto.DialogResponse;
+import com.reley.messenger.dialog.dto.GroupInviteResponse;
 import com.reley.messenger.dialog.dto.GroupSettingsResponse;
 import com.reley.messenger.dialog.entity.Dialog;
 import reactor.core.publisher.Flux;
@@ -38,5 +39,9 @@ public interface DialogService {
     Mono<Void> leaveGroup(Long dialogId);
 
     Mono<GroupSettingsResponse> getGroupSettings(Long dialogId);
+
+    Mono<GroupInviteResponse> getGroupByLink(String dialogLink);
+
+    Mono<Long> joinGroup(String dialogLink);
 
 }

@@ -39,15 +39,6 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
     Flux<Dialog> findAllByUserId(Long userId);
 
     @Query("""
-        SELECT id
-        FROM messages
-        WHERE dialog_id = :dialogId
-        ORDER BY id DESC
-        LIMIT 1
-        """)
-    Mono<Long> findLastMessageId(Long dialogId);
-
-    @Query("""
         UPDATE dialogs
         SET dialog_name = :name,
             is_public = :isPublic,
@@ -71,5 +62,14 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
           AND group_chat = true
         """)
     Mono<Dialog> findGroupById(Long dialogId);
+
+    @Query("""
+        SELECT *
+        FROM dialogs
+        WHERE dialog_link = :dialogLink
+          AND group_chat = true
+        LIMIT 1
+        """)
+    Mono<Dialog> findGroupByDialogLink(String dialogLink);
 
 }

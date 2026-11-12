@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title th:text="${group.name}">
+        Группа
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-family: Arial, sans-serif;
+
+            background: #f5f7fa;
+            color: #222;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 520px;
+
+            margin: 20px;
+            padding: 30px;
+
+            background: white;
+
+            border-radius: 16px;
+
+            box-shadow:
+                    0 5px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .group-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .group-avatar {
+            width: 80px;
+            height: 80px;
+
+            margin: 0 auto 15px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background: #eef0ff;
+
+            font-size: 36px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+
+            font-size: 25px;
+
+            word-break: break-word;
+        }
+
+        .visibility {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .description {
+            margin: 20px 0;
+
+            text-align: center;
+
+            color: #555;
+
+            line-height: 1.5;
+        }
+
+        .join-form {
+            margin-top: 20px;
+        }
+
+        .join-button {
+            width: 100%;
+
+            padding: 12px 16px;
+
+            border: none;
+            border-radius: 9px;
+
+            background: #4f63d9;
+            color: white;
+
+            font-size: 15px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .join-button:hover {
+            background: #4053c7;
+        }
+
+        .private {
+            margin-top: 20px;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            background: #f5f5f5;
+
+            text-align: center;
+
+            color: #555;
+        }
+
+        .private-title {
+            margin-bottom: 8px;
+
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .private-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .participants {
+            margin-top: 28px;
+        }
+
+        .participants-title {
+            margin-bottom: 10px;
+
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .participant {
+            display: flex;
+            align-items: center;
+
+            padding: 10px 0;
+
+            border-bottom: 1px solid #eee;
+        }
+
+        .participant:last-child {
+            border-bottom: none;
+        }
+
+        .participant-avatar {
+            width: 38px;
+            height: 38px;
+
+            margin-right: 10px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            flex-shrink: 0;
+
+            border-radius: 50%;
+
+            background: #eef0ff;
+
+            font-size: 16px;
+        }
+
+        .participant-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .participant-name {
+            font-weight: 600;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .participant-email {
+            margin-top: 2px;
+
+            color: #777;
+
+            font-size: 13px;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .admin {
+            margin-left: 10px;
+
+            padding: 4px 7px;
+
+            border-radius: 5px;
+
+            background: #eef0ff;
+            color: #4f63d9;
+
+            font-size: 11px;
+
+            flex-shrink: 0;
+        }
+
+        .empty {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .back {
+            display: block;
+
+            margin-top: 25px;
+
+            text-align: center;
+
+            color: #4f63d9;
+
+            text-decoration: none;
+        }
+
+        .back:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+    <!-- ==================== -->
+    <!-- GROUP HEADER -->
+    <!-- ==================== -->
+
+    <div class="group-header">
+
+        <div class="group-avatar">
+            👥
+        </div>
+
+        <h1 th:text="${group.name}">
+            Название группы
+        </h1>
+
+        <div class="visibility">
+
+            <span th:if="${group.isPublic}">
+                Публичная группа
+            </span>
+
+            <span th:unless="${group.isPublic}">
+                Приватная группа
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================== -->
+    <!-- PUBLIC GROUP -->
+    <!-- ==================== -->
+
+    <th:block th:if="${group.isPublic}">
+
+        <div class="description">
+
+            Вы можете вступить в эту группу
+            и начать общение с её участниками.
+
+        </div>
+
+        <form class="join-form"
+              th:action="@{'/dialogs/groups/link/' + ${group.link} + '/join'}"
+              method="post">
+
+            <button type="submit"
+                    class="join-button">
+
+                Вступить в группу
+
+            </button>
+
+        </form>
+
+    </th:block>
+
+
+    <!-- ==================== -->
+    <!-- PRIVATE GROUP -->
+    <!-- ==================== -->
+
+    <th:block th:unless="${group.isPublic}">
+
+        <div class="private">
+
+            <div class="private-title">
+                Приватная группа
+            </div>
+
+            <div class="private-text">
+
+                Эта группа закрыта.
+                Вступить в неё можно только
+                по приглашению.
+
+            </div>
+
+        </div>
+
+    </th:block>
+
+
+    <!-- ==================== -->
+    <!-- PARTICIPANTS -->
+    <!-- ==================== -->
+
+    <div class="participants">
+
+        <div class="participants-title">
+
+            Участники
+            (<span th:text="${#lists.size(group.participants)}">0</span>)
+
+        </div>
+
+
+        <div th:if="${#lists.isEmpty(group.participants)}"
+             class="empty">
+
+            В группе пока нет участников.
+
+        </div>
+
+
+        <div th:each="participant : ${group.participants}"
+             class="participant">
+
+            <div class="participant-avatar">
+                👤
+            </div>
+
+
+            <div class="participant-info">
+
+                <div class="participant-name"
+                     th:text="${participant.name != null && !participant.name.isBlank()
+                                ? participant.name
+                                : participant.email}">
+
+                    Пользователь
+
+                </div>
+
+                <div class="participant-email"
+                     th:text="${participant.email}">
+
+                    email@example.com
+
+                </div>
+
+            </div>
+
+
+            <span th:if="${participant.admin}"
+                  class="admin">
+
+                Админ
+
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================== -->
+    <!-- BACK -->
+    <!-- ==================== -->
+
+    <a href="/"
+       class="back">
+
+        ← Вернуться к чатам
+
+    </a>
+
+</div>
+
+</body>
+</html>

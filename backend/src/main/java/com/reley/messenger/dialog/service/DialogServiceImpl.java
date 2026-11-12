@@ -2,6 +2,7 @@ package com.reley.messenger.dialog.service;
 
 import com.reley.messenger.dialog.dto.DialogListItem;
 import com.reley.messenger.dialog.dto.DialogResponse;
+import com.reley.messenger.dialog.dto.GroupInviteResponse;
 import com.reley.messenger.dialog.dto.GroupParticipantResponse;
 import com.reley.messenger.dialog.dto.GroupSettingsResponse;
 import com.reley.messenger.dialog.dto.UserIdAndEmail;
@@ -18,7 +19,9 @@ import com.reley.messenger.user.service.HydrateUserInfoApi;
 import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -1031,6 +1034,105 @@ public class DialogServiceImpl implements DialogService {
                                                         )
                                                 )
                                 )
+                );
+    }
+
+    @Override
+    public Mono<GroupInviteResponse> getGroupByLink(String dialogLink) {
+
+        return dialogRepository
+                .findGroupByDialogLink(dialogLink)
+                .switchIfEmpty(
+                        Mono.error(
+                                new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Группа не найдена"
+                                )
+                        )
+                )
+                .flatMap(dialog ->
+                        participantRepository
+                                .findByDialogId(dialog.getId())
+                                .flatMap(participant ->
+                                        userService
+                                                .findById(participant.getUserId())
+                                                .map(user ->
+                                                        new GroupParticipantResponse(
+                                                                user.getId(),
+                                                                user.getName(),
+                                                                dialogLink,
+                                                                participant.isAdmin()
+                                                        )
+                                                )
+                                )
+                                .collectList()
+                                .map(participants ->
+                                        new GroupInviteResponse(
+                                                dialog.getId(),
+                                                dialog.getDialogLink(),
+                                                dialog.getDialogName(),
+                                                dialog.getIsPublic(),
+                                                participants
+                                        )
+                                )
+                );
+    }
+
+    @Override
+    public Mono<Long> joinGroup(String dialogLink) {
+
+        return userServiceInfo
+                .getCurrentUserId()
+                .flatMap(userId ->
+                        dialogRepository
+                                .findGroupByDialogLink(dialogLink)
+                                .switchIfEmpty(
+                                        Mono.error(
+                                                new ResponseStatusException(
+                                                        HttpStatus.NOT_FOUND,
+                                                        "Группа не найдена"
+                                                )
+                                        )
+                                )
+                                .flatMap(dialog -> {
+
+                                    if (!dialog.isGroupChat()) {
+                                        return Mono.error(
+                                                new IllegalStateException(
+                                                        "Диалог не является группой"
+                                                )
+                                        );
+                                    }
+
+                                    if (!dialog.getIsPublic()) {
+                                        return Mono.error(
+                                                new ChatHaveNoAccess(
+                                                        "Группа приватная. Вступить можно только по приглашению."
+                                                )
+                                        );
+                                    }
+
+                                    return participantRepository
+                                            .existsByDialogIdAndUserId(
+                                                    dialog.getId(),
+                                                    userId
+                                            )
+                                            .flatMap(exists -> {
+
+                                                if (exists) {
+                                                    return Mono.just(dialog.getId());
+                                                }
+
+                                                return participantRepository
+                                                        .insert(
+                                                                dialog.getId(),
+                                                                userId,
+                                                                false,
+                                                                OffsetDateTime.now()
+                                                        )
+                                                        .thenReturn(dialog.getId());
+                                            });
+                                })
                 );
     }
 
