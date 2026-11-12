@@ -114,10 +114,10 @@ public class DialogController {
 
     @PostMapping("/groups")
     public Mono<String> createGroup(
-            @RequestParam String name
+            @ModelAttribute CreateGroupRequest request
     ) {
         return dialogService
-                .createGroup(name)
+                .createGroup(request.name())
                 .thenReturn("redirect:/");
     }
 

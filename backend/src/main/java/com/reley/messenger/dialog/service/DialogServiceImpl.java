@@ -220,6 +220,51 @@ public class DialogServiceImpl implements DialogService {
                                 .findAllByUserId(user.userId())
                                 .flatMap(dialog -> {
 
+                                    Mono<OffsetDateTime> lastMessage =
+                                            messageReaderService
+                                                    .findLastMessageDateByDialogId(
+                                                            dialog.getId()
+                                                    );
+
+                                    Mono<Long> unreadCount =
+                                            getUnreadCount(
+                                                    dialog.getId(),
+                                                    user.userId()
+                                            );
+
+                                    /*
+                                     * Групповой чат.
+                                     *
+                                     * У группы нет otherParty,
+                                     * поэтому User искать не нужно.
+                                     */
+                                    if (dialog.isGroupChat()) {
+
+                                        return Mono.zip(
+                                                        lastMessage,
+                                                        unreadCount
+                                                )
+                                                .map(tuple ->
+                                                        new DialogListItem(
+                                                                dialog.getId(),
+                                                                dialog.getDialogName(),
+                                                                true,
+                                                                null,
+                                                                tuple.getT1().equals(
+                                                                        OffsetDateTime.MIN
+                                                                )
+                                                                        ? null
+                                                                        : tuple.getT1(),
+                                                                tuple.getT2()
+                                                        )
+                                                );
+                                    }
+
+                                    /*
+                                     * Обычный личный диалог.
+                                     *
+                                     * Определяем второго пользователя.
+                                     */
                                     Long otherUserId;
 
                                     if (Objects.equals(
@@ -227,25 +272,23 @@ public class DialogServiceImpl implements DialogService {
                                             dialog.getDialogName()
                                     )) {
                                         otherUserId = user.userId();
+
                                     } else if (Objects.equals(
                                             dialog.getOwnerId(),
                                             user.userId()
                                     )) {
                                         otherUserId = dialog.getParticipantId();
+
                                     } else {
                                         otherUserId = dialog.getOwnerId();
                                     }
 
                                     return Mono.zip(
-                                                    userService.findById(otherUserId),
-                                                    messageReaderService
-                                                            .findLastMessageDateByDialogId(
-                                                                    dialog.getId()
-                                                            ),
-                                                    getUnreadCount(
-                                                            dialog.getId(),
-                                                            user.userId()
-                                                    )
+                                                    userService.findById(
+                                                            otherUserId
+                                                    ),
+                                                    lastMessage,
+                                                    unreadCount
                                             )
                                             .map(tuple -> {
 
@@ -257,6 +300,7 @@ public class DialogServiceImpl implements DialogService {
                                                 return new DialogListItem(
                                                         dialog.getId(),
                                                         dialog.getDialogName(),
+                                                        false,
                                                         otherUser,
                                                         lastMessageAt.equals(
                                                                 OffsetDateTime.MIN

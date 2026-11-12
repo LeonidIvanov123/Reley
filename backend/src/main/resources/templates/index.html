@@ -8,6 +8,7 @@
     <title>Reley Messenger</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -237,6 +238,23 @@
         }
 
         /*
+         * Group avatar
+         */
+
+        .group-avatar {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #e8efff;
+            color: #3978d5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        /*
          * Empty state
          */
 
@@ -307,6 +325,7 @@
                 font-size: 23px;
             }
         }
+
     </style>
 </head>
 
@@ -321,21 +340,27 @@
         <div>
 
             <h1 class="brand">
-                <span>Reley Messenger</span>
+
+                <span>
+                    Reley Messenger
+                </span>
 
                 <span class="app-version"
                       th:text="'v' + ${appVersion}">
                     v0.1.0
                 </span>
+
             </h1>
 
             <div class="user-info">
+
                 Вы вошли как:
 
                 <span class="user-email"
                       th:text="${user.email}">
                     user@example.com
                 </span>
+
             </div>
 
         </div>
@@ -347,7 +372,9 @@
 
     </div>
 
+
     <div th:replace="~{fragments/show_error :: show-error}"></div>
+
 
     <!-- Dialogs header -->
 
@@ -380,6 +407,7 @@
 
     </div>
 
+
     <!-- Нет диалогов -->
 
     <div th:if="${#lists.isEmpty(dialogs)}"
@@ -399,6 +427,7 @@
 
     </div>
 
+
     <!-- Список диалогов -->
 
     <div th:unless="${#lists.isEmpty(dialogs)}"
@@ -409,44 +438,87 @@
            th:attr="data-dialog-id=${dialog.id}"
            th:href="@{/dialogs/{id}(id=${dialog.id})}">
 
-            <!-- Avatar -->
 
-            <div th:replace="~{fragments/avatar :: avatar(
-                ${dialog.otherParty != null ? dialog.otherParty : user},
-                48
-            )}">
+            <!-- ========================= -->
+            <!-- Avatar                     -->
+            <!-- ========================= -->
+
+            <!-- Группа -->
+
+            <div th:if="${dialog.groupChat}"
+                 class="group-avatar">
+                👥
             </div>
+
+
+            <!-- Личный диалог / Избранное -->
+
+            <div th:unless="${dialog.groupChat}">
+
+                <div th:replace="~{fragments/avatar :: avatar(
+                    ${dialog.otherParty},
+                    48
+                )}">
+                </div>
+
+            </div>
+
+
+            <!-- ========================= -->
+            <!-- Dialog content             -->
+            <!-- ========================= -->
 
             <div class="dialog-content">
 
                 <div class="dialog-title">
 
+
+                    <!-- Группа -->
+
+                    <th:block th:if="${dialog.groupChat}">
+
+                        <span th:text="${dialog.dialogName}">
+                            Java Developers
+                        </span>
+
+                    </th:block>
+
+
                     <!-- Избранное -->
 
-                    <span th:if="${dialog.dialogName != null}"
-                          th:text="${dialog.dialogName}">
-                        Избранное
-                    </span>
+                    <th:block th:if="${!dialog.groupChat
+                                       and dialog.dialogName != null}">
 
-                    <!-- Обычный диалог -->
+                        <span th:text="${dialog.dialogName}">
+                            Избранное
+                        </span>
 
-                    <th:block th:if="${dialog.dialogName == null}">
+                    </th:block>
 
-                        <span th:if="${dialog.otherParty.name != null
+
+                    <!-- Обычный личный диалог -->
+
+                    <th:block th:if="${!dialog.groupChat
+                                       and dialog.dialogName == null}">
+
+                        <span th:if="${dialog.otherParty != null
+                                      and dialog.otherParty.name != null
                                       and !#strings.isEmpty(dialog.otherParty.name)}"
                               th:text="${dialog.otherParty.name}">
                             Иван Иванов
                         </span>
 
                         <span class="dialog-email"
-                              th:if="${dialog.otherParty.name != null
+                              th:if="${dialog.otherParty != null
+                                      and dialog.otherParty.name != null
                                       and !#strings.isEmpty(dialog.otherParty.name)}"
                               th:text="'(' + ${dialog.otherParty.email} + ')'">
                             (user@example.com)
                         </span>
 
-                        <span th:if="${dialog.otherParty.name == null
-                                      or #strings.isEmpty(dialog.otherParty.name)}"
+                        <span th:if="${dialog.otherParty != null
+                                      and (dialog.otherParty.name == null
+                                      or #strings.isEmpty(dialog.otherParty.name))}"
                               th:text="${dialog.otherParty.email}">
                             user@example.com
                         </span>
@@ -454,6 +526,7 @@
                     </th:block>
 
                 </div>
+
 
                 <!-- Последнее сообщение -->
 
@@ -473,6 +546,7 @@
 
             </div>
 
+
             <!-- Непрочитанные сообщения -->
 
             <span th:if="${dialog.unreadCount > 0}"
@@ -487,6 +561,7 @@
 
 </div>
 
+
 <!-- Message sound -->
 
 <audio id="messageSound"
@@ -496,6 +571,7 @@
             type="audio/mpeg">
 
 </audio>
+
 
 <script>
 
@@ -518,6 +594,7 @@
             if (!createMenu.contains(event.target)) {
                 createMenu.removeAttribute('open');
             }
+
         }
     );
 
@@ -542,6 +619,7 @@
         console.log(
             'WebSocket connected'
         );
+
     };
 
 
@@ -550,6 +628,7 @@
         console.log(
             'WebSocket disconnected'
         );
+
     };
 
 
@@ -559,6 +638,7 @@
             'WebSocket error:',
             error
         );
+
     };
 
 
@@ -574,6 +654,7 @@
                 wsEvent
             );
 
+
             if (
                 wsEvent.type === 'DIALOG_UPDATED'
             ) {
@@ -581,13 +662,16 @@
                 handleDialogUpdated(
                     wsEvent
                 );
+
             }
+
 
             if (
                 wsEvent.type === 'NEW_MESSAGE'
             ) {
 
                 playMessageSound();
+
             }
 
         } catch (error) {
@@ -596,7 +680,9 @@
                 'Failed to process WebSocket event:',
                 error
             );
+
         }
+
     };
 
 
@@ -615,11 +701,14 @@
                 'messageSound'
             );
 
+
         if (!sound) {
             return;
         }
 
+
         sound.currentTime = 0;
+
 
         sound.play()
             .catch(error => {
@@ -628,7 +717,9 @@
                     'Message sound was blocked by browser:',
                     error
                 );
+
             });
+
     }
 
 
@@ -645,16 +736,20 @@
                 return;
             }
 
+
             const sound =
                 document.getElementById(
                     'messageSound'
                 );
 
+
             if (!sound) {
                 return;
             }
 
+
             sound.volume = 0;
+
 
             sound.play()
                 .then(() => {
@@ -664,9 +759,12 @@
                     sound.volume = 1;
 
                     audioUnlocked = true;
+
                 })
                 .catch(() => {
+
                     // Браузер пока не разрешил воспроизведение
+
                 });
 
         },
@@ -683,12 +781,15 @@
         const dialogId =
             Number(wsEvent.dialogId);
 
+
         const payload =
             wsEvent.payload;
+
 
         if (!dialogId || !payload) {
             return;
         }
+
 
         const dialogElement =
             document.querySelector(
@@ -711,10 +812,12 @@
                 payload.lastMessageAt
             );
 
+
             updateUnreadCount(
                 dialogElement,
                 payload.unreadCount
             );
+
 
             return;
         }
@@ -734,6 +837,7 @@
          */
 
         window.location.reload();
+
     }
 
 
@@ -750,17 +854,21 @@
             return;
         }
 
+
         const dateElement =
             dialogElement.querySelector(
                 '.dialog-date'
             );
 
+
         if (!dateElement) {
             return;
         }
 
+
         const date =
             new Date(lastMessageAt);
+
 
         dateElement.textContent =
             date.toLocaleString(
@@ -773,6 +881,7 @@
                     minute: '2-digit'
                 }
             );
+
     }
 
 
@@ -787,6 +896,7 @@
 
         const count =
             Number(unreadCount) || 0;
+
 
         let badge =
             dialogElement.querySelector(
@@ -836,18 +946,23 @@
                 'span'
             );
 
+
         badge.className =
             'unread-badge';
+
 
         badge.textContent =
             count;
 
+
         dialogElement.appendChild(
             badge
         );
+
     }
 
 </script>
 
 </body>
+
 </html>
