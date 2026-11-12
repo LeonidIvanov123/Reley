@@ -6,6 +6,7 @@ import com.reley.messenger.user.dto.CreateUserRequest;
 import com.reley.messenger.user.dto.UpdateProfileRequest;
 import com.reley.messenger.user.dto.UserDirectoryResponse;
 import com.reley.messenger.user.dto.UserResponse;
+import com.reley.messenger.user.dto.UserSenderProjection;
 import com.reley.messenger.user.entity.Credential;
 import com.reley.messenger.user.entity.User;
 import com.reley.messenger.user.repository.CredentialRepository;
@@ -176,6 +177,11 @@ public class UserServiceImpl implements UserService {
                     return userRepository.save(user);
                 })
                 .then();
+    }
+
+    @Override
+    public Flux<UserSenderProjection> findSendersByDialogId(Long dialogId) {
+        return userRepository.findSendersByDialogId(dialogId);
     }
 
 }

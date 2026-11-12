@@ -6,7 +6,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title th:text="${dialog.dialogName} + ' — Reley'">Reley</title>
+    <title th:text="${dialog.dialogName} + ' — Reley'">
+        Reley
+    </title>
 
     <style>
 
@@ -50,14 +52,18 @@
             width: 38px;
             height: 38px;
             flex-shrink: 0;
+
             display: flex;
             align-items: center;
             justify-content: center;
+
             border-radius: 9px;
             background: #f1f4f8;
             color: #3978d5;
             text-decoration: none;
+
             font-size: 20px;
+
             transition: background .2s;
         }
 
@@ -65,49 +71,109 @@
             background: #e5edfa;
         }
 
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+            background: #e5efff;
+            color: #3978d5;
+
+            font-size: 18px;
+            font-weight: 600;
+        }
+
         .chat-title {
             min-width: 0;
+            flex: 1;
         }
 
         .chat-title h2 {
             margin: 0;
+
             font-size: 18px;
             font-weight: 600;
+
             overflow-wrap: anywhere;
         }
 
         .chat-subtitle {
             margin-top: 4px;
+
             color: #8992a1;
             font-size: 12px;
         }
 
+        .settings-button {
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 9px;
+            background: #f1f4f8;
+            color: #697586;
+
+            text-decoration: none;
+            font-size: 18px;
+
+            transition: background .2s,
+                        color .2s;
+        }
+
+        .settings-button:hover {
+            background: #e5edfa;
+            color: #3978d5;
+        }
+
         /* =========================
-           Область сообщений
+           Область чата
            ========================= */
 
         .chat {
             flex: 1;
             min-height: 0;
+
             display: flex;
             flex-direction: column;
+
             overflow: hidden;
+
             background: #fff;
+
             border: 1px solid #e5e9f0;
             border-top: none;
             border-radius: 0 0 14px 14px;
+
             box-shadow: 0 4px 18px rgba(30, 50, 80, .05);
         }
+
+        /* =========================
+           Сообщения
+           ========================= */
 
         .messages {
             flex: 1;
             min-height: 0;
+
             overflow-y: auto;
+
             padding: 22px;
+
             display: flex;
             flex-direction: column;
             gap: 12px;
+
             background: #f8f9fb;
+
             scroll-behavior: auto;
         }
 
@@ -126,31 +192,62 @@
 
         .message {
             position: relative;
+
             max-width: 75%;
             min-width: 70px;
-            padding: 11px 14px 8px;
+
+            padding: 8px 14px 8px;
+
             border-radius: 14px;
+
             overflow-wrap: anywhere;
+
             cursor: default;
+
             box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
         }
 
         .message.mine {
             align-self: flex-end;
+
             background: #e5efff;
             border: 1px solid #d7e5fb;
+
             border-bottom-right-radius: 4px;
         }
 
         .message.theirs {
             align-self: flex-start;
+
             background: #fff;
             border: 1px solid #e8ebf0;
+
             border-bottom-left-radius: 4px;
+        }
+
+        /* =========================
+           Автор сообщения
+           ========================= */
+
+        .message-author {
+            margin-bottom: 4px;
+
+            color: #7d8795;
+            font-size: 10px;
+            font-weight: 600;
+
+            line-height: 1.2;
+        }
+
+        .message-author.removed {
+            color: #a0a6b0;
+            font-weight: 400;
+            font-style: italic;
         }
 
         .message-content {
             white-space: pre-wrap;
+
             line-height: 1.45;
             font-size: 14px;
         }
@@ -162,6 +259,7 @@
 
         .message-deleted-label {
             margin-top: 5px;
+
             color: #a0a6b0;
             font-size: 11px;
             font-style: italic;
@@ -169,8 +267,10 @@
 
         .message-time {
             margin-top: 6px;
+
             color: #8992a1;
             font-size: 10px;
+
             text-align: right;
         }
 
@@ -180,8 +280,10 @@
 
         .message-status {
             margin-left: 4px;
+
             font-size: 11px;
             font-weight: 600;
+
             letter-spacing: -2px;
             white-space: nowrap;
         }
@@ -201,24 +303,34 @@
         .message-reactions {
             display: flex;
             flex-wrap: wrap;
+
             gap: 4px;
+
             margin-top: 7px;
         }
 
         .reaction-item {
             display: inline-flex;
             align-items: center;
+
             gap: 4px;
+
             min-height: 24px;
+
             padding: 2px 7px;
+
             border: 1px solid #dfe4eb;
             border-radius: 12px;
+
             background: #fff;
             color: #4d5663;
+
             font-size: 13px;
             line-height: 1;
+
             cursor: pointer;
             user-select: none;
+
             transition: background .15s,
                         border-color .15s,
                         transform .1s;
@@ -245,29 +357,42 @@
         }
 
         /* =========================
-           Кнопка добавления реакции
+           Кнопка реакции
            ========================= */
 
         .reaction-trigger {
             position: absolute;
+
             top: 50%;
+
             width: 30px;
             height: 30px;
+
             display: flex;
             align-items: center;
             justify-content: center;
+
             padding: 0;
+
             border: 1px solid #dfe4eb;
             border-radius: 50%;
+
             background: #fff;
             color: #7d8795;
+
             font-size: 16px;
+
             cursor: pointer;
+
             opacity: 0;
+
             transform: translateY(-50%);
+
             transition: opacity .15s,
                         background .15s;
+
             box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+
             z-index: 10;
         }
 
@@ -288,20 +413,28 @@
         }
 
         /* =========================
-           Панель выбора реакции
+           Picker
            ========================= */
 
         .reaction-picker {
             position: absolute;
+
             bottom: calc(100% + 6px);
+
             display: none;
             align-items: center;
+
             gap: 3px;
+
             padding: 5px;
+
             background: #fff;
+
             border: 1px solid #e2e6ed;
             border-radius: 12px;
+
             box-shadow: 0 6px 20px rgba(0, 0, 0, .14);
+
             z-index: 20;
         }
 
@@ -320,12 +453,18 @@
         .reaction-picker button {
             width: 32px;
             height: 32px;
+
             padding: 0;
+
             border: none;
             border-radius: 8px;
+
             background: transparent;
+
             font-size: 19px;
+
             cursor: pointer;
+
             transition: background .15s,
                         transform .1s;
         }
@@ -340,57 +479,76 @@
         }
 
         /* =========================
-           Индикатор загрузки
+           Загрузка
            ========================= */
 
         .loading-indicator {
             display: none;
+
             padding: 8px;
+
             color: #8992a1;
             font-size: 12px;
+
             text-align: center;
         }
 
         #empty-messages {
             margin: auto;
+
             padding: 20px;
+
             color: #8992a1;
             font-size: 14px;
+
             text-align: center;
         }
 
         /* =========================
-           Отправка сообщения
+           Отправка
            ========================= */
 
         .send-area {
             padding: 14px 18px;
+
             background: #fff;
+
             border-top: 1px solid #e5e9f0;
         }
 
         .send-form {
             display: flex;
             align-items: flex-end;
+
             gap: 12px;
         }
 
         .send-form textarea {
             flex: 1;
             min-width: 0;
+
             min-height: 44px;
             max-height: 120px;
+
             resize: none;
+
             padding: 12px 14px;
+
             font-family: inherit;
             font-size: 14px;
             line-height: 1.4;
+
             color: #252a34;
+
             background: #f8f9fb;
+
             border: 1px solid #e0e5ed;
             border-radius: 10px;
+
             outline: none;
-            transition: border-color .2s, background .2s;
+
+            transition: border-color .2s,
+                        background .2s;
         }
 
         .send-form textarea:focus {
@@ -404,14 +562,20 @@
 
         .send-form button {
             min-height: 44px;
+
             padding: 0 22px;
+
             border: none;
             border-radius: 10px;
+
             background: #3978d5;
             color: #fff;
+
             font-size: 14px;
             font-weight: 600;
+
             cursor: pointer;
+
             transition: background .2s;
         }
 
@@ -424,11 +588,18 @@
             cursor: not-allowed;
         }
 
+        /* =========================
+           Ошибка
+           ========================= */
+
         .error {
             display: none;
+
             padding: 9px 18px;
+
             color: #b42318;
             background: #fff1f0;
+
             font-size: 13px;
         }
 
@@ -442,26 +613,41 @@
 
         .context-menu {
             position: fixed;
+
             display: none;
+
             min-width: 180px;
+
             padding: 5px;
+
             background: #fff;
+
             border: 1px solid #e5e9f0;
             border-radius: 10px;
+
             box-shadow: 0 6px 22px rgba(0, 0, 0, .14);
+
             z-index: 1000;
         }
 
         .context-menu button {
             display: block;
+
             width: 100%;
+
             padding: 10px 12px;
+
             border: none;
             border-radius: 7px;
+
             background: none;
+
             color: #c0392b;
+
             font-size: 13px;
+
             text-align: left;
+
             cursor: pointer;
         }
 
@@ -491,6 +677,7 @@
 
             .chat {
                 border-radius: 0;
+
                 border-left: none;
                 border-right: none;
                 border-bottom: none;
@@ -557,17 +744,35 @@
             ←
         </a>
 
+        <div class="chat-avatar"
+             th:text="${dialog.groupChat ? '👥' : '👤'}">
+            👤
+        </div>
+
         <div class="chat-title">
 
             <h2 th:text="${dialog.dialogName}">
                 Диалог
             </h2>
 
-            <div class="chat-subtitle">
+            <div class="chat-subtitle"
+                 th:if="${dialog.groupChat}">
+                Групповой чат
+            </div>
+
+            <div class="chat-subtitle"
+                 th:unless="${dialog.groupChat}">
                 Reley messenger
             </div>
 
         </div>
+
+        <a th:if="${dialog.groupChat}"
+           th:href="@{/dialogs/{id}/settings(id=${dialog.id})}"
+           class="settings-button"
+           title="Настройки группы">
+            ⚙
+        </a>
 
     </div>
 
@@ -589,7 +794,9 @@
             </div>
 
 
-            <!-- Сообщения -->
+            <!-- =========================
+                 Сообщения из сервера
+                 ========================= -->
 
             <div th:each="message : ${messages}"
                  class="message"
@@ -599,7 +806,38 @@
                  th:data-sender-id="${message.senderId}"
                  th:data-deleted-at="${message.deletedAt}">
 
-                <!-- Кнопка реакции -->
+                <!-- =========================
+                     Автор
+                     ========================= -->
+
+                <div class="message-author"
+                     th:if="${message.senderId != currentUserId
+                             && message.senderName != null
+                             && !message.senderName.isBlank()}"
+                     th:text="${message.senderName}">
+                    Автор
+                </div>
+
+                <div class="message-author"
+                     th:if="${message.senderId != currentUserId
+                             && (message.senderName == null || message.senderName.isBlank())
+                             && message.senderEmail != null
+                             && !message.senderEmail.isBlank()}"
+                     th:text="${message.senderEmail}">
+                    email@example.com
+                </div>
+
+                <div class="message-author removed"
+                     th:if="${message.senderId != currentUserId
+                             && (message.senderName == null || message.senderName.isBlank())
+                             && (message.senderEmail == null || message.senderEmail.isBlank())}">
+                    Участник исключен
+                </div>
+
+
+                <!-- =========================
+                     Кнопка реакции
+                     ========================= -->
 
                 <button type="button"
                         class="reaction-trigger"
@@ -608,7 +846,9 @@
                 </button>
 
 
-                <!-- Панель выбора реакции -->
+                <!-- =========================
+                     Picker
+                     ========================= -->
 
                 <div class="reaction-picker">
 
@@ -645,14 +885,18 @@
                 </div>
 
 
-                <!-- Текст -->
+                <!-- =========================
+                     Текст
+                     ========================= -->
 
                 <div class="message-content"
                      th:text="${message.content}">
                 </div>
 
 
-                <!-- Удалено -->
+                <!-- =========================
+                     Удалено
+                     ========================= -->
 
                 <div class="message-deleted-label"
                      th:if="${message.deletedAt != null}">
@@ -660,7 +904,9 @@
                 </div>
 
 
-                <!-- Реакции -->
+                <!-- =========================
+                     Реакции
+                     ========================= -->
 
                 <div class="message-reactions"
                      th:if="${message.reactions != null && !message.reactions.isEmpty()}">
@@ -685,16 +931,15 @@
                 </div>
 
 
-                <!-- Время -->
+                <!-- =========================
+                     Время
+                     ========================= -->
 
                 <div class="message-time">
 
                     <span th:text="${#temporals.format(message.createdAt, 'HH:mm')}">
                         12:30
                     </span>
-
-
-                    <!-- Статус -->
 
                     <span th:if="${message.senderId == currentUserId}"
                           class="message-status"
@@ -715,6 +960,8 @@
             </div>
 
 
+            <!-- Нет сообщений -->
+
             <div id="empty-messages"
                  th:if="${#lists.isEmpty(messages)}">
                 Сообщений пока нет. Напишите первым!
@@ -723,13 +970,17 @@
         </div>
 
 
+        <!-- =========================
+             Ошибка
+             ========================= -->
+
         <div id="send-error"
              class="error">
         </div>
 
 
         <!-- =========================
-             Отправка сообщения
+             Отправка
              ========================= -->
 
         <div class="send-area">
@@ -872,27 +1123,23 @@
                 wsEvent
             );
 
+            switch (wsEvent.type) {
 
-            if (
-                wsEvent.type === 'NEW_MESSAGE'
-            ) {
-                handleNewMessage(wsEvent);
+                case 'NEW_MESSAGE':
+                    handleNewMessage(wsEvent);
+                    break;
+
+                case 'MESSAGE_READ':
+                    handleMessageRead(wsEvent);
+                    break;
+
+                case 'MESSAGE_REACTION_CHANGED':
+                    handleMessageReactionChanged(wsEvent);
+                    break;
+
+                default:
+                    break;
             }
-
-
-            if (
-                wsEvent.type === 'MESSAGE_READ'
-            ) {
-                handleMessageRead(wsEvent);
-            }
-
-
-            if (
-                wsEvent.type === 'MESSAGE_REACTION_CHANGED'
-            ) {
-                handleMessageReactionChanged(wsEvent);
-            }
-
 
         } catch (error) {
 
@@ -900,102 +1147,9 @@
                 'Failed to process WebSocket event:',
                 error
             );
-
         }
     };
 
-    function handleMessageReactionChanged(wsEvent) {
-
-        const messageId =
-            wsEvent.data.messageId;
-
-        const messageElement =
-            messagesContainer.querySelector(
-                `[data-message-id="${messageId}"]`
-            );
-
-        if (!messageElement) {
-            return;
-        }
-
-        renderWebSocketReactions(
-            messageElement,
-            wsEvent.data.reactions
-        );
-    }
-
-    function renderWebSocketReactions(
-        messageElement,
-        reactions
-    ) {
-        let container =
-            messageElement.querySelector('.message-reactions');
-
-        if (!reactions || reactions.length === 0) {
-            if (container) {
-                container.remove();
-            }
-
-            return;
-        }
-
-        if (!container) {
-            container =
-                document.createElement('div');
-
-            container.className =
-                'message-reactions';
-
-            messageElement.appendChild(container);
-        }
-
-        const existingReacted =
-            new Set(
-                Array.from(
-                    container.querySelectorAll('.reaction-item.reacted')
-                ).map(button =>
-                    button.dataset.reaction
-                )
-            );
-
-        container.innerHTML = '';
-
-        reactions.forEach(reaction => {
-
-            const button =
-                document.createElement('button');
-
-            button.type = 'button';
-            button.className = 'reaction-item';
-
-            button.dataset.reaction =
-                reaction.reaction;
-
-            if (existingReacted.has(reaction.reaction)) {
-                button.classList.add('reacted');
-            }
-
-            const emoji =
-                document.createElement('span');
-
-            emoji.textContent =
-                reaction.reaction;
-
-            const count =
-                document.createElement('span');
-
-            count.className =
-                'reaction-count';
-
-            count.textContent =
-                reaction.count;
-
-            button.appendChild(emoji);
-            button.appendChild(count);
-
-            container.appendChild(button);
-        });
-    }
 
     /*
      * =========================
@@ -1020,10 +1174,6 @@
         }
 
 
-        /*
-         * Защита от дубликатов.
-         */
-
         const existingMessage =
             messagesContainer.querySelector(
                 `[data-message-id="${message.id}"]`
@@ -1033,11 +1183,6 @@
             return;
         }
 
-
-        /*
-         * NewMessageEvent может не содержать
-         * readByOther.
-         */
 
         const messageForUi = {
             ...message,
@@ -1055,12 +1200,6 @@
             emptyMessage.remove();
         }
 
-
-        /*
-         * Если пользователь находится
-         * примерно внизу чата —
-         * прокручиваем вниз.
-         */
 
         const isNearBottom =
             messagesContainer.scrollHeight -
@@ -1087,7 +1226,7 @@
 
     /*
      * =========================
-     * Сообщения прочитаны
+     * Прочитано
      * =========================
      */
 
@@ -1100,22 +1239,15 @@
             return;
         }
 
-
         const lastReadMessageId =
             Number(
                 wsEvent.payload?.lastReadMessageId
             );
 
-
         if (!lastReadMessageId) {
             return;
         }
 
-
-        /*
-         * Меняем статус только
-         * у моих сообщений.
-         */
 
         const messageElements =
             messagesContainer.querySelectorAll(
@@ -1151,7 +1283,8 @@
                 }
 
 
-                status.textContent = '✓✓';
+                status.textContent =
+                    '✓✓';
 
                 status.classList.remove(
                     'unread'
@@ -1168,7 +1301,7 @@
 
     /*
      * =========================
-     * Изменение реакций через WebSocket
+     * Изменение реакций
      * =========================
      */
 
@@ -1204,24 +1337,52 @@
             );
 
 
-        /*
-         * Сообщения может не быть в текущей
-         * загруженной странице.
-         */
-
         if (!messageElement) {
             return;
         }
 
 
-        const reactions =
-            payload.reactions || [];
-
-
         renderReactions(
             messageElement,
-            reactions
+            payload.reactions || []
         );
+    }
+
+
+    /*
+     * =========================
+     * Автор сообщения
+     * =========================
+     */
+
+    function getMessageAuthor(message) {
+
+        if (
+            message.senderName &&
+            message.senderName.trim()
+        ) {
+            return {
+                text: message.senderName.trim(),
+                removed: false
+            };
+        }
+
+
+        if (
+            message.senderEmail &&
+            message.senderEmail.trim()
+        ) {
+            return {
+                text: message.senderEmail.trim(),
+                removed: false
+            };
+        }
+
+
+        return {
+            text: 'Участник исключен',
+            removed: true
+        };
     }
 
 
@@ -1263,7 +1424,43 @@
 
 
         /*
-         * Кнопка реакции
+         * Автор
+         *
+         * Свои сообщения не подписываем.
+         */
+
+        if (!mine) {
+
+            const author =
+                getMessageAuthor(message);
+
+
+            const authorElement =
+                document.createElement('div');
+
+            authorElement.className =
+                'message-author';
+
+
+            if (author.removed) {
+                authorElement.classList.add(
+                    'removed'
+                );
+            }
+
+
+            authorElement.textContent =
+                author.text;
+
+
+            element.appendChild(
+                authorElement
+            );
+        }
+
+
+        /*
+         * Реакция
          */
 
         const reactionTrigger =
@@ -1287,7 +1484,7 @@
 
 
         /*
-         * Панель выбора реакции
+         * Picker
          */
 
         const reactionPicker =
@@ -1325,7 +1522,7 @@
 
 
         /*
-         * Текст сообщения
+         * Текст
          */
 
         const content =
@@ -1343,7 +1540,7 @@
 
 
         /*
-         * Метка удаления
+         * Удаление
          */
 
         if (message.deletedAt) {
@@ -1364,7 +1561,7 @@
 
 
         /*
-         * Реакции
+         * Контейнер реакций
          */
 
         const reactionsContainer =
@@ -1385,7 +1582,7 @@
 
 
         /*
-         * Время + статус
+         * Время
          */
 
         const time =
@@ -1412,7 +1609,7 @@
 
 
         /*
-         * Галочки только для моих сообщений
+         * Статус
          */
 
         if (mine) {
@@ -1448,7 +1645,7 @@
 
     /*
      * =========================
-     * Отрисовка реакций
+     * Реакции
      * =========================
      */
 
@@ -1462,11 +1659,6 @@
                 '.message-reactions'
             );
 
-
-        /*
-         * Если контейнера ещё нет —
-         * создаём его.
-         */
 
         if (!reactionsContainer) {
 
@@ -1483,10 +1675,19 @@
                 );
 
 
-            messageElement.insertBefore(
-                reactionsContainer,
-                messageTime
-            );
+            if (messageTime) {
+
+                messageElement.insertBefore(
+                    reactionsContainer,
+                    messageTime
+                );
+
+            } else {
+
+                messageElement.appendChild(
+                    reactionsContainer
+                );
+            }
         }
 
 
@@ -1497,6 +1698,7 @@
             !reactions ||
             reactions.length === 0
         ) {
+
             reactionsContainer.style.display =
                 'none';
 
@@ -1581,7 +1783,7 @@
 
     /*
      * =========================
-     * Самое старое сообщение
+     * Старое сообщение
      * =========================
      */
 
@@ -1604,7 +1806,7 @@
 
     /*
      * =========================
-     * Загрузка предыдущих сообщений
+     * Загрузка старых сообщений
      * =========================
      */
 
@@ -1689,10 +1891,19 @@
                         );
 
 
-                    messagesContainer.insertBefore(
-                        element,
-                        firstMessage
-                    );
+                    if (firstMessage) {
+
+                        messagesContainer.insertBefore(
+                            element,
+                            firstMessage
+                        );
+
+                    } else {
+
+                        messagesContainer.appendChild(
+                            element
+                        );
+                    }
                 }
             );
 
@@ -1814,9 +2025,7 @@
 
 
     /*
-     * =========================
-     * Правый клик мыши
-     * =========================
+     * Правый клик
      */
 
     messagesContainer.addEventListener(
@@ -1847,9 +2056,7 @@
 
 
     /*
-     * =========================
-     * Долгое нажатие
-     * =========================
+     * Long press
      */
 
     messagesContainer.addEventListener(
@@ -1917,11 +2124,6 @@
         'click',
         async event => {
 
-            /*
-             * Нажали кнопку открытия
-             * панели реакций.
-             */
-
             const trigger =
                 event.target.closest(
                     '.reaction-trigger'
@@ -1952,11 +2154,6 @@
                 }
 
 
-                /*
-                 * Закрываем все остальные
-                 * панели.
-                 */
-
                 document
                     .querySelectorAll(
                         '.reaction-picker.open'
@@ -1965,6 +2162,7 @@
                         element => {
 
                             if (element !== picker) {
+
                                 element.classList.remove(
                                     'open'
                                 );
@@ -1982,11 +2180,6 @@
                 return;
             }
 
-
-            /*
-             * Нажали на конкретную реакцию
-             * в панели выбора.
-             */
 
             const pickerButton =
                 event.target.closest(
@@ -2007,28 +2200,15 @@
                 }
 
 
-                const reaction =
-                    pickerButton.dataset.reaction;
-
-
                 await setMessageReaction(
                     messageElement,
-                    reaction
+                    pickerButton.dataset.reaction
                 );
 
 
                 return;
             }
 
-
-            /*
-             * Нажали на уже существующую
-             * реакцию под сообщением.
-             *
-             * Сервер сам решит:
-             * - если это наша реакция -> удалить;
-             * - если другая -> заменить.
-             */
 
             const reactionButton =
                 event.target.closest(
@@ -2049,13 +2229,9 @@
                 }
 
 
-                const reaction =
-                    reactionButton.dataset.reaction;
-
-
                 await setMessageReaction(
                     messageElement,
-                    reaction
+                    reactionButton.dataset.reaction
                 );
             }
 
@@ -2065,7 +2241,7 @@
 
     /*
      * =========================
-     * Установка / снятие реакции
+     * Установка реакции
      * =========================
      */
 
@@ -2087,7 +2263,8 @@
             messageElement.dataset.messageId;
 
 
-        sendError.textContent = '';
+        sendError.textContent =
+            '';
 
 
         try {
@@ -2127,7 +2304,6 @@
                     }
 
                 } catch (_) {
-                    // Ответ может быть не JSON.
                 }
 
 
@@ -2147,10 +2323,6 @@
             );
 
 
-            /*
-             * Закрываем picker.
-             */
-
             const picker =
                 messageElement.querySelector(
                     '.reaction-picker'
@@ -2158,6 +2330,7 @@
 
 
             if (picker) {
+
                 picker.classList.remove(
                     'open'
                 );
@@ -2173,19 +2346,13 @@
 
     /*
      * =========================
-     * Закрытие панели реакций
+     * Закрытие picker
      * =========================
      */
 
     document.addEventListener(
         'click',
         event => {
-
-            /*
-             * Не закрываем picker,
-             * если клик был внутри него
-             * или по кнопке открытия.
-             */
 
             if (
                 event.target.closest(
@@ -2217,7 +2384,7 @@
 
     /*
      * =========================
-     * Закрытие контекстного меню
+     * Закрытие context menu
      * =========================
      */
 
@@ -2276,7 +2443,6 @@
             const messageElement =
                 selectedMessage;
 
-
             const messageId =
                 messageElement.dataset.messageId;
 
@@ -2284,7 +2450,8 @@
             closeContextMenu();
 
 
-            sendError.textContent = '';
+            sendError.textContent =
+                '';
 
 
             try {
@@ -2386,7 +2553,8 @@
             }
 
 
-            sendError.textContent = '';
+            sendError.textContent =
+                '';
 
 
             try {
@@ -2433,15 +2601,6 @@
                 }
 
 
-                /*
-                 * Сообщение отправителя
-                 * добавляем сразу из POST.
-                 *
-                 * WebSocket NEW_MESSAGE сейчас
-                 * отправляется только второму
-                 * пользователю.
-                 */
-
                 messagesContainer.appendChild(
                     createMessageElement(
                         message
@@ -2449,7 +2608,8 @@
                 );
 
 
-                messageInput.value = '';
+                messageInput.value =
+                    '';
 
                 scrollToBottom();
 
@@ -2466,8 +2626,7 @@
 
     /*
      * =========================
-     * Enter — отправка
-     * Shift + Enter — новая строка
+     * Enter
      * =========================
      */
 
@@ -2485,6 +2644,7 @@
 
                 sendForm.requestSubmit();
             }
+
         }
     );
 

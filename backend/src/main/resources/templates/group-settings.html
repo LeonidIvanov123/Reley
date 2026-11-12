@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Настройки группы</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            color: #222;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="url"],
+        select {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #d5d9df;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #7b8cff;
+        }
+
+        input:disabled,
+        select:disabled {
+            background: #f0f1f3;
+            cursor: not-allowed;
+        }
+
+        .visibility {
+            display: flex;
+            gap: 20px;
+        }
+
+        .visibility label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .hint {
+            margin-top: 6px;
+            color: #777;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #4f63d9;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4053c7;
+        }
+
+        .btn-secondary {
+            background: #e9ecf1;
+            color: #222;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 7px 11px;
+            font-size: 13px;
+        }
+
+        .link-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .link-row input {
+            flex: 1;
+        }
+
+        .participant {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            gap: 12px;
+        }
+
+        .participant:last-child {
+            border-bottom: none;
+        }
+
+        .participant-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .participant-name {
+            font-weight: 600;
+        }
+
+        .participant-email {
+            color: #777;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+
+        .participant-actions {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            flex-shrink: 0;
+        }
+
+        .admin-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: #eef0ff;
+            color: #4f63d9;
+            font-size: 12px;
+        }
+
+        .add-user {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .add-user-main {
+            flex: 1;
+        }
+
+        .users-list {
+            position: relative;
+        }
+
+        .user-search {
+            margin-bottom: 8px;
+        }
+
+        .empty {
+            color: #777;
+            font-size: 14px;
+            padding: 10px 0;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .success {
+            color: #198754;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .bottom-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        a {
+            color: #4f63d9;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .page {
+                margin-top: 20px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .participant {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .participant-actions {
+                width: 100%;
+            }
+
+            .add-user {
+                flex-direction: column;
+            }
+
+            .add-user button {
+                width: 100%;
+            }
+
+            .bottom-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="card">
+
+        <h1>Настройки группы</h1>
+
+        <!-- ==================== -->
+        <!-- ОСНОВНЫЕ НАСТРОЙКИ -->
+        <!-- ==================== -->
+
+        <div class="form-group">
+
+            <label for="groupName">
+                Название группы
+            </label>
+
+            <input id="groupName"
+                   type="text"
+                   th:value="${group.name}"
+                   th:disabled="${!group.currentUserAdmin}">
+        </div>
+
+
+        <!-- ==================== -->
+        <!-- ПРИВАТНОСТЬ -->
+        <!-- ==================== -->
+
+        <div class="form-group">
+
+            <label>
+                Видимость группы
+            </label>
+
+            <div class="visibility">
+
+                <label>
+                    <input type="radio"
+                           name="visibility"
+                           value="public"
+                           th:checked="${group.isPublic}"
+                           th:disabled="${!group.currentUserAdmin}">
+                    Публичная
+                </label>
+
+                <label>
+                    <input type="radio"
+                           name="visibility"
+                           value="private"
+                           th:checked="${!group.isPublic}"
+                           th:disabled="${!group.currentUserAdmin}">
+                    Приватная
+                </label>
+
+            </div>
+
+            <div class="hint"
+                 id="visibilityHint">
+            </div>
+
+        </div>
+
+
+        <!-- ==================== -->
+        <!-- ПРЯМАЯ ССЫЛКА -->
+        <!-- ==================== -->
+
+        <div class="form-group">
+
+            <label for="dialogLink">
+                Прямая ссылка
+            </label>
+
+            <div class="link-row">
+
+                <input id="dialogLink"
+                       type="text"
+                       th:value="${group.dialogLink}"
+                       th:disabled="${!group.currentUserAdmin}"
+                       placeholder="my-group">
+
+                <button type="button"
+                        class="btn-secondary"
+                        onclick="copyGroupLink()">
+                    Копировать
+                </button>
+
+            </div>
+
+            <div class="hint">
+
+                Публичная группа доступна для вступления по этой ссылке.
+                Для приватной группы переход по ссылке покажет предупреждение
+                о закрытой группе.
+
+            </div>
+
+            <div id="linkMessage"></div>
+
+        </div>
+
+
+        <!-- ==================== -->
+        <!-- СОХРАНИТЬ -->
+        <!-- ==================== -->
+
+        <div th:if="${group.currentUserAdmin}">
+
+            <button type="button"
+                    class="btn-primary"
+                    onclick="saveGroupSettings()">
+                Сохранить
+            </button>
+
+            <div id="saveMessage"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================== -->
+    <!-- ДОБАВЛЕНИЕ УЧАСТНИКА -->
+    <!-- ==================== -->
+
+    <div class="card"
+         th:if="${group.currentUserAdmin}">
+
+        <h2>Добавить участника</h2>
+
+        <div class="add-user">
+
+            <div class="add-user-main">
+
+                <input id="userSearch"
+                       class="user-search"
+                       type="text"
+                       placeholder="Введите email для поиска..."
+                       oninput="filterUsers()">
+
+                <select id="userSelect"
+                        size="5">
+
+                    <option th:each="user : ${group.users}"
+                            th:value="${user.userId}"
+                            th:text="${user.email}"
+                            th:attr="data-email=${user.email}">
+                    </option>
+
+                </select>
+
+            </div>
+
+            <button type="button"
+                    class="btn-primary"
+                    onclick="addParticipant()">
+                Добавить
+            </button>
+
+        </div>
+
+        <div id="addParticipantMessage"></div>
+
+    </div>
+
+
+    <!-- ==================== -->
+    <!-- УЧАСТНИКИ -->
+    <!-- ==================== -->
+
+    <div class="card">
+
+        <h2>
+            Участники
+            <span th:text="'(' + ${#lists.size(group.participants)} + ')'">
+            </span>
+        </h2>
+
+        <div th:if="${#lists.isEmpty(group.participants)}"
+             class="empty">
+            В группе пока нет участников.
+        </div>
+
+        <div th:each="participant : ${group.participants}"
+             class="participant">
+
+            <div class="participant-info">
+
+                <div class="participant-name"
+                     th:text="${participant.name != null && !participant.name.isBlank()
+                                ? participant.name
+                                : participant.email}">
+                </div>
+
+                <div class="participant-email"
+                     th:text="${participant.email}">
+                </div>
+
+            </div>
+
+
+            <div class="participant-actions">
+
+                <span th:if="${participant.admin}"
+                      class="admin-badge">
+                    Администратор
+                </span>
+
+
+                <!-- Управление только для админа -->
+
+                <th:block th:if="${group.currentUserAdmin}">
+
+                    <!-- Назначить администратором -->
+
+                    <button th:if="${!participant.admin}"
+                            type="button"
+                            class="btn-secondary btn-small"
+                            th:attr="data-user-id=${participant.userId}"
+                            onclick="makeAdmin(this.dataset.userId)">
+                        Сделать админом
+                    </button>
+
+
+                    <!-- Снять администратора -->
+
+                    <button th:if="${participant.admin}"
+                            type="button"
+                            class="btn-secondary btn-small"
+                            th:attr="data-user-id=${participant.userId}"
+                            onclick="removeAdmin(this.dataset.userId)">
+                        Снять админа
+                    </button>
+
+
+                    <!-- Удалить -->
+
+                    <button type="button"
+                            class="btn-danger btn-small"
+                            th:attr="data-user-id=${participant.userId}"
+                            onclick="removeParticipant(this.dataset.userId)">
+                        Удалить
+                    </button>
+
+                </th:block>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================== -->
+    <!-- ВЫЙТИ -->
+    <!-- ==================== -->
+
+    <div class="card">
+
+        <div class="bottom-actions">
+
+            <a th:href="@{/}">
+                ← Вернуться к чатам
+            </a>
+
+            <button type="button"
+                    class="btn-danger"
+                    onclick="leaveGroup()">
+                Покинуть группу
+            </button>
+
+        </div>
+
+        <div id="leaveMessage"></div>
+
+    </div>
+
+</div>
+
+
+<script th:inline="javascript">
+
+    const groupId = /*[[${group.id}]]*/ null;
+    const currentUserAdmin = /*[[${group.currentUserAdmin}]]*/ false;
+
+
+    // =========================
+    // VISIBILITY
+    // =========================
+
+    function updateVisibilityHint() {
+
+        const isPublic =
+            document.querySelector(
+                'input[name="visibility"]:checked'
+            )?.value === 'public';
+
+        const hint =
+            document.getElementById('visibilityHint');
+
+        if (!hint) {
+            return;
+        }
+
+        if (isPublic) {
+
+            hint.textContent =
+                'Публичную группу можно найти и вступить в неё по прямой ссылке.';
+
+        } else {
+
+            hint.textContent =
+                'Приватная группа закрыта. Переход по прямой ссылке не позволит вступить в неё.';
+
+        }
+    }
+
+
+    document
+        .querySelectorAll('input[name="visibility"]')
+        .forEach(element => {
+            element.addEventListener(
+                'change',
+                updateVisibilityHint
+            );
+        });
+
+    updateVisibilityHint();
+
+
+    // =========================
+    // SAVE GROUP
+    // =========================
+
+    async function saveGroupSettings() {
+
+        if (!currentUserAdmin) {
+            return;
+        }
+
+        const name =
+            document.getElementById('groupName').value.trim();
+
+        const dialogLink =
+            document.getElementById('dialogLink').value.trim();
+
+        const isPublic =
+            document.querySelector(
+                'input[name="visibility"]:checked'
+            )?.value === 'public';
+
+        const message =
+            document.getElementById('saveMessage');
+
+        message.className = '';
+        message.textContent = '';
+
+        try {
+
+            const response = await fetch(
+                `/dialogs/${groupId}`,
+                {
+                    method: 'PUT',
+
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+
+                    body: JSON.stringify({
+                        name: name,
+                        isPublic: isPublic,
+                        dialogLink: dialogLink
+                    })
+                }
+            );
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                throw new Error(
+                    text || 'Не удалось сохранить настройки'
+                );
+            }
+
+            message.className = 'success';
+            message.textContent =
+                'Настройки сохранены';
+
+        } catch (error) {
+
+            console.error(error);
+
+            message.className = 'error';
+            message.textContent =
+                error.message ||
+                'Не удалось сохранить настройки';
+        }
+    }
+
+
+    // =========================
+    // USER SEARCH
+    // =========================
+
+    function filterUsers() {
+
+        const search =
+            document
+                .getElementById('userSearch')
+                .value
+                .trim()
+                .toLowerCase();
+
+        const select =
+            document.getElementById('userSelect');
+
+        const options =
+            select.querySelectorAll(
+                'option[data-email]'
+            );
+
+        options.forEach(option => {
+
+            const email =
+                option.dataset.email.toLowerCase();
+
+            option.hidden =
+                search.length > 0 &&
+                !email.includes(search);
+
+        });
+    }
+
+
+    // =========================
+    // ADD PARTICIPANT
+    // =========================
+
+    async function addParticipant() {
+
+        const select =
+            document.getElementById('userSelect');
+
+        const userId =
+            select.value;
+
+        const message =
+            document.getElementById(
+                'addParticipantMessage'
+            );
+
+        message.className = '';
+        message.textContent = '';
+
+        if (!userId) {
+
+            message.className = 'error';
+            message.textContent =
+                'Выберите пользователя';
+
+            return;
+        }
+
+        try {
+
+            const response = await fetch(
+                `/dialogs/${groupId}/participants`,
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+
+                    body: JSON.stringify({
+                        userId: Number(userId)
+                    })
+                }
+            );
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                throw new Error(
+                    text || 'Не удалось добавить пользователя'
+                );
+            }
+
+            message.className = 'success';
+            message.textContent =
+                'Пользователь добавлен';
+
+            setTimeout(
+                () => location.reload(),
+                500
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+            message.className = 'error';
+            message.textContent =
+                error.message ||
+                'Не удалось добавить пользователя';
+        }
+    }
+
+
+    // =========================
+    // MAKE ADMIN
+    // =========================
+
+    async function makeAdmin(userId) {
+
+        if (!confirm(
+            'Сделать пользователя администратором?'
+        )) {
+            return;
+        }
+
+        const response = await fetch(
+            `/dialogs/${groupId}/participants/${userId}/admin`,
+            {
+                method: 'POST'
+            }
+        );
+
+        if (!response.ok) {
+
+            alert(
+                'Не удалось назначить администратора'
+            );
+
+            return;
+        }
+
+        location.reload();
+    }
+
+
+    // =========================
+    // REMOVE ADMIN
+    // =========================
+
+    async function removeAdmin(userId) {
+
+        if (!confirm(
+            'Снять с пользователя права администратора?'
+        )) {
+            return;
+        }
+
+        const response = await fetch(
+            `/dialogs/${groupId}/participants/${userId}/admin`,
+            {
+                method: 'DELETE'
+            }
+        );
+
+        if (!response.ok) {
+
+            alert(
+                'Не удалось снять права администратора'
+            );
+
+            return;
+        }
+
+        location.reload();
+    }
+
+
+    // =========================
+    // REMOVE PARTICIPANT
+    // =========================
+
+    async function removeParticipant(userId) {
+
+        if (!confirm(
+            'Удалить пользователя из группы?'
+        )) {
+            return;
+        }
+
+        const response = await fetch(
+            `/dialogs/${groupId}/participants/${userId}`,
+            {
+                method: 'DELETE'
+            }
+        );
+
+        if (!response.ok) {
+
+            alert(
+                'Не удалось удалить пользователя'
+            );
+
+            return;
+        }
+
+        location.reload();
+    }
+
+
+    // =========================
+    // LEAVE GROUP
+    // =========================
+
+    async function leaveGroup() {
+
+        if (!confirm(
+            'Вы действительно хотите покинуть группу?'
+        )) {
+            return;
+        }
+
+        const message =
+            document.getElementById(
+                'leaveMessage'
+            );
+
+        try {
+
+            const response = await fetch(
+                `/dialogs/${groupId}/leave`,
+                {
+                    method: 'POST'
+                }
+            );
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                throw new Error(
+                    text || 'Не удалось покинуть группу'
+                );
+            }
+
+            window.location.href = '/';
+
+        } catch (error) {
+
+            console.error(error);
+
+            message.className = 'error';
+            message.textContent =
+                error.message ||
+                'Не удалось покинуть группу';
+        }
+    }
+
+
+    // =========================
+    // COPY GROUP LINK
+    // =========================
+
+    async function copyGroupLink() {
+
+        const dialogLink =
+            document
+                .getElementById('dialogLink')
+                .value
+                .trim();
+
+        const message =
+            document.getElementById(
+                'linkMessage'
+            );
+
+        if (!dialogLink) {
+
+            message.className = 'error';
+            message.textContent =
+                'Ссылка группы не задана';
+
+            return;
+        }
+
+        const url =
+            `${window.location.origin}/dialogs/groups/link/${dialogLink}`;
+
+        try {
+
+            await navigator.clipboard.writeText(url);
+
+            message.className = 'success';
+            message.textContent =
+                'Ссылка скопирована';
+
+        } catch (error) {
+
+            console.error(error);
+
+            message.className = 'error';
+            message.textContent =
+                'Не удалось скопировать ссылку';
+        }
+    }
+
+</script>
+
+</body>
+</html>

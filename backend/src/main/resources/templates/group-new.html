@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Новая группа — Reley Messenger</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+
+            font-family:
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    Arial,
+                    sans-serif;
+
+            background: #f5f7fa;
+            color: #1f2937;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+
+            margin: 0 auto;
+            padding: 24px;
+
+            background: white;
+            border-radius: 16px;
+
+            box-shadow:
+                    0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+
+            margin-bottom: 24px;
+        }
+
+        .back-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 40px;
+            height: 40px;
+
+            margin-right: 12px;
+
+            border: none;
+            border-radius: 50%;
+
+            background: #f1f3f5;
+
+            color: #333;
+            font-size: 22px;
+
+            text-decoration: none;
+
+            cursor: pointer;
+
+            transition: background 0.15s;
+        }
+
+        .back-button:hover {
+            background: #e2e5e9;
+        }
+
+        .title {
+            margin: 0;
+
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            margin-top: 6px;
+
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .field input {
+            width: 100%;
+
+            padding: 12px 14px;
+
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+
+            font-size: 16px;
+
+            outline: none;
+
+            transition:
+                    border-color 0.15s,
+                    box-shadow 0.15s;
+        }
+
+        .field input:focus {
+            border-color: #2563eb;
+
+            box-shadow:
+                    0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+
+            gap: 10px;
+
+            margin-top: 6px;
+        }
+
+        .button {
+            padding: 11px 18px;
+
+            border: none;
+            border-radius: 10px;
+
+            font-size: 15px;
+            font-weight: 500;
+
+            cursor: pointer;
+
+            text-decoration: none;
+        }
+
+        .button-cancel {
+            background: #f1f3f5;
+            color: #374151;
+        }
+
+        .button-cancel:hover {
+            background: #e2e5e9;
+        }
+
+        .button-create {
+            background: #2563eb;
+            color: white;
+        }
+
+        .button-create:hover {
+            background: #1d4ed8;
+        }
+
+        .group-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 72px;
+            height: 72px;
+
+            margin: 0 auto 20px;
+
+            border-radius: 50%;
+
+            background: #eef2ff;
+
+            font-size: 34px;
+        }
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 0;
+            }
+
+            .container {
+                min-height: 100vh;
+
+                border-radius: 0;
+                box-shadow: none;
+
+                padding: 20px;
+            }
+
+            .actions {
+                flex-direction: column-reverse;
+            }
+
+            .button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <a href="/"
+           class="back-button"
+           title="Назад">
+            ←
+        </a>
+
+        <div>
+            <h1 class="title">
+                Новая группа
+            </h1>
+
+            <div class="subtitle">
+                Создайте группу и добавьте участников позже
+            </div>
+        </div>
+
+    </div>
+
+    <div class="group-icon">
+        👥
+    </div>
+
+    <form method="post"
+          action="/dialogs/groups"
+          class="form">
+
+        <div class="field">
+
+            <label for="name">
+                Название группы
+            </label>
+
+            <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="Например, Java Developers"
+                    maxlength="100"
+                    required
+                    autofocus
+            >
+
+        </div>
+
+        <div class="actions">
+
+            <a href="/"
+               class="button button-cancel">
+                Отмена
+            </a>
+
+            <button
+                    type="submit"
+                    class="button button-create">
+                Создать группу
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+</body>
+</html>

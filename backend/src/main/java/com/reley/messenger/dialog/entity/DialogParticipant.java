@@ -22,6 +22,12 @@ public class DialogParticipant {
     @Column("user_id")
     private Long userId;
 
+    @Column("is_admin")
+    private boolean admin;
+
+    @Column("last_read_message_id")
+    private Long lastReadMessageId;
+
     @Column("joined_at")
     private OffsetDateTime joinedAt;
 }
