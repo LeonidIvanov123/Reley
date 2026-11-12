@@ -4,6 +4,7 @@ import com.reley.messenger.dialog.dto.DialogListItem;
 import com.reley.messenger.dialog.dto.DialogResponse;
 import com.reley.messenger.dialog.dto.GroupParticipantResponse;
 import com.reley.messenger.dialog.dto.GroupSettingsResponse;
+import com.reley.messenger.dialog.dto.UserIdAndEmail;
 import com.reley.messenger.dialog.entity.Dialog;
 import com.reley.messenger.dialog.entity.DialogParticipant;
 import com.reley.messenger.dialog.repository.DialogParticipantRepository;
@@ -652,7 +653,8 @@ public class DialogServiceImpl implements DialogService {
     public Mono<Void> updateGroup(
             Long dialogId,
             String name,
-            boolean isPublic
+            boolean isPublic,
+            String groupLink
     ) {
         return userServiceInfo.getCurrentUserId()
                 .flatMap(currentUserId ->
@@ -708,6 +710,7 @@ public class DialogServiceImpl implements DialogService {
                                             dialogId,
                                             normalizedName,
                                             isPublic,
+                                            groupLink,
                                             OffsetDateTime.now()
                                     );
                                 })
@@ -962,7 +965,6 @@ public class DialogServiceImpl implements DialogService {
 
         return userServiceInfo.getCurrentUserId()
                 .flatMap(currentUserId ->
-
                         dialogRepository
                                 .findGroupById(dialogId)
                                 .switchIfEmpty(
@@ -974,7 +976,6 @@ public class DialogServiceImpl implements DialogService {
                                         )
                                 )
                                 .flatMap(dialog ->
-
                                         participantRepository
                                                 .findByDialogIdAndUserId(
                                                         dialogId,
@@ -989,32 +990,45 @@ public class DialogServiceImpl implements DialogService {
                                                 )
                                                 .flatMap(currentParticipant ->
 
-                                                        participantRepository
-                                                                .findByDialogId(dialogId)
-                                                                .flatMap(participant ->
-                                                                        userService
-                                                                                .findById(
-                                                                                        participant.getUserId()
-                                                                                )
-                                                                                .map(user ->
-                                                                                        new GroupParticipantResponse(
-                                                                                                user.getId(),
-                                                                                                user.getName(),
-                                                                                                user.getEmail(),
-                                                                                                participant.isAdmin()
+                                                        Mono.zip(
+                                                                participantRepository
+                                                                        .findByDialogId(dialogId)
+                                                                        .flatMap(participant ->
+                                                                                userService
+                                                                                        .findById(
+                                                                                                participant.getUserId()
                                                                                         )
-                                                                                )
-                                                                )
-                                                                .collectList()
-                                                                .map(participants ->
-                                                                        new GroupSettingsResponse(
-                                                                                dialog.getId(),
-                                                                                dialog.getDialogName(),
-                                                                                dialog.getIsPublic(),
-                                                                                currentParticipant.isAdmin(),
-                                                                                participants
+                                                                                        .map(user ->
+                                                                                                new GroupParticipantResponse(
+                                                                                                        user.getId(),
+                                                                                                        user.getName(),
+                                                                                                        user.getEmail(),
+                                                                                                        participant.isAdmin()
+                                                                                                )
+                                                                                        )
                                                                         )
+                                                                        .collectList(),
+
+                                                                userService
+                                                                        .getDirectoryUsers()
+                                                                        .map(user ->
+                                                                                new UserIdAndEmail(
+                                                                                        user.id(),
+                                                                                        user.email()
+                                                                                )
+                                                                        )
+                                                                        .collectList()
+                                                        ).map(tuple ->
+                                                                new GroupSettingsResponse(
+                                                                        dialog.getId(),
+                                                                        dialog.getDialogName(),
+                                                                        dialog.getIsPublic(),
+                                                                        dialog.getDialogLink(),
+                                                                        currentParticipant.isAdmin(),
+                                                                        tuple.getT1(),
+                                                                        tuple.getT2()
                                                                 )
+                                                        )
                                                 )
                                 )
                 );

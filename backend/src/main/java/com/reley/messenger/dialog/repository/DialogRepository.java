@@ -51,6 +51,7 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
         UPDATE dialogs
         SET dialog_name = :name,
             is_public = :isPublic,
+            dialog_link = :dialogLink,
             updated_at = :updatedAt
         WHERE id = :dialogId
           AND group_chat = true
@@ -59,6 +60,7 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
             Long dialogId,
             String name,
             boolean isPublic,
+            String dialogLink,
             OffsetDateTime updatedAt
     );
 

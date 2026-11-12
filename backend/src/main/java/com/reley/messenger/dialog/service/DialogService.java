@@ -27,7 +27,7 @@ public interface DialogService {
 
     Mono<Void> checkAccess(Long dialogId, Long userId);
 
-    Mono<Void> updateGroup(Long dialogId, String name, boolean isPublic);
+    Mono<Void> updateGroup(Long dialogId, String name, boolean isPublic, String dialogLink);
 
     Mono<Void> removeParticipant(Long dialogId, Long userId);
 

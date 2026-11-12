@@ -3,7 +3,6 @@ package com.reley.messenger.dialog.controller;
 import com.reley.messenger.dialog.dto.AddDialogParticipantRequest;
 import com.reley.messenger.dialog.dto.CreateDialogRequest;
 import com.reley.messenger.dialog.dto.CreateGroupRequest;
-import com.reley.messenger.dialog.dto.DialogResponse;
 import com.reley.messenger.dialog.dto.UpdateGroupRequest;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
@@ -68,7 +67,8 @@ public class DialogController {
         return dialogService.updateGroup(
                 dialogId,
                 request.name(),
-                request.isPublic()
+                request.isPublic(),
+                request.dialogLink()
         );
     }
 
@@ -126,7 +126,10 @@ public class DialogController {
             @PathVariable Long dialogId,
             @RequestBody AddDialogParticipantRequest request
     ) {
-        return dialogService.addParticipant(dialogId, request.userId());
+        return dialogService.addParticipant(
+                dialogId,
+                request.userId()
+        );
     }
 
     @PostMapping("new")

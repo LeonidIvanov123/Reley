@@ -6,7 +6,9 @@ public record GroupSettingsResponse(
         Long id,
         String name,
         boolean isPublic,
+        String dialogLink,
         boolean currentUserAdmin,
-        List<GroupParticipantResponse> participants
+        List<GroupParticipantResponse> participants,
+        List<UserIdAndEmail> users
 ) {
 }
