@@ -57,4 +57,24 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
             Long dialogId
     );
 
+    @Query("""
+        SELECT COUNT(*)
+        FROM messages
+        WHERE dialog_id = :dialogId
+          AND (:messageId IS NULL OR id > :messageId)
+        """)
+    Mono<Long> countMessagesAfterId(
+            Long dialogId,
+            Long messageId
+    );
+
+    @Query("""
+        SELECT id
+        FROM messages
+        WHERE dialog_id = :dialogId
+        ORDER BY id DESC
+        LIMIT 1
+        """)
+    Mono<Long> findLastMessageId(Long dialogId);
+
 }

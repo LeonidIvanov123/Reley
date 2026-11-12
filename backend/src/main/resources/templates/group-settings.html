@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Настройки группы — Reley Messenger</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+
+            font-family:
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    Arial,
+                    sans-serif;
+
+            background: #f5f7fa;
+            color: #1f2937;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+
+            margin: 0 auto;
+            padding: 24px;
+
+            background: white;
+            border-radius: 16px;
+
+            box-shadow:
+                    0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        /* HEADER */
+
+        .header {
+            display: flex;
+            align-items: center;
+
+            margin-bottom: 24px;
+        }
+
+        .back-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 40px;
+            height: 40px;
+
+            margin-right: 12px;
+
+            border: none;
+            border-radius: 50%;
+
+            background: #f1f3f5;
+
+            color: #333;
+
+            font-size: 22px;
+            text-decoration: none;
+
+            cursor: pointer;
+
+            transition: background 0.15s;
+        }
+
+        .back-button:hover {
+            background: #e2e5e9;
+        }
+
+        .title {
+            margin: 0;
+
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            margin-top: 5px;
+
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* GROUP */
+
+        .group-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            margin-bottom: 28px;
+        }
+
+        .group-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 82px;
+            height: 82px;
+
+            margin-bottom: 12px;
+
+            border-radius: 50%;
+
+            background: #eef2ff;
+
+            font-size: 38px;
+        }
+
+        .group-name-preview {
+            font-size: 18px;
+            font-weight: 600;
+
+            word-break: break-word;
+            text-align: center;
+        }
+
+        /* SECTIONS */
+
+        .section {
+            margin-top: 26px;
+        }
+
+        .section-title {
+            margin-bottom: 10px;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            color: #6b7280;
+        }
+
+        /* INPUT */
+
+        .field {
+            display: flex;
+            flex-direction: column;
+
+            gap: 7px;
+        }
+
+        .field label {
+            font-size: 14px;
+            font-weight: 500;
+
+            color: #374151;
+        }
+
+        .field input {
+            width: 100%;
+
+            padding: 12px 14px;
+
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+
+            font-size: 16px;
+
+            outline: none;
+
+            transition:
+                    border-color 0.15s,
+                    box-shadow 0.15s;
+        }
+
+        .field input:focus {
+            border-color: #2563eb;
+
+            box-shadow:
+                    0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        /* PUBLIC */
+
+        .visibility-options {
+            display: flex;
+            flex-direction: column;
+
+            gap: 10px;
+        }
+
+        .visibility-option {
+            display: flex;
+            align-items: center;
+
+            padding: 13px 14px;
+
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+
+            cursor: pointer;
+
+            transition:
+                    background 0.15s,
+                    border-color 0.15s;
+        }
+
+        .visibility-option:hover {
+            background: #f9fafb;
+        }
+
+        .visibility-option input {
+            margin-right: 12px;
+        }
+
+        .visibility-content {
+            display: flex;
+            flex-direction: column;
+
+            gap: 3px;
+        }
+
+        .visibility-title {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .visibility-description {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* PARTICIPANTS */
+
+        .participants {
+            display: flex;
+            flex-direction: column;
+
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+
+            overflow: hidden;
+        }
+
+        .participant {
+            display: flex;
+            align-items: center;
+
+            min-height: 62px;
+
+            padding: 10px 12px;
+
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .participant:last-child {
+            border-bottom: none;
+        }
+
+        .participant-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 40px;
+            height: 40px;
+
+            flex-shrink: 0;
+
+            margin-right: 12px;
+
+            border-radius: 50%;
+
+            background: #eef2f7;
+
+            font-size: 18px;
+        }
+
+        .participant-info {
+            min-width: 0;
+
+            flex: 1;
+        }
+
+        .participant-name {
+            font-size: 15px;
+            font-weight: 500;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .participant-email {
+            margin-top: 2px;
+
+            color: #6b7280;
+
+            font-size: 13px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .participant-actions {
+            display: flex;
+            align-items: center;
+
+            gap: 6px;
+
+            margin-left: 8px;
+        }
+
+        .admin-badge {
+            padding: 4px 8px;
+
+            border-radius: 999px;
+
+            background: #eef2ff;
+            color: #4f46e5;
+
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .participant-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 32px;
+            height: 32px;
+
+            border: none;
+            border-radius: 8px;
+
+            background: transparent;
+
+            color: #6b7280;
+
+            cursor: pointer;
+
+            font-size: 16px;
+        }
+
+        .participant-button:hover {
+            background: #f1f3f5;
+        }
+
+        .participant-button.delete:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* ADD */
+
+        .add-participant {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            width: 100%;
+
+            margin-top: 10px;
+            padding: 11px;
+
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+
+            background: transparent;
+
+            color: #2563eb;
+
+            font-size: 14px;
+            font-weight: 500;
+
+            cursor: pointer;
+        }
+
+        .add-participant:hover {
+            background: #f8fafc;
+        }
+
+        /* BUTTONS */
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+
+            gap: 10px;
+
+            margin-top: 28px;
+        }
+
+        .button {
+            padding: 11px 18px;
+
+            border: none;
+            border-radius: 10px;
+
+            font-size: 15px;
+            font-weight: 500;
+
+            cursor: pointer;
+
+            text-decoration: none;
+        }
+
+        .button-secondary {
+            background: #f1f3f5;
+            color: #374151;
+        }
+
+        .button-secondary:hover {
+            background: #e2e5e9;
+        }
+
+        .button-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .button-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .button-danger:hover {
+            background: #fecaca;
+        }
+
+        /* ERROR */
+
+        .error {
+            display: none;
+
+            margin-bottom: 18px;
+            padding: 12px 14px;
+
+            border-radius: 10px;
+
+            background: #fee2e2;
+            color: #991b1b;
+
+            font-size: 14px;
+        }
+
+        .success {
+            display: none;
+
+            margin-bottom: 18px;
+            padding: 12px 14px;
+
+            border-radius: 10px;
+
+            background: #dcfce7;
+            color: #166534;
+
+            font-size: 14px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 0;
+            }
+
+            .container {
+                min-height: 100vh;
+
+                border-radius: 0;
+                box-shadow: none;
+
+                padding: 20px;
+            }
+
+            .actions {
+                flex-direction: column-reverse;
+            }
+
+            .button {
+                width: 100%;
+
+                text-align: center;
+            }
+
+            .participant-actions {
+                gap: 2px;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <a th:href="@{/dialogs/{id}(id=${group.id})}"
+           class="back-button"
+           title="Назад">
+            ←
+        </a>
+
+        <div>
+
+            <h1 class="title">
+                Настройки группы
+            </h1>
+
+            <div class="subtitle">
+                Управление группой и участниками
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MESSAGES -->
+
+    <div id="errorMessage"
+         class="error">
+    </div>
+
+    <div id="successMessage"
+         class="success">
+    </div>
+
+
+    <!-- GROUP -->
+
+    <div class="group-header">
+
+        <div class="group-avatar">
+            👥
+        </div>
+
+        <div id="groupNamePreview"
+             class="group-name-preview"
+             th:text="${group.name}">
+            Название группы
+        </div>
+
+    </div>
+
+
+    <!-- GENERAL SETTINGS -->
+
+    <div class="section"
+         th:if="${group.currentUserAdmin}">
+
+        <div class="section-title">
+            Основные настройки
+        </div>
+
+        <div class="field">
+
+            <label for="groupName">
+                Название группы
+            </label>
+
+            <input
+                    id="groupName"
+                    type="text"
+                    maxlength="100"
+                    th:value="${group.name}"
+                    placeholder="Название группы"
+            >
+
+        </div>
+
+    </div>
+
+
+    <!-- VISIBILITY -->
+
+    <div class="section"
+         th:if="${group.currentUserAdmin}">
+
+        <div class="section-title">
+            Видимость группы
+        </div>
+
+        <div class="visibility-options">
+
+            <label class="visibility-option">
+
+                <input
+                        type="radio"
+                        name="visibility"
+                        value="private"
+                        th:checked="${!group.isPublic}"
+                >
+
+                <div class="visibility-content">
+
+                    <div class="visibility-title">
+                        🔒 Приватная
+                    </div>
+
+                    <div class="visibility-description">
+                        В группу можно попасть только по приглашению
+                    </div>
+
+                </div>
+
+            </label>
+
+
+            <label class="visibility-option">
+
+                <input
+                        type="radio"
+                        name="visibility"
+                        value="public"
+                        th:checked="${group.isPublic}"
+                >
+
+                <div class="visibility-content">
+
+                    <div class="visibility-title">
+                        🌐 Публичная
+                    </div>
+
+                    <div class="visibility-description">
+                        В будущем в группу можно будет вступать по публичной ссылке
+                    </div>
+
+                </div>
+
+            </label>
+
+        </div>
+
+    </div>
+
+
+    <!-- PARTICIPANTS -->
+
+    <div class="section">
+
+        <div class="section-title"
+             th:text="'Участники (' + ${#lists.size(group.participants)} + ')'">
+            Участники
+        </div>
+
+
+        <div class="participants">
+
+            <div class="participant"
+                 th:each="participant : ${group.participants}">
+
+                <div class="participant-avatar">
+                    👤
+                </div>
+
+
+                <div class="participant-info">
+
+                    <div class="participant-name"
+                         th:text="${participant.name != null && !participant.name.isBlank()
+                                    ? participant.name
+                                    : participant.email}">
+                        Пользователь
+                    </div>
+
+                    <div class="participant-email"
+                         th:text="${participant.email}">
+                        email@example.com
+                    </div>
+
+                </div>
+
+
+
+                <div class="participant-actions"
+                     th:if="${group.currentUserAdmin}">
+
+    <span
+            th:if="${participant.admin}"
+            class="admin-badge">
+        Админ
+    </span>
+
+                    <button
+                            th:if="${participant.admin}"
+                            type="button"
+                            class="participant-button"
+                            title="Снять администратора"
+                            th:attr="data-user-id=${participant.userId}"
+                            onclick="removeAdmin(this)">
+                        ↓
+                    </button>
+
+                    <button
+                            th:unless="${participant.admin}"
+                            type="button"
+                            class="participant-button"
+                            title="Сделать администратором"
+                            th:attr="data-user-id=${participant.userId}"
+                            onclick="makeAdmin(this)">
+                        ↑
+                    </button>
+
+                    <button
+                            type="button"
+                            class="participant-button delete"
+                            title="Удалить участника"
+                            th:attr="data-user-id=${participant.userId}"
+                            onclick="removeParticipant(this)">
+                        ×
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <button
+                th:if="${group.currentUserAdmin}"
+                type="button"
+                class="add-participant"
+                onclick="addParticipant()">
+
+            + Добавить участника
+
+        </button>
+
+    </div>
+
+
+    <!-- SAVE -->
+
+    <div class="actions">
+
+        <a th:href="@{/dialogs/{id}(id=${group.id})}"
+           class="button button-secondary">
+            Отмена
+        </a>
+
+        <button
+                type="button"
+                class="button button-primary"
+                onclick="saveGroup()">
+            Сохранить
+        </button>
+
+    </div>
+
+
+    <!-- LEAVE -->
+
+    <div class="section">
+
+        <button
+                type="button"
+                class="button button-danger"
+                style="width: 100%;"
+                onclick="leaveGroup()">
+
+            Покинуть группу
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script th:inline="javascript">
+
+    const dialogId =
+        /*[[${group.id}]]*/ 0;
+
+
+    function showError(message) {
+
+        const element =
+            document.getElementById("errorMessage");
+
+        element.textContent = message;
+        element.style.display = "block";
+
+        document
+            .getElementById("successMessage")
+            .style.display = "none";
+    }
+
+
+    function showSuccess(message) {
+
+        const element =
+            document.getElementById("successMessage");
+
+        element.textContent = message;
+        element.style.display = "block";
+
+        document
+            .getElementById("errorMessage")
+            .style.display = "none";
+    }
+
+
+    async function saveGroup() {
+
+        const name =
+            document
+                .getElementById("groupName")
+                .value
+                .trim();
+
+        if (!name) {
+
+            showError(
+                "Название группы не может быть пустым"
+            );
+
+            return;
+        }
+
+
+        const isPublic =
+            document.querySelector(
+                'input[name="visibility"]:checked'
+            ).value === "public";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/dialogs/${dialogId}`,
+                    {
+                        method: "PUT",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            name: name,
+                            isPublic: isPublic
+                        })
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Не удалось сохранить настройки группы"
+                );
+            }
+
+
+            document
+                .getElementById("groupNamePreview")
+                .textContent = name;
+
+            showSuccess(
+                "Настройки группы сохранены"
+            );
+
+        } catch (error) {
+
+            showError(
+                error.message
+            );
+        }
+    }
+
+
+    async function removeParticipant(button) {
+
+        const userId =
+            button.dataset.userId;
+
+
+        if (!confirm(
+                "Удалить этого участника из группы?"
+        )) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/dialogs/${dialogId}/participants/${userId}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Не удалось удалить участника"
+                );
+            }
+
+
+            location.reload();
+
+        } catch (error) {
+
+            showError(
+                error.message
+            );
+        }
+    }
+
+
+    async function makeAdmin(button) {
+
+        const userId =
+            button.dataset.userId;
+
+
+        if (!confirm(
+                "Назначить пользователя администратором?"
+        )) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/dialogs/${dialogId}/participants/${userId}/admin`,
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Не удалось назначить администратора"
+                );
+            }
+
+
+            location.reload();
+
+        } catch (error) {
+
+            showError(
+                error.message
+            );
+        }
+    }
+
+
+    async function removeAdmin(button) {
+
+        const userId =
+            button.dataset.userId;
+
+
+        if (!confirm(
+                "Снять с пользователя права администратора?"
+        )) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/dialogs/${dialogId}/participants/${userId}/admin`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Не удалось снять права администратора"
+                );
+            }
+
+
+            location.reload();
+
+        } catch (error) {
+
+            showError(
+                error.message
+            );
+        }
+    }
+
+
+    async function addParticipant() {
+
+        const userId =
+            prompt(
+                "Введите ID пользователя:"
+            );
+
+
+        if (!userId) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/dialogs/${dialogId}/participants`,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            userId: Number(userId)
+                        })
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Не удалось добавить участника"
+                );
+            }
+
+
+            location.reload();
+
+        } catch (error) {
+
+            showError(
+                error.message
+            );
+        }
+    }
+
+
+    async function leaveGroup() {
+
+        if (!confirm(
+                "Вы действительно хотите покинуть группу?"
+        )) {
+            return;
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/dialogs/${dialogId}/leave`,
+                    {
+                        method: "POST"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Не удалось покинуть группу"
+                );
+            }
+
+
+            window.location.href = "/";
+
+        } catch (error) {
+
+            showError(
+                error.message
+            );
+        }
+    }
+
+
+    document
+        .getElementById("groupName")
+        .addEventListener(
+            "input",
+            function () {
+
+                document
+                    .getElementById("groupNamePreview")
+                    .textContent =
+                        this.value.trim()
+                            || "Название группы";
+            }
+        );
+
+</script>
+
+</body>
+</html>

@@ -94,15 +94,37 @@
             margin: 0;
         }
 
+        /*
+         * Create menu
+         */
+
+        .create-menu {
+            position: relative;
+        }
+
+        .create-menu summary {
+            list-style: none;
+        }
+
+        .create-menu summary::-webkit-details-marker {
+            display: none;
+        }
+
         .create-button {
+            width: 42px;
+            height: 42px;
+            padding: 0;
             border: none;
-            border-radius: 9px;
+            border-radius: 50%;
             background: #586fe5;
             color: white;
-            padding: 11px 16px;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 25px;
+            font-weight: 400;
+            line-height: 1;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: background 0.2s, transform 0.2s;
         }
 
@@ -110,6 +132,42 @@
             background: #465bd0;
             transform: translateY(-1px);
         }
+
+        .create-menu[open] .create-button {
+            background: #465bd0;
+        }
+
+        .create-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 190px;
+            background: white;
+            border: 1px solid #edf0f5;
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.10);
+            z-index: 100;
+        }
+
+        .create-dropdown a {
+            display: block;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #292e38;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .create-dropdown a:hover {
+            background: #f4f6ff;
+        }
+
+        /*
+         * Dialogs
+         */
 
         .dialog-list {
             display: flex;
@@ -178,6 +236,10 @@
             flex-shrink: 0;
         }
 
+        /*
+         * Empty state
+         */
+
         .empty-state {
             text-align: center;
             padding: 45px 20px;
@@ -205,7 +267,9 @@
             margin-bottom: 20px;
         }
 
-        /* Avatar */
+        /*
+         * Avatar
+         */
 
         .reley-avatar {
             width: var(--avatar-size);
@@ -230,6 +294,7 @@
         }
 
         @media (max-width: 480px) {
+
             body {
                 padding: 15px 10px;
             }
@@ -241,15 +306,6 @@
             .brand {
                 font-size: 23px;
             }
-
-            .section-header {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .create-button {
-                width: 100%;
-            }
         }
     </style>
 </head>
@@ -258,12 +314,15 @@
 
 <div class="container">
 
+    <!-- Header -->
+
     <div class="header">
 
         <div>
 
             <h1 class="brand">
                 <span>Reley Messenger</span>
+
                 <span class="app-version"
                       th:text="'v' + ${appVersion}">
                     v0.1.0
@@ -272,6 +331,7 @@
 
             <div class="user-info">
                 Вы вошли как:
+
                 <span class="user-email"
                       th:text="${user.email}">
                     user@example.com
@@ -289,21 +349,34 @@
 
     <div th:replace="~{fragments/show_error :: show-error}"></div>
 
+    <!-- Dialogs header -->
+
     <div class="section-header">
 
         <h2 class="section-title">
             Диалоги
         </h2>
 
-        <form method="get"
-              action="/dialogs/new">
+        <details class="create-menu">
 
-            <button type="submit"
-                    class="create-button">
-                + Новый диалог
-            </button>
+            <summary class="create-button"
+                     title="Создать">
+                +
+            </summary>
 
-        </form>
+            <div class="create-dropdown">
+
+                <a href="/dialogs/new">
+                    Новый чат
+                </a>
+
+                <a href="/dialogs/groups/new">
+                    Новая группа
+                </a>
+
+            </div>
+
+        </details>
 
     </div>
 
@@ -335,6 +408,8 @@
            th:each="dialog : ${dialogs}"
            th:attr="data-dialog-id=${dialog.id}"
            th:href="@{/dialogs/{id}(id=${dialog.id})}">
+
+            <!-- Avatar -->
 
             <div th:replace="~{fragments/avatar :: avatar(
                 ${dialog.otherParty != null ? dialog.otherParty : user},
@@ -412,11 +487,40 @@
 
 </div>
 
-<audio id="messageSound" preload="auto">
-    <source src="/sounds/message.mp3" type="audio/mpeg">
+<!-- Message sound -->
+
+<audio id="messageSound"
+       preload="auto">
+
+    <source src="/sounds/message.mp3"
+            type="audio/mpeg">
+
 </audio>
 
 <script>
+
+    /*
+     * Закрытие меню создания при клике
+     * вне него.
+     */
+
+    document.addEventListener(
+        'click',
+        event => {
+
+            const createMenu =
+                document.querySelector('.create-menu');
+
+            if (!createMenu) {
+                return;
+            }
+
+            if (!createMenu.contains(event.target)) {
+                createMenu.removeAttribute('open');
+            }
+        }
+    );
+
 
     /*
      * WebSocket
@@ -502,6 +606,7 @@
      */
 
     let audioUnlocked = false;
+
 
     function playMessageSound() {
 

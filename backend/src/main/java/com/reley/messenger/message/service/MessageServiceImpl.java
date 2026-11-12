@@ -1,6 +1,5 @@
 package com.reley.messenger.message.service;
 
-import com.reley.messenger.dialog.service.DialogReadStateService;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.exception.ChatHaveNoAccess;
 import com.reley.messenger.message.dto.MessageResponse;
@@ -30,7 +29,6 @@ public class MessageServiceImpl implements MessageService {
     private final DialogService dialogService;
     private final MessageRepository messageRepository;
     private final HydrateUserInfoApi userServiceInfo;
-    private final DialogReadStateService dialogReadStateService;
     private final ApplicationEventPublisher eventPublisher;
     private final MessageReactionService messageReactionService;
 
@@ -40,21 +38,23 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public Flux<MessageResponse> getMessages(Long dialogId, Long beforeId) {
-
+    public Flux<MessageResponse> getMessages(
+            Long dialogId,
+            Long beforeId
+    ) {
         return userServiceInfo.getCurrentUserId()
                 .flatMapMany(userId ->
-                        checkAccess(dialogId, userId)
-                                .thenMany(
-                                        beforeId == null
-                                                ? messageRepository
-                                                .findTop15ByDialogIdOrderByIdDesc(dialogId)
-                                                : messageRepository
-                                                .findTop15ByDialogIdAndIdLessThanOrderByIdDesc(
-                                                        dialogId,
-                                                        beforeId
-                                                )
-                                )
+
+                        (
+                                beforeId == null
+                                        ? messageRepository
+                                        .findTop15ByDialogIdOrderByIdDesc(dialogId)
+                                        : messageRepository
+                                        .findTop15ByDialogIdAndIdLessThanOrderByIdDesc(
+                                                dialogId,
+                                                beforeId
+                                        )
+                        )
                                 .collectList()
                                 .flatMapMany(messages -> {
 
@@ -68,7 +68,8 @@ public class MessageServiceImpl implements MessageService {
                                             .map(Message::getId)
                                             .toList();
 
-                                    return dialogService.findById(dialogId)
+                                    return dialogService
+                                            .findById(dialogId)
                                             .flatMapMany(dialog -> {
 
                                                 Long otherUserId;
@@ -77,60 +78,62 @@ public class MessageServiceImpl implements MessageService {
                                                         dialog.getOwnerId(),
                                                         userId
                                                 )) {
-                                                    otherUserId = dialog.getParticipantId();
+                                                    otherUserId =
+                                                            dialog.getParticipantId();
                                                 } else {
-                                                    otherUserId = dialog.getOwnerId();
+                                                    otherUserId =
+                                                            dialog.getOwnerId();
                                                 }
 
                                                 return Mono.zip(
-                                                                dialogReadStateService
-                                                                        .getLastReadMessageId(
-                                                                                dialogId,
-                                                                                otherUserId
-                                                                        )
-                                                                        .defaultIfEmpty(0L),
+                                                        dialogService
+                                                                .getLastReadMessageId(
+                                                                        dialogId,
+                                                                        otherUserId
+                                                                )
+                                                                .defaultIfEmpty(0L),
 
-                                                                messageReactionService
-                                                                        .getReactions(
-                                                                                messageIds,
+                                                        messageReactionService
+                                                                .getReactions(
+                                                                        messageIds,
+                                                                        userId
+                                                                )
+                                                ).flatMapMany(tuple -> {
+
+                                                    Long lastReadMessageId =
+                                                            tuple.getT1();
+
+                                                    Map<Long, List<MessageReactionResponse>>
+                                                            reactionsByMessageId =
+                                                            tuple.getT2();
+
+                                                    return Flux
+                                                            .fromIterable(messages)
+                                                            .map(message -> {
+
+                                                                boolean readByOther =
+                                                                        Objects.equals(
+                                                                                message.getSenderId(),
                                                                                 userId
                                                                         )
-                                                        )
-                                                        .flatMapMany(tuple -> {
+                                                                                && message.getId()
+                                                                                <= lastReadMessageId;
 
-                                                            Long lastReadMessageId =
-                                                                    tuple.getT1();
+                                                                List<MessageReactionResponse>
+                                                                        reactions =
+                                                                        reactionsByMessageId
+                                                                                .getOrDefault(
+                                                                                        message.getId(),
+                                                                                        List.of()
+                                                                                );
 
-                                                            Map<Long, List<MessageReactionResponse>>
-                                                                    reactionsByMessageId =
-                                                                    tuple.getT2();
-
-                                                            return Flux.fromIterable(messages)
-                                                                    .map(message -> {
-
-                                                                        boolean readByOther =
-                                                                                Objects.equals(
-                                                                                        message.getSenderId(),
-                                                                                        userId
-                                                                                )
-                                                                                        && message.getId()
-                                                                                        <= lastReadMessageId;
-
-                                                                        List<MessageReactionResponse>
-                                                                                reactions =
-                                                                                reactionsByMessageId
-                                                                                        .getOrDefault(
-                                                                                                message.getId(),
-                                                                                                List.of()
-                                                                                        );
-
-                                                                        return MessageResponse.fromEntity(
-                                                                                message,
-                                                                                readByOther,
-                                                                                reactions
-                                                                        );
-                                                                    });
-                                                        });
+                                                                return MessageResponse.fromEntity(
+                                                                        message,
+                                                                        readByOther,
+                                                                        reactions
+                                                                );
+                                                            });
+                                                });
                                             });
                                 })
                 );
@@ -160,23 +163,16 @@ public class MessageServiceImpl implements MessageService {
 
 
     @Override
-    public Mono<MessageResponse> sendMessage(Long dialogId, SendMessageRequest request) {
+    public Mono<MessageResponse> sendMessage(
+            Long dialogId,
+            SendMessageRequest request
+    ) {
         return userServiceInfo.getCurrentUserId()
                 .flatMap(userId ->
-                        checkAccess(dialogId, userId)
+                        dialogService
+                                .checkAccess(dialogId, userId)
                                 .then(dialogService.findById(dialogId))
                                 .flatMap(dialog -> {
-
-                                    Long otherUserId;
-
-                                    if (Objects.equals(
-                                            dialog.getOwnerId(),
-                                            userId
-                                    )) {
-                                        otherUserId = dialog.getParticipantId();
-                                    } else {
-                                        otherUserId = dialog.getOwnerId();
-                                    }
 
                                     OffsetDateTime now = OffsetDateTime.now();
 
@@ -187,19 +183,20 @@ public class MessageServiceImpl implements MessageService {
                                             .createdAt(now)
                                             .build();
 
-                                    return dialogReadStateService
-                                            .markAsRead(dialogId, userId)
-                                            .then(messageRepository.save(message))
+                                    return messageRepository
+                                            .save(message)
                                             .flatMap(savedMessage -> {
 
                                                 MessageResponse response =
-                                                        MessageResponse.fromEntity(savedMessage, false);
+                                                        MessageResponse.fromEntity(
+                                                                savedMessage,
+                                                                false
+                                                        );
 
-                                                if (otherUserId != null) {
                                                     eventPublisher.publishEvent(
-                                                            NewMessageDomainEvent.fromMessageResponse(
-                                                                    response, otherUserId));
-                                                }
+                                                            NewMessageDomainEvent
+                                                                    .fromMessageResponse(response)
+                                                    );
 
                                                 return Mono.just(response);
                                             });
