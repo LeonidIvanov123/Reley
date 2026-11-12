@@ -1,5 +1,6 @@
 package com.reley.messenger.user.repository;
 
+import com.reley.messenger.user.dto.UserSenderProjection;
 import com.reley.messenger.user.entity.User;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
@@ -40,4 +41,16 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
     ORDER BY id, email
     """)
     Flux<User> findAllVisibleUsers(Long currentUserId);
+
+    @Query("""
+        SELECT u.id,
+               u.name,
+               u.email
+        FROM users u
+        JOIN dialog_participants dp
+          ON dp.user_id = u.id
+        WHERE dp.dialog_id = :dialogId
+        """)
+    Flux<UserSenderProjection> findSendersByDialogId(Long dialogId);
+
 }

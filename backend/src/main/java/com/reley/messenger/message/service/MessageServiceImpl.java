@@ -10,7 +10,9 @@ import com.reley.messenger.message.entity.Message;
 import com.reley.messenger.message.reaction.dto.MessageReactionResponse;
 import com.reley.messenger.message.reaction.service.MessageReactionService;
 import com.reley.messenger.message.repository.MessageRepository;
+import com.reley.messenger.user.dto.UserSenderProjection;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
+import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class MessageServiceImpl implements MessageService {
     private final ApplicationEventPublisher eventPublisher;
     private final MessageReactionService messageReactionService;
     private final DialogParticipantRepository participantRepository;
+    private final UserService userService;
 
     @Override
     public Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId) {
@@ -99,7 +102,9 @@ public class MessageServiceImpl implements MessageService {
                                                                 .getReactions(
                                                                         messageIds,
                                                                         userId
-                                                                )
+                                                                ),
+
+                                                        getSenderInfoMap(dialogId)
                                                 ).flatMapMany(tuple -> {
 
                                                     Long lastReadMessageId =
@@ -108,6 +113,10 @@ public class MessageServiceImpl implements MessageService {
                                                     Map<Long, List<MessageReactionResponse>>
                                                             reactionsByMessageId =
                                                             tuple.getT2();
+
+                                                    Map<Long, MessageResponse.SenderInfo>
+                                                            senderInfoByUserId =
+                                                            tuple.getT3();
 
                                                     return Flux
                                                             .fromIterable(messages)
@@ -129,15 +138,43 @@ public class MessageServiceImpl implements MessageService {
                                                                                         List.of()
                                                                                 );
 
+                                                                MessageResponse.SenderInfo sender =
+                                                                        senderInfoByUserId.get(
+                                                                                message.getSenderId()
+                                                                        );
+
+                                                                if (sender == null) {
+                                                                    sender =
+                                                                            new MessageResponse.SenderInfo(
+                                                                                    null,
+                                                                                    null
+                                                                            );
+                                                                }
+
                                                                 return MessageResponse.fromEntity(
                                                                         message,
                                                                         readByOther,
-                                                                        reactions
+                                                                        reactions,
+                                                                        sender
                                                                 );
                                                             });
                                                 });
                                             });
                                 })
+                );
+    }
+
+    private Mono<Map<Long, MessageResponse.SenderInfo>> getSenderInfoMap(
+            Long dialogId
+    ) {
+        return userService
+                .findSendersByDialogId(dialogId)
+                .collectMap(
+                        UserSenderProjection::getId,
+                        sender -> new MessageResponse.SenderInfo(
+                                sender.getName(),
+                                sender.getEmail()
+                        )
                 );
     }
 

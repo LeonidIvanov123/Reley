@@ -11,6 +11,7 @@ public record MessageResponse(
         Long dialogId,
         Long senderId,
         String senderName,
+        String senderEmail,
         String content,
         OffsetDateTime createdAt,
         OffsetDateTime editedAt,
@@ -24,6 +25,7 @@ public record MessageResponse(
                 message.getId(),
                 message.getDialogId(),
                 message.getSenderId(),
+                null,
                 null,
                 message.getContent(),
                 message.getCreatedAt(),
@@ -40,6 +42,7 @@ public record MessageResponse(
                 message.getDialogId(),
                 message.getSenderId(),
                 null,
+                null,
                 message.getContent(),
                 message.getCreatedAt(),
                 message.getEditedAt(),
@@ -51,12 +54,14 @@ public record MessageResponse(
 
     public static MessageResponse fromEntity(Message message,
                                              boolean readByOther,
-                                             List<MessageReactionResponse> reactions) {
+                                             List<MessageReactionResponse> reactions,
+                                             SenderInfo sender) {
         return new MessageResponse(
                 message.getId(),
                 message.getDialogId(),
                 message.getSenderId(),
-                null,
+                sender.name,
+                sender.email,
                 message.getContent(),
                 message.getCreatedAt(),
                 message.getEditedAt(),
@@ -64,6 +69,9 @@ public record MessageResponse(
                 readByOther,
                 reactions
         );
+    }
+
+    public record SenderInfo(String name, String email) {
     }
 
 }

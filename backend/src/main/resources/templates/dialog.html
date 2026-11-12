@@ -196,7 +196,7 @@
             max-width: 75%;
             min-width: 70px;
 
-            padding: 11px 14px 8px;
+            padding: 8px 14px 8px;
 
             border-radius: 14px;
 
@@ -223,6 +223,26 @@
             border: 1px solid #e8ebf0;
 
             border-bottom-left-radius: 4px;
+        }
+
+        /* =========================
+           Автор сообщения
+           ========================= */
+
+        .message-author {
+            margin-bottom: 4px;
+
+            color: #7d8795;
+            font-size: 10px;
+            font-weight: 600;
+
+            line-height: 1.2;
+        }
+
+        .message-author.removed {
+            color: #a0a6b0;
+            font-weight: 400;
+            font-style: italic;
         }
 
         .message-content {
@@ -703,7 +723,6 @@
             .reaction-picker {
                 bottom: calc(100% + 8px);
             }
-
         }
 
     </style>
@@ -725,7 +744,6 @@
             ←
         </a>
 
-        <!-- Аватар -->
         <div class="chat-avatar"
              th:text="${dialog.groupChat ? '👥' : '👤'}">
             👤
@@ -749,7 +767,6 @@
 
         </div>
 
-        <!-- Настройки только для группы -->
         <a th:if="${dialog.groupChat}"
            th:href="@{/dialogs/{id}/settings(id=${dialog.id})}"
            class="settings-button"
@@ -789,7 +806,38 @@
                  th:data-sender-id="${message.senderId}"
                  th:data-deleted-at="${message.deletedAt}">
 
-                <!-- Реакция -->
+                <!-- =========================
+                     Автор
+                     ========================= -->
+
+                <div class="message-author"
+                     th:if="${message.senderId != currentUserId
+                             && message.senderName != null
+                             && !message.senderName.isBlank()}"
+                     th:text="${message.senderName}">
+                    Автор
+                </div>
+
+                <div class="message-author"
+                     th:if="${message.senderId != currentUserId
+                             && (message.senderName == null || message.senderName.isBlank())
+                             && message.senderEmail != null
+                             && !message.senderEmail.isBlank()}"
+                     th:text="${message.senderEmail}">
+                    email@example.com
+                </div>
+
+                <div class="message-author removed"
+                     th:if="${message.senderId != currentUserId
+                             && (message.senderName == null || message.senderName.isBlank())
+                             && (message.senderEmail == null || message.senderEmail.isBlank())}">
+                    Участник исключен
+                </div>
+
+
+                <!-- =========================
+                     Кнопка реакции
+                     ========================= -->
 
                 <button type="button"
                         class="reaction-trigger"
@@ -798,7 +846,9 @@
                 </button>
 
 
-                <!-- Picker -->
+                <!-- =========================
+                     Picker
+                     ========================= -->
 
                 <div class="reaction-picker">
 
@@ -835,14 +885,18 @@
                 </div>
 
 
-                <!-- Текст -->
+                <!-- =========================
+                     Текст
+                     ========================= -->
 
                 <div class="message-content"
                      th:text="${message.content}">
                 </div>
 
 
-                <!-- Удалено -->
+                <!-- =========================
+                     Удалено
+                     ========================= -->
 
                 <div class="message-deleted-label"
                      th:if="${message.deletedAt != null}">
@@ -850,7 +904,9 @@
                 </div>
 
 
-                <!-- Реакции -->
+                <!-- =========================
+                     Реакции
+                     ========================= -->
 
                 <div class="message-reactions"
                      th:if="${message.reactions != null && !message.reactions.isEmpty()}">
@@ -875,7 +931,9 @@
                 </div>
 
 
-                <!-- Время -->
+                <!-- =========================
+                     Время
+                     ========================= -->
 
                 <div class="message-time">
 
@@ -1089,7 +1147,6 @@
                 'Failed to process WebSocket event:',
                 error
             );
-
         }
     };
 
@@ -1294,6 +1351,43 @@
 
     /*
      * =========================
+     * Автор сообщения
+     * =========================
+     */
+
+    function getMessageAuthor(message) {
+
+        if (
+            message.senderName &&
+            message.senderName.trim()
+        ) {
+            return {
+                text: message.senderName.trim(),
+                removed: false
+            };
+        }
+
+
+        if (
+            message.senderEmail &&
+            message.senderEmail.trim()
+        ) {
+            return {
+                text: message.senderEmail.trim(),
+                removed: false
+            };
+        }
+
+
+        return {
+            text: 'Участник исключен',
+            removed: true
+        };
+    }
+
+
+    /*
+     * =========================
      * Создание сообщения
      * =========================
      */
@@ -1326,6 +1420,42 @@
 
         if (message.deletedAt) {
             element.classList.add('deleted');
+        }
+
+
+        /*
+         * Автор
+         *
+         * Свои сообщения не подписываем.
+         */
+
+        if (!mine) {
+
+            const author =
+                getMessageAuthor(message);
+
+
+            const authorElement =
+                document.createElement('div');
+
+            authorElement.className =
+                'message-author';
+
+
+            if (author.removed) {
+                authorElement.classList.add(
+                    'removed'
+                );
+            }
+
+
+            authorElement.textContent =
+                author.text;
+
+
+            element.appendChild(
+                authorElement
+            );
         }
 
 
