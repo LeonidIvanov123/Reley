@@ -6,17 +6,15 @@ import java.time.OffsetDateTime;
 //WebSocket event
 public record NewMessageDomainEvent(
         Long id,
-        Long otherUserId,
         Long dialogId,
         Long senderId,
         String content,
         OffsetDateTime createdAt
 ) {
 
-    public static NewMessageDomainEvent fromMessageResponse(MessageResponse message, Long otherUserId) {
+    public static NewMessageDomainEvent fromMessageResponse(MessageResponse message) {
         return new NewMessageDomainEvent(
                 message.id(),
-                otherUserId,
                 message.dialogId(),
                 message.senderId(),
                 message.content(),

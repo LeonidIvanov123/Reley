@@ -8,6 +8,7 @@
     <title>Reley Messenger</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -94,15 +95,37 @@
             margin: 0;
         }
 
+        /*
+         * Create menu
+         */
+
+        .create-menu {
+            position: relative;
+        }
+
+        .create-menu summary {
+            list-style: none;
+        }
+
+        .create-menu summary::-webkit-details-marker {
+            display: none;
+        }
+
         .create-button {
+            width: 42px;
+            height: 42px;
+            padding: 0;
             border: none;
-            border-radius: 9px;
+            border-radius: 50%;
             background: #586fe5;
             color: white;
-            padding: 11px 16px;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 25px;
+            font-weight: 400;
+            line-height: 1;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: background 0.2s, transform 0.2s;
         }
 
@@ -110,6 +133,42 @@
             background: #465bd0;
             transform: translateY(-1px);
         }
+
+        .create-menu[open] .create-button {
+            background: #465bd0;
+        }
+
+        .create-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 190px;
+            background: white;
+            border: 1px solid #edf0f5;
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.10);
+            z-index: 100;
+        }
+
+        .create-dropdown a {
+            display: block;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #292e38;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .create-dropdown a:hover {
+            background: #f4f6ff;
+        }
+
+        /*
+         * Dialogs
+         */
 
         .dialog-list {
             display: flex;
@@ -178,6 +237,27 @@
             flex-shrink: 0;
         }
 
+        /*
+         * Group avatar
+         */
+
+        .group-avatar {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #e8efff;
+            color: #3978d5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        /*
+         * Empty state
+         */
+
         .empty-state {
             text-align: center;
             padding: 45px 20px;
@@ -205,7 +285,9 @@
             margin-bottom: 20px;
         }
 
-        /* Avatar */
+        /*
+         * Avatar
+         */
 
         .reley-avatar {
             width: var(--avatar-size);
@@ -230,6 +312,7 @@
         }
 
         @media (max-width: 480px) {
+
             body {
                 padding: 15px 10px;
             }
@@ -241,16 +324,8 @@
             .brand {
                 font-size: 23px;
             }
-
-            .section-header {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .create-button {
-                width: 100%;
-            }
         }
+
     </style>
 </head>
 
@@ -258,24 +333,34 @@
 
 <div class="container">
 
+    <!-- Header -->
+
     <div class="header">
 
         <div>
 
             <h1 class="brand">
-                <span>Reley Messenger</span>
+
+                <span>
+                    Reley Messenger
+                </span>
+
                 <span class="app-version"
                       th:text="'v' + ${appVersion}">
                     v0.1.0
                 </span>
+
             </h1>
 
             <div class="user-info">
+
                 Вы вошли как:
+
                 <span class="user-email"
                       th:text="${user.email}">
                     user@example.com
                 </span>
+
             </div>
 
         </div>
@@ -287,7 +372,11 @@
 
     </div>
 
+
     <div th:replace="~{fragments/show_error :: show-error}"></div>
+
+
+    <!-- Dialogs header -->
 
     <div class="section-header">
 
@@ -295,17 +384,29 @@
             Диалоги
         </h2>
 
-        <form method="get"
-              action="/dialogs/new">
+        <details class="create-menu">
 
-            <button type="submit"
-                    class="create-button">
-                + Новый диалог
-            </button>
+            <summary class="create-button"
+                     title="Создать">
+                +
+            </summary>
 
-        </form>
+            <div class="create-dropdown">
+
+                <a href="/dialogs/new">
+                    Новый чат
+                </a>
+
+                <a href="/dialogs/groups/new">
+                    Новая группа
+                </a>
+
+            </div>
+
+        </details>
 
     </div>
+
 
     <!-- Нет диалогов -->
 
@@ -326,6 +427,7 @@
 
     </div>
 
+
     <!-- Список диалогов -->
 
     <div th:unless="${#lists.isEmpty(dialogs)}"
@@ -336,42 +438,87 @@
            th:attr="data-dialog-id=${dialog.id}"
            th:href="@{/dialogs/{id}(id=${dialog.id})}">
 
-            <div th:replace="~{fragments/avatar :: avatar(
-                ${dialog.otherParty != null ? dialog.otherParty : user},
-                48
-            )}">
+
+            <!-- ========================= -->
+            <!-- Avatar                     -->
+            <!-- ========================= -->
+
+            <!-- Группа -->
+
+            <div th:if="${dialog.groupChat}"
+                 class="group-avatar">
+                👥
             </div>
+
+
+            <!-- Личный диалог / Избранное -->
+
+            <div th:unless="${dialog.groupChat}">
+
+                <div th:replace="~{fragments/avatar :: avatar(
+                    ${dialog.otherParty},
+                    48
+                )}">
+                </div>
+
+            </div>
+
+
+            <!-- ========================= -->
+            <!-- Dialog content             -->
+            <!-- ========================= -->
 
             <div class="dialog-content">
 
                 <div class="dialog-title">
 
+
+                    <!-- Группа -->
+
+                    <th:block th:if="${dialog.groupChat}">
+
+                        <span th:text="${dialog.dialogName}">
+                            Java Developers
+                        </span>
+
+                    </th:block>
+
+
                     <!-- Избранное -->
 
-                    <span th:if="${dialog.dialogName != null}"
-                          th:text="${dialog.dialogName}">
-                        Избранное
-                    </span>
+                    <th:block th:if="${!dialog.groupChat
+                                       and dialog.dialogName != null}">
 
-                    <!-- Обычный диалог -->
+                        <span th:text="${dialog.dialogName}">
+                            Избранное
+                        </span>
 
-                    <th:block th:if="${dialog.dialogName == null}">
+                    </th:block>
 
-                        <span th:if="${dialog.otherParty.name != null
+
+                    <!-- Обычный личный диалог -->
+
+                    <th:block th:if="${!dialog.groupChat
+                                       and dialog.dialogName == null}">
+
+                        <span th:if="${dialog.otherParty != null
+                                      and dialog.otherParty.name != null
                                       and !#strings.isEmpty(dialog.otherParty.name)}"
                               th:text="${dialog.otherParty.name}">
                             Иван Иванов
                         </span>
 
                         <span class="dialog-email"
-                              th:if="${dialog.otherParty.name != null
+                              th:if="${dialog.otherParty != null
+                                      and dialog.otherParty.name != null
                                       and !#strings.isEmpty(dialog.otherParty.name)}"
                               th:text="'(' + ${dialog.otherParty.email} + ')'">
                             (user@example.com)
                         </span>
 
-                        <span th:if="${dialog.otherParty.name == null
-                                      or #strings.isEmpty(dialog.otherParty.name)}"
+                        <span th:if="${dialog.otherParty != null
+                                      and (dialog.otherParty.name == null
+                                      or #strings.isEmpty(dialog.otherParty.name))}"
                               th:text="${dialog.otherParty.email}">
                             user@example.com
                         </span>
@@ -379,6 +526,7 @@
                     </th:block>
 
                 </div>
+
 
                 <!-- Последнее сообщение -->
 
@@ -398,6 +546,7 @@
 
             </div>
 
+
             <!-- Непрочитанные сообщения -->
 
             <span th:if="${dialog.unreadCount > 0}"
@@ -412,11 +561,43 @@
 
 </div>
 
-<audio id="messageSound" preload="auto">
-    <source src="/sounds/message.mp3" type="audio/mpeg">
+
+<!-- Message sound -->
+
+<audio id="messageSound"
+       preload="auto">
+
+    <source src="/sounds/message.mp3"
+            type="audio/mpeg">
+
 </audio>
 
+
 <script>
+
+    /*
+     * Закрытие меню создания при клике
+     * вне него.
+     */
+
+    document.addEventListener(
+        'click',
+        event => {
+
+            const createMenu =
+                document.querySelector('.create-menu');
+
+            if (!createMenu) {
+                return;
+            }
+
+            if (!createMenu.contains(event.target)) {
+                createMenu.removeAttribute('open');
+            }
+
+        }
+    );
+
 
     /*
      * WebSocket
@@ -438,6 +619,7 @@
         console.log(
             'WebSocket connected'
         );
+
     };
 
 
@@ -446,6 +628,7 @@
         console.log(
             'WebSocket disconnected'
         );
+
     };
 
 
@@ -455,6 +638,7 @@
             'WebSocket error:',
             error
         );
+
     };
 
 
@@ -470,6 +654,7 @@
                 wsEvent
             );
 
+
             if (
                 wsEvent.type === 'DIALOG_UPDATED'
             ) {
@@ -477,13 +662,16 @@
                 handleDialogUpdated(
                     wsEvent
                 );
+
             }
+
 
             if (
                 wsEvent.type === 'NEW_MESSAGE'
             ) {
 
                 playMessageSound();
+
             }
 
         } catch (error) {
@@ -492,7 +680,9 @@
                 'Failed to process WebSocket event:',
                 error
             );
+
         }
+
     };
 
 
@@ -503,6 +693,7 @@
 
     let audioUnlocked = false;
 
+
     function playMessageSound() {
 
         const sound =
@@ -510,11 +701,14 @@
                 'messageSound'
             );
 
+
         if (!sound) {
             return;
         }
 
+
         sound.currentTime = 0;
+
 
         sound.play()
             .catch(error => {
@@ -523,7 +717,9 @@
                     'Message sound was blocked by browser:',
                     error
                 );
+
             });
+
     }
 
 
@@ -540,16 +736,20 @@
                 return;
             }
 
+
             const sound =
                 document.getElementById(
                     'messageSound'
                 );
 
+
             if (!sound) {
                 return;
             }
 
+
             sound.volume = 0;
+
 
             sound.play()
                 .then(() => {
@@ -559,9 +759,12 @@
                     sound.volume = 1;
 
                     audioUnlocked = true;
+
                 })
                 .catch(() => {
+
                     // Браузер пока не разрешил воспроизведение
+
                 });
 
         },
@@ -578,12 +781,15 @@
         const dialogId =
             Number(wsEvent.dialogId);
 
+
         const payload =
             wsEvent.payload;
+
 
         if (!dialogId || !payload) {
             return;
         }
+
 
         const dialogElement =
             document.querySelector(
@@ -606,10 +812,12 @@
                 payload.lastMessageAt
             );
 
+
             updateUnreadCount(
                 dialogElement,
                 payload.unreadCount
             );
+
 
             return;
         }
@@ -629,6 +837,7 @@
          */
 
         window.location.reload();
+
     }
 
 
@@ -645,17 +854,21 @@
             return;
         }
 
+
         const dateElement =
             dialogElement.querySelector(
                 '.dialog-date'
             );
 
+
         if (!dateElement) {
             return;
         }
 
+
         const date =
             new Date(lastMessageAt);
+
 
         dateElement.textContent =
             date.toLocaleString(
@@ -668,6 +881,7 @@
                     minute: '2-digit'
                 }
             );
+
     }
 
 
@@ -682,6 +896,7 @@
 
         const count =
             Number(unreadCount) || 0;
+
 
         let badge =
             dialogElement.querySelector(
@@ -731,18 +946,23 @@
                 'span'
             );
 
+
         badge.className =
             'unread-badge';
+
 
         badge.textContent =
             count;
 
+
         dialogElement.appendChild(
             badge
         );
+
     }
 
 </script>
 
 </body>
+
 </html>

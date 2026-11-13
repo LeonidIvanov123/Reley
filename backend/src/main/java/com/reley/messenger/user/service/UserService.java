@@ -4,6 +4,7 @@ import com.reley.messenger.user.dto.CreateUserRequest;
 import com.reley.messenger.user.dto.UpdateProfileRequest;
 import com.reley.messenger.user.dto.UserDirectoryResponse;
 import com.reley.messenger.user.dto.UserResponse;
+import com.reley.messenger.user.dto.UserSenderProjection;
 import com.reley.messenger.user.entity.User;
 import org.springframework.http.codec.multipart.FilePart;
 import reactor.core.publisher.Flux;
@@ -26,5 +27,7 @@ public interface UserService {
     Mono<Void> updateAvatar(FilePart avatar);
 
     Mono<Void> deleteAvatar();
+
+    Flux<UserSenderProjection> findSendersByDialogId(Long dialogId);
 
 }

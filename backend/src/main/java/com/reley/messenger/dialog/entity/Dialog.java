@@ -32,6 +32,9 @@ public class Dialog {
     @Column("participant_id")
     private Long participantId;
 
+    @Column("is_public")
+    private Boolean isPublic;
+
     @Column("group_chat")
     private boolean groupChat = false;
 

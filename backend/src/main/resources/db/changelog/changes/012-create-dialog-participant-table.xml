@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="012-clear-dialog-data-before-group-chat" author="reley">
+
+        <delete tableName="message_reaction"/>
+        <delete tableName="messages"/>
+        <delete tableName="dialog_read_state"/>
+        <delete tableName="dialog_participants"/>
+        <delete tableName="dialogs"/>
+
+    </changeSet>
+
+    <changeSet id="012-drop-dialog-read-state" author="reley">
+
+        <dropTable tableName="dialog_read_state" cascadeConstraints="true"/>
+
+    </changeSet>
+
+    <changeSet id="012-add-dialog-participant-fields" author="reley">
+
+        <addColumn tableName="dialog_participants">
+
+            <column name="is_admin" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="last_read_message_id" type="BIGINT"/>
+
+        </addColumn>
+
+        <addForeignKeyConstraint
+                baseTableName="dialog_participants"
+                baseColumnNames="last_read_message_id"
+                referencedTableName="messages"
+                referencedColumnNames="id"
+                constraintName="fk_dialog_participants_last_read_message"/>
+
+    </changeSet>
+
+    <changeSet id="012-add-is-public-to-dialogs" author="reley">
+        <addColumn tableName="dialogs">
+            <column name="is_public" type="BOOLEAN" defaultValueBoolean="false"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

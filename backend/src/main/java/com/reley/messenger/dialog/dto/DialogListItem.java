@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 public record DialogListItem(
         Long id,
         String dialogName,
+        boolean groupChat,
         User otherParty,
         OffsetDateTime lastMessageAt,
         long unreadCount

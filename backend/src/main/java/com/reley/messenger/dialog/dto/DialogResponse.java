@@ -7,5 +7,6 @@ public record DialogResponse(
         String dialogName,
         Long otherUserId,
         String otherUserEmail,
-        OffsetDateTime createdAt
+        OffsetDateTime createdAt,
+        boolean isGroupChat
 ) {}
