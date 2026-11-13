@@ -8,6 +8,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Repository
@@ -79,4 +81,40 @@ public class MessageAttachmentRepository {
                 )
                 .all();
     }
+
+    public Flux<MessageAttachment> findAttachmentsByMessageIds(List<Long> messageIds) {
+        return databaseClient.sql("""
+        SELECT
+            fa.*,
+            ma.message_id
+        FROM file_attachment fa
+        JOIN message_attachment ma
+            ON ma.attachment_id = fa.id
+        WHERE ma.message_id IN (:messageIds)
+        ORDER BY ma.message_id, fa.created_at
+        """)
+                .bind("messageIds", messageIds)
+                .map((row, metadata) ->
+                        new MessageAttachment(
+                                row.get("message_id", Long.class),
+                                Attachment.builder()
+                                        .id(row.get("id", UUID.class))
+                                        .createdBy(row.get("created_by", Long.class))
+                                        .originalFileName(row.get("original_file_name", String.class))
+                                        .extension(row.get("extension", String.class))
+                                        .contentType(row.get("content_type", String.class))
+                                        .size(row.get("size", Long.class))
+                                        .storageKey(row.get("storage_key", String.class))
+                                        .createdAt(row.get("created_at", OffsetDateTime.class))
+                                        .build()
+                        )
+                )
+                .all();
+    }
+
+    public record MessageAttachment(
+            Long messageId,
+            Attachment attachment
+    ) {}
+
 }
