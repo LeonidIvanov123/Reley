@@ -50,11 +50,15 @@
 
         <createTable tableName="message_attachment">
 
-            <column name="message_id" type="BIGINT">
+            <column name="attachment_id" type="UUID">
                 <constraints nullable="false"/>
             </column>
 
-            <column name="attachment_id" type="UUID">
+            <column name="dialog_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="message_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
 
@@ -62,8 +66,22 @@
 
         <addPrimaryKey
                 tableName="message_attachment"
-                columnNames="message_id, attachment_id"
+                columnNames="attachment_id, message_id"
                 constraintName="pk_message_attachment"/>
+
+        <addForeignKeyConstraint
+                baseTableName="message_attachment"
+                baseColumnNames="attachment_id"
+                referencedTableName="file_attachment"
+                referencedColumnNames="id"
+                constraintName="fk_message_attachment_attachment"/>
+
+        <addForeignKeyConstraint
+                baseTableName="message_attachment"
+                baseColumnNames="dialog_id"
+                referencedTableName="dialogs"
+                referencedColumnNames="id"
+                constraintName="fk_message_attachment_dialog"/>
 
         <addForeignKeyConstraint
                 baseTableName="message_attachment"
@@ -72,12 +90,17 @@
                 referencedColumnNames="id"
                 constraintName="fk_message_attachment_message"/>
 
-        <addForeignKeyConstraint
-                baseTableName="message_attachment"
-                baseColumnNames="attachment_id"
-                referencedTableName="file_attachment"
-                referencedColumnNames="id"
-                constraintName="fk_message_attachment_attachment"/>
+        <createIndex
+                tableName="message_attachment"
+                indexName="idx_message_attachment_dialog">
+            <column name="dialog_id"/>
+        </createIndex>
+
+        <createIndex
+                tableName="message_attachment"
+                indexName="idx_message_attachment_message">
+            <column name="message_id"/>
+        </createIndex>
 
     </changeSet>
 

@@ -17,7 +17,6 @@
     <include file="db/changelog/changes/008-add-user-avatar.xml"/>
     <include file="db/changelog/changes/009-create-dialog-read-state.xml"/>
     <include file="db/changelog/changes/010-create-attachments-table.xml"/>
-    <include file="db/changelog/changes/011-message-attachments.xml"/>
     <include file="db/changelog/changes/011-create-message-reactions.xml"/>
     <include file="db/changelog/changes/012-create-dialog-participant-table.xml"/>
 
