@@ -1,14 +1,16 @@
 package com.reley.messenger.message.service;
 
+import com.reley.messenger.attachment.dto.AttachmentResponse;
 import com.reley.messenger.dialog.repository.DialogParticipantRepository;
 import com.reley.messenger.dialog.service.DialogService;
-import com.reley.messenger.exception.ChatHaveNoAccess;
+import com.reley.messenger.exception.UserNotFoundException;
 import com.reley.messenger.message.dto.MessageResponse;
 import com.reley.messenger.message.dto.NewMessageDomainEvent;
 import com.reley.messenger.message.dto.SendMessageRequest;
 import com.reley.messenger.message.entity.Message;
 import com.reley.messenger.message.reaction.dto.MessageReactionResponse;
 import com.reley.messenger.message.reaction.service.MessageReactionService;
+import com.reley.messenger.message.repository.MessageAttachmentRepository;
 import com.reley.messenger.message.repository.MessageRepository;
 import com.reley.messenger.user.dto.UserSenderProjection;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
@@ -24,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,11 +39,7 @@ public class MessageServiceImpl implements MessageService {
     private final MessageReactionService messageReactionService;
     private final DialogParticipantRepository participantRepository;
     private final UserService userService;
-
-    @Override
-    public Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId) {
-        return messageRepository.findTopByDialogIdOrderByIdDesc(dialogId);
-    }
+    private final MessageAttachmentService messageAttachmentService;
 
     @Override
     public Flux<MessageResponse> getMessages(
@@ -104,7 +103,9 @@ public class MessageServiceImpl implements MessageService {
                                                                         userId
                                                                 ),
 
-                                                        getSenderInfoMap(dialogId)
+                                                        getSenderInfoMap(dialogId),
+
+                                                        getAttachmentsByMessageId(messageIds)
                                                 ).flatMapMany(tuple -> {
 
                                                     Long lastReadMessageId =
@@ -117,6 +118,9 @@ public class MessageServiceImpl implements MessageService {
                                                     Map<Long, MessageResponse.SenderInfo>
                                                             senderInfoByUserId =
                                                             tuple.getT3();
+
+                                                    Map<Long, List<AttachmentResponse>>
+                                                            attachmentsByMessageId = tuple.getT4();
 
                                                     return Flux
                                                             .fromIterable(messages)
@@ -151,16 +155,47 @@ public class MessageServiceImpl implements MessageService {
                                                                             );
                                                                 }
 
+                                                                List<AttachmentResponse> attachments =
+                                                                        attachmentsByMessageId.getOrDefault(
+                                                                                message.getId(),
+                                                                                List.of()
+                                                                        );
+
                                                                 return MessageResponse.fromEntity(
                                                                         message,
                                                                         readByOther,
                                                                         reactions,
-                                                                        sender
+                                                                        sender,
+                                                                        attachments
                                                                 );
                                                             });
                                                 });
                                             });
                                 })
+                );
+    }
+
+    private Mono<Map<Long, List<AttachmentResponse>>> getAttachmentsByMessageId(List<Long> messageIds) {
+        return messageAttachmentService
+                .findAttachmentsByMessageIds(messageIds)
+                .map(item ->
+                        Map.entry(
+                                item.messageId(),
+                                AttachmentResponse.fromEntity(
+                                        item.attachment()
+                                )
+                        )
+                )
+                .collectList()
+                .map(entries ->
+                        entries.stream()
+                                .collect(Collectors.groupingBy(
+                                        Map.Entry::getKey,
+                                        Collectors.mapping(
+                                                Map.Entry::getValue,
+                                                Collectors.toList()
+                                        )
+                                ))
                 );
     }
 
@@ -190,12 +225,17 @@ public class MessageServiceImpl implements MessageService {
                                 .then(dialogService.findById(dialogId))
                                 .flatMap(dialog -> {
 
-                                    OffsetDateTime now = OffsetDateTime.now();
+                                    OffsetDateTime now =
+                                            OffsetDateTime.now();
 
                                     Message message = Message.builder()
                                             .dialogId(dialogId)
                                             .senderId(userId)
-                                            .content(request.content().trim())
+                                            .content(
+                                                    request.content() == null
+                                                            ? ""
+                                                            : request.content().trim()
+                                            )
                                             .createdAt(now)
                                             .build();
 
@@ -203,25 +243,80 @@ public class MessageServiceImpl implements MessageService {
                                             .save(message)
                                             .flatMap(savedMessage -> {
 
-                                                MessageResponse response =
-                                                        MessageResponse.fromEntity(
-                                                                savedMessage,
-                                                                false
-                                                        );
-
-                                                return participantRepository
-                                                        .updateLastReadMessageId(
-                                                                dialogId,
-                                                                userId,
-                                                                savedMessage.getId()
-                                                        )
-                                                        .then(Mono.fromRunnable(() ->
-                                                                eventPublisher.publishEvent(
-                                                                        NewMessageDomainEvent
-                                                                                .fromMessageResponse(response)
+                                                Mono<Void> attachAttachments =
+                                                        Flux.fromIterable(request.attachmentIds())
+                                                                .concatMap(attachmentId ->
+                                                                        messageAttachmentService.attachToMessage(
+                                                                                attachmentId,
+                                                                                dialogId,
+                                                                                savedMessage.getId()
+                                                                        )
                                                                 )
-                                                        ))
-                                                        .thenReturn(response);
+                                                                .then();
+
+                                                return attachAttachments
+                                                        .then(
+                                                                participantRepository
+                                                                        .updateLastReadMessageId(
+                                                                                dialogId,
+                                                                                userId,
+                                                                                savedMessage.getId()
+                                                                        )
+                                                        )
+                                                        .then(
+                                                                messageAttachmentService
+                                                                        .findAttachmentsByMessageId(
+                                                                                savedMessage.getId()
+                                                                        )
+                                                                        .map(AttachmentResponse::fromEntity)
+                                                                        .collectList()
+                                                        )
+                                                        .flatMap(attachments ->
+                                                                userService
+                                                                        .findById(
+                                                                                savedMessage.getSenderId()
+                                                                        )
+                                                                        .switchIfEmpty(
+                                                                                Mono.error(
+                                                                                        new UserNotFoundException(
+                                                                                                "Пользователь с id %s не найден"
+                                                                                                        .formatted(
+                                                                                                                savedMessage.getSenderId()
+                                                                                                        )
+                                                                                        )
+                                                                                )
+                                                                        )
+                                                                        .map(user ->
+                                                                                new MessageResponse.SenderInfo(
+                                                                                        user.getName(),
+                                                                                        user.getEmail()
+                                                                                )
+                                                                        )
+                                                                        .map(sender ->
+                                                                                MessageResponse.fromEntity(
+                                                                                        savedMessage,
+                                                                                        false,
+                                                                                        List.of(),
+                                                                                        sender,
+                                                                                        attachments
+                                                                                )
+                                                                        )
+                                                        )
+                                                        .flatMap(response ->
+                                                                Mono.fromRunnable(() ->
+                                                                                eventPublisher.publishEvent(
+                                                                                        NewMessageDomainEvent.fromMessageResponse(
+                                                                                                response,
+                                                                                                new MessageResponse.SenderInfo(
+                                                                                                        response.senderName(),
+                                                                                                        response.senderEmail()
+                                                                                                ),
+                                                                                                response.attachments()
+                                                                                        )
+                                                                                )
+                                                                        )
+                                                                        .thenReturn(response)
+                                                        );
                                             });
                                 })
                 );
@@ -234,11 +329,6 @@ public class MessageServiceImpl implements MessageService {
                         messageRepository.markAsDeleteMessage(messageId, dialogId, user.userId(), OffsetDateTime.now()))
                 .flatMap(count -> messageRepository.findById(messageId))
                 .map(MessageResponse::fromEntity);
-    }
-
-    @Override
-    public Mono<OffsetDateTime> findLastMessageDateByDialogId(Long dialogId) {
-        return messageRepository.findLastMessageDate(dialogId);
     }
 
 }

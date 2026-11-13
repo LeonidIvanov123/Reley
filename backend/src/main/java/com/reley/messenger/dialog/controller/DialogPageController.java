@@ -45,7 +45,7 @@ public class DialogPageController {
                                                     model.addAttribute("messages", messages)
                                             )
                                             .then(dialogService.markAsRead(dialogId, userId))
-                                            .thenReturn("dialog");
+                                            .thenReturn("dialogs/dialog");
                                 })
                 );
     }

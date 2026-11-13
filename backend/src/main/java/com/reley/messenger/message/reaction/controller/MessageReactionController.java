@@ -5,7 +5,6 @@ import com.reley.messenger.message.reaction.dto.SetMessageReactionRequest;
 import com.reley.messenger.message.reaction.service.MessageReactionService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,7 +16,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class MessageReactionController {
@@ -31,8 +29,6 @@ public class MessageReactionController {
     public Mono<List<MessageReactionResponse>> setReaction(@PathVariable Long dialogId,
                                                            @PathVariable Long messageId,
                                                            @RequestBody SetMessageReactionRequest request) {
-
-        log.info("dialogId = {}, messageId = {}, request = {}", dialogId, messageId, request);
 
         return userServiceInfo
                 .getCurrentUser()

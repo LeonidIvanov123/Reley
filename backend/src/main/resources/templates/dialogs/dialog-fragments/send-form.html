@@ -1,0 +1,39 @@
+<div
+        class="send-area"
+        th:fragment="send-form">
+
+    <!-- Выбранные файлы -->
+    <div
+            id="selected-attachments"
+            class="selected-attachments">
+    </div>
+
+
+    <form
+            id="send-form"
+            class="send-form">
+
+        <button
+                type="button"
+                id="attachment-button"
+                class="attachment-button"
+                title="Прикрепить файл">
+            📎
+        </button>
+
+
+        <textarea
+                id="message-content"
+                name="content"
+                placeholder="Напишите сообщение..."
+                rows="1"></textarea>
+
+
+        <button
+                type="submit">
+            Отправить
+        </button>
+
+    </form>
+
+</div>

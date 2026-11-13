@@ -352,12 +352,9 @@ public class DialogServiceImpl implements DialogService {
     @Override
     public Mono<Dialog> findById(Long id) {
 
-        return userServiceInfo.getCurrentUser()
-                .flatMap(user ->
-                        checkAccessAndReturnDialog(
-                                id,
-                                user.userId()
-                        )
+        return dialogRepository.findById(id)
+                .switchIfEmpty(
+                        Mono.error(new ChatHaveNoAccess("Диалог с id %s не найден".formatted(id)))
                 )
                 .flatMap(dialog -> {
 
@@ -452,38 +449,6 @@ public class DialogServiceImpl implements DialogService {
 
                     return Mono.empty();
                 });
-    }
-
-    private Mono<Dialog> checkAccessAndReturnDialog(
-            Long dialogId,
-            Long userId
-    ) {
-        return dialogRepository.findById(dialogId)
-                .switchIfEmpty(
-                        Mono.error(
-                                new ChatHaveNoAccess(
-                                        "Диалог с id %s не найден"
-                                                .formatted(dialogId)
-                                )
-                        )
-                )
-                .flatMap(dialog ->
-                        participantRepository
-                                .existsByDialogIdAndUserId(
-                                        dialogId,
-                                        userId
-                                )
-                                .flatMap(isParticipant ->
-                                        isParticipant
-                                                ? Mono.just(dialog)
-                                                : Mono.error(
-                                                new ChatHaveNoAccess(
-                                                        "Нет доступа к диалогу c id [%s]"
-                                                                .formatted(dialogId)
-                                                )
-                                        )
-                                )
-                );
     }
 
     private Mono<Long> getUnreadCount(

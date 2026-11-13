@@ -1,0 +1,212 @@
+<th:block
+        th:fragment="message(message, currentUserId)"
+        th:with="mine=${message.senderId == currentUserId}">
+
+    <div
+            class="message"
+            th:classappend="${mine ? ' mine' : ' theirs'}
+                + (${message.deletedAt != null} ? ' deleted' : '')"
+            th:attr="data-message-id=${message.id}">
+
+        <!-- =========================
+             Автор
+             ========================= -->
+
+        <div
+                class="message-author"
+                th:if="${!mine}">
+
+            <span
+                    th:text="${message.senderName != null and !message.senderName.isBlank()
+                        ? message.senderName
+                        : message.senderEmail}">
+                User
+            </span>
+
+        </div>
+
+
+        <!-- =========================
+             Реакции
+             ========================= -->
+
+        <button
+                type="button"
+                class="reaction-trigger"
+                title="Добавить реакцию">
+            ☺
+        </button>
+
+
+        <div class="reaction-picker">
+
+            <button
+                    type="button"
+                    data-reaction="👍">
+                👍
+            </button>
+
+            <button
+                    type="button"
+                    data-reaction="❤️">
+                ❤️
+            </button>
+
+            <button
+                    type="button"
+                    data-reaction="😂">
+                😂
+            </button>
+
+            <button
+                    type="button"
+                    data-reaction="😮">
+                😮
+            </button>
+
+            <button
+                    type="button"
+                    data-reaction="😢">
+                😢
+            </button>
+
+            <button
+                    type="button"
+                    data-reaction="😡">
+                😡
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             Текст сообщения
+             ========================= -->
+
+        <div
+                class="message-content"
+                th:if="${message.content != null and !message.content.isBlank()}"
+                th:text="${message.content}">
+        </div>
+
+
+        <!-- =========================
+             Attachments
+             ========================= -->
+
+        <div
+                class="message-attachments"
+                th:if="${message.attachments != null and !message.attachments.isEmpty()}">
+
+            <a
+                    th:each="attachment : ${message.attachments}"
+                    class="message-attachment"
+                    th:href="${attachment.downloadUrl}"
+                    target="_blank"
+                    rel="noopener noreferrer">
+
+                <div class="attachment-icon">
+                    📎
+                </div>
+
+                <div class="attachment-info">
+
+                    <div
+                            class="attachment-name"
+                            th:text="${attachment.fileName}">
+                        file.txt
+                    </div>
+
+                    <div
+                            class="attachment-meta">
+
+                        <span
+                                th:if="${attachment.extension != null}"
+                                th:text="${attachment.extension}">
+                            txt
+                        </span>
+
+                        <span
+                                th:if="${attachment.extension != null}">
+                            ·
+                        </span>
+
+                        <span
+                                th:text="${attachment.size}">
+                            1024
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <!-- =========================
+             Удалённое сообщение
+             ========================= -->
+
+        <div
+                class="message-deleted-label"
+                th:if="${message.deletedAt != null}">
+            удалено
+        </div>
+
+
+        <!-- =========================
+             Реакции сообщения
+             ========================= -->
+
+        <div class="message-reactions">
+
+            <button
+                    th:each="reaction : ${message.reactions}"
+                    type="button"
+                    class="reaction-item"
+                    th:classappend="${reaction.reactedByMe ? ' reacted' : ''}"
+                    th:attr="data-reaction=${reaction.reaction}">
+
+                <span
+                        th:text="${reaction.reaction}">
+                    👍
+                </span>
+
+                <span
+                        class="reaction-count"
+                        th:text="${reaction.count}">
+                    1
+                </span>
+
+            </button>
+
+        </div>
+
+
+        <!-- =========================
+             Время
+             ========================= -->
+
+        <div class="message-time">
+
+            <span
+                    th:text="${#temporals.format(message.createdAt, 'HH:mm')}">
+                12:30
+            </span>
+
+
+            <span
+                    th:if="${mine}"
+                    class="message-status"
+                    th:classappend="${message.readByOther ? ' read' : ' unread'}"
+                    th:text="${message.readByOther ? '✓✓' : '✓'}">
+                ✓
+            </span>
+
+        </div>
+
+    </div>
+
+</th:block>

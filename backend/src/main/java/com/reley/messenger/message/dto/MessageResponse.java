@@ -1,5 +1,6 @@
 package com.reley.messenger.message.dto;
 
+import com.reley.messenger.attachment.dto.AttachmentResponse;
 import com.reley.messenger.message.entity.Message;
 import com.reley.messenger.message.reaction.dto.MessageReactionResponse;
 
@@ -17,7 +18,8 @@ public record MessageResponse(
         OffsetDateTime editedAt,
         OffsetDateTime deletedAt,
         boolean readByOther,
-        List<MessageReactionResponse> reactions
+        List<MessageReactionResponse> reactions,
+        List<AttachmentResponse> attachments
 ) {
 
     public static MessageResponse fromEntity(Message message) {
@@ -32,6 +34,7 @@ public record MessageResponse(
                 message.getEditedAt(),
                 message.getDeletedAt(),
                 false,
+                List.of(),
                 List.of()
         );
     }
@@ -48,6 +51,7 @@ public record MessageResponse(
                 message.getEditedAt(),
                 message.getDeletedAt(),
                 readByOther,
+                List.of(),
                 List.of()
         );
     }
@@ -67,7 +71,29 @@ public record MessageResponse(
                 message.getEditedAt(),
                 message.getDeletedAt(),
                 readByOther,
-                reactions
+                reactions,
+                List.of()
+        );
+    }
+
+    public static MessageResponse fromEntity(Message message,
+                                             boolean readByOther,
+                                             List<MessageReactionResponse> reactions,
+                                             SenderInfo sender,
+                                             List<AttachmentResponse> attachments) {
+        return new MessageResponse(
+                message.getId(),
+                message.getDialogId(),
+                message.getSenderId(),
+                sender.name,
+                sender.email,
+                message.getContent(),
+                message.getCreatedAt(),
+                message.getEditedAt(),
+                message.getDeletedAt(),
+                readByOther,
+                reactions,
+                attachments
         );
     }
 

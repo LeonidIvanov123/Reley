@@ -52,6 +52,9 @@ logging:
     #org.springframework.security: TRACE
 
 reley:
+  file-storage:
+    type: local
+    path: ${FILE_STORAGE_PATH:./data/files}
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT:587}
