@@ -8,6 +8,7 @@ import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.util.UriUtils;
 import reactor.core.publisher.Mono;
 
@@ -59,6 +61,7 @@ public class DialogController {
                 .thenReturn("group-settings");
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping("/{dialogId}")
     public Mono<Void> updateGroup(
             @PathVariable Long dialogId,
@@ -72,6 +75,7 @@ public class DialogController {
         );
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{dialogId}/participants/{userId}")
     public Mono<Void> removeParticipant(
             @PathVariable Long dialogId,
@@ -83,6 +87,7 @@ public class DialogController {
         );
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/{dialogId}/participants/{userId}/admin")
     public Mono<Void> makeAdmin(
             @PathVariable Long dialogId,
@@ -94,6 +99,7 @@ public class DialogController {
         );
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{dialogId}/participants/{userId}/admin")
     public Mono<Void> removeAdmin(
             @PathVariable Long dialogId,
@@ -105,6 +111,7 @@ public class DialogController {
         );
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/{dialogId}/leave")
     public Mono<Void> leaveGroup(
             @PathVariable Long dialogId
@@ -121,6 +128,7 @@ public class DialogController {
                 .thenReturn("redirect:/");
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/{dialogId}/participants")
     public Mono<Void> addParticipant(
             @PathVariable Long dialogId,
