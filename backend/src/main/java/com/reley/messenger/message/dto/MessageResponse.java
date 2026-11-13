@@ -71,8 +71,7 @@ public record MessageResponse(
                 message.getEditedAt(),
                 message.getDeletedAt(),
                 readByOther,
-                reactions
-                readByOther,
+                reactions,
                 List.of()
         );
     }
