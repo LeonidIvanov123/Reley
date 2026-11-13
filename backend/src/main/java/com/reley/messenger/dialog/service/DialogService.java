@@ -44,8 +44,4 @@ public interface DialogService {
 
     Mono<Long> joinGroup(String dialogLink);
 
-
-    //TODO не актуально, логика меняалсь
-    Mono<Dialog> checkAccessAndReturnDialog(Long dialogId, Long userId);
-
 }

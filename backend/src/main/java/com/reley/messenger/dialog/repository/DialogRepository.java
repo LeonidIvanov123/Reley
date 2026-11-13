@@ -72,18 +72,4 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
         """)
     Mono<Dialog> findGroupByDialogLink(String dialogLink);
 
-//TODO некорректно для новой логики диалогов
-    @Query("""
-        SELECT EXISTS (
-            SELECT 1
-            FROM dialogs
-            WHERE id = :dialogId
-              AND (
-                    owner_id = :userId
-                    OR participant_id = :userId
-                  )
-        )
-        """)
-    Mono<Boolean> existsByIdAndUserId(Long dialogId, Long userId);
-
 }

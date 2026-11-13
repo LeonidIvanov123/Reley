@@ -78,19 +78,21 @@ public record MessageResponse(
 
     public static MessageResponse fromEntity(Message message,
                                              boolean readByOther,
+                                             List<MessageReactionResponse> reactions,
+                                             SenderInfo sender,
                                              List<AttachmentResponse> attachments) {
         return new MessageResponse(
                 message.getId(),
                 message.getDialogId(),
                 message.getSenderId(),
-                null,
-                null,
+                sender.name,
+                sender.email,
                 message.getContent(),
                 message.getCreatedAt(),
                 message.getEditedAt(),
                 message.getDeletedAt(),
                 readByOther,
-                List.of(),
+                reactions,
                 attachments
         );
     }

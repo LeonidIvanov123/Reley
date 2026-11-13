@@ -38,11 +38,6 @@ public class MessageServiceImpl implements MessageService {
     private final UserService userService;
 
     @Override
-    public Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId) {
-        return messageRepository.findTopByDialogIdOrderByIdDesc(dialogId);
-    }
-
-    @Override
     public Flux<MessageResponse> getMessages(
             Long dialogId,
             Long beforeId
@@ -234,11 +229,6 @@ public class MessageServiceImpl implements MessageService {
                         messageRepository.markAsDeleteMessage(messageId, dialogId, user.userId(), OffsetDateTime.now()))
                 .flatMap(count -> messageRepository.findById(messageId))
                 .map(MessageResponse::fromEntity);
-    }
-
-    @Override
-    public Mono<OffsetDateTime> findLastMessageDateByDialogId(Long dialogId) {
-        return messageRepository.findLastMessageDate(dialogId);
     }
 
 }
