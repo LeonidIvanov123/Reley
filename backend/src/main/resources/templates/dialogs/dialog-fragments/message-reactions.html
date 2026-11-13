@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<div th:fragment="reactions(reactions)"
+     class="message-reactions"
+     th:if="${reactions != null && !reactions.isEmpty()}">
+
+    <button type="button"
+            class="reaction-item"
+            th:each="reaction : ${reactions}"
+            th:classappend="${reaction.reactedByMe ? ' reacted' : ''}"
+            th:data-reaction="${reaction.reaction}">
+
+        <span th:text="${reaction.reaction}">
+            👍
+        </span>
+
+        <span class="reaction-count"
+              th:text="${reaction.count}">
+            1
+        </span>
+
+    </button>
+
+</div>
+
+</body>
+</html>

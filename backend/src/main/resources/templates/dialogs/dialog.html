@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title th:text="${dialog.dialogName} + ' — Reley'">
+        Reley
+    </title>
+
+    <link rel="stylesheet" th:href="@{/css/dialog.css}">
+
+
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- =========================
+         Шапка
+         ========================= -->
+
+    <div th:replace="~{dialogs/dialog-fragments/chat-header :: header(
+            dialog=${dialog}
+         )}">
+    </div>
+
+
+    <div class="chat">
+
+        <!-- =========================
+             Сообщения
+             ========================= -->
+
+        <div class="messages"
+             id="messages"
+             th:data-dialog-id="${dialog.id}"
+             th:data-current-user-id="${currentUserId}">
+
+            <div id="loading-indicator"
+                 class="loading-indicator">
+                Загрузка сообщений...
+            </div>
+
+
+            <!-- =========================
+                 Сообщения из сервера
+                 ========================= -->
+
+            <th:block th:each="message : ${messages}">
+
+                <div
+                        th:replace="~{dialogs/dialog-fragments/message :: message(
+                message=${message},
+                currentUserId=${currentUserId}
+            )}">
+                </div>
+
+            </th:block>
+
+
+            <!-- =========================
+                 Нет сообщений
+                 ========================= -->
+
+            <div id="empty-messages"
+                 th:if="${#lists.isEmpty(messages)}">
+                Сообщений пока нет. Напишите первым!
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             Ошибка
+             ========================= -->
+
+        <div id="send-error"
+             class="error">
+        </div>
+
+
+        <!-- =========================
+             Отправка
+             ========================= -->
+
+        <div th:replace="~{dialogs/dialog-fragments/send-form :: send-form}">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     Контекстное меню
+     ========================= -->
+
+<div
+        id="attachment-picker"
+        class="attachment-picker">
+
+    <div class="attachment-picker-header">
+
+        <span>Прикрепить файл</span>
+
+        <button
+                type="button"
+                id="close-attachment-picker"
+                class="attachment-picker-close">
+            ×
+        </button>
+
+    </div>
+
+
+    <div class="attachment-picker-search">
+
+        <input
+                type="text"
+                id="attachment-search"
+                placeholder="Поиск файлов...">
+
+    </div>
+
+
+    <div
+            id="my-attachments"
+            class="my-attachments">
+
+        <div class="attachments-loading">
+            Загрузка файлов...
+        </div>
+
+    </div>
+
+
+    <div class="attachment-picker-footer">
+
+        <input
+                type="file"
+                id="attachment-file-input"
+                multiple
+                hidden>
+
+        <button
+                type="button"
+                id="upload-attachment-button"
+                class="upload-attachment-button">
+            ＋ Загрузить с устройства
+        </button>
+
+    </div>
+
+</div>
+
+<div th:replace="~{dialogs/dialog-fragments/context-menu :: context-menu}">
+</div>
+
+
+<script th:src="@{/js/dialog.js}"></script>
+
+
+</body>
+</html>

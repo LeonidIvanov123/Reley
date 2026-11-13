@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<div th:fragment="header(dialog)"
+     class="chat-header">
+
+    <a class="back-button"
+       href="/"
+       title="К списку диалогов">
+        ←
+    </a>
+
+    <div class="chat-avatar"
+         th:text="${dialog.groupChat ? '👥' : '👤'}">
+        👤
+    </div>
+
+    <div class="chat-title">
+
+        <h2 th:text="${dialog.dialogName}">
+            Диалог
+        </h2>
+
+        <div class="chat-subtitle"
+             th:if="${dialog.groupChat}">
+            Групповой чат
+        </div>
+
+        <div class="chat-subtitle"
+             th:unless="${dialog.groupChat}">
+            Reley messenger
+        </div>
+
+    </div>
+
+    <a th:if="${dialog.groupChat}"
+       th:href="@{/dialogs/{id}/settings(id=${dialog.id})}"
+       class="settings-button"
+       title="Настройки группы">
+        ⚙
+    </a>
+
+</div>
+
+</body>
+</html>
