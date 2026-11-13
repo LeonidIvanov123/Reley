@@ -16,4 +16,6 @@ public interface DialogService {
 
     Mono<Dialog> findById(Long id);
 
+    Mono<Dialog> checkAccessAndReturnDialog(Long dialogId, Long userId);
+
 }

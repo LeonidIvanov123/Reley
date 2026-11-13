@@ -1,3 +1,17 @@
 package com.reley.messenger.message.dto;
 
-public record SendMessageRequest(String content) {}
+import java.util.List;
+import java.util.UUID;
+
+public record SendMessageRequest(
+        String content,
+        List<UUID> attachmentIds
+) {
+
+    public List<UUID> attachmentIds() {
+        return attachmentIds == null
+                ? List.of()
+                : attachmentIds;
+    }
+
+}

@@ -22,4 +22,18 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
             Long userId,
             Long otherUserId
     );
+
+    @Query("""
+        SELECT EXISTS (
+            SELECT 1
+            FROM dialogs
+            WHERE id = :dialogId
+              AND (
+                    owner_id = :userId
+                    OR participant_id = :userId
+                  )
+        )
+        """)
+    Mono<Boolean> existsByIdAndUserId(Long dialogId, Long userId);
+
 }

@@ -187,7 +187,8 @@ public class DialogServiceImpl implements DialogService {
                 );
     }
 
-    private Mono<Dialog> checkAccessAndReturnDialog(Long dialogId, Long userId) {
+    @Override
+    public Mono<Dialog> checkAccessAndReturnDialog(Long dialogId, Long userId) {
 
         return dialogRepository.findById(dialogId)
                 .switchIfEmpty(Mono.error(
