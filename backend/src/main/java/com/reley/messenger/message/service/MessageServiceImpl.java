@@ -2,7 +2,7 @@ package com.reley.messenger.message.service;
 
 import com.reley.messenger.dialog.repository.DialogParticipantRepository;
 import com.reley.messenger.dialog.service.DialogService;
-import com.reley.messenger.exception.ChatHaveNoAccess;
+import com.reley.messenger.exception.UserNotFoundException;
 import com.reley.messenger.message.dto.MessageResponse;
 import com.reley.messenger.message.dto.NewMessageDomainEvent;
 import com.reley.messenger.message.dto.SendMessageRequest;
@@ -210,12 +210,27 @@ public class MessageServiceImpl implements MessageService {
                                                                 userId,
                                                                 savedMessage.getId()
                                                         )
-                                                        .then(Mono.fromRunnable(() ->
-                                                                eventPublisher.publishEvent(
-                                                                        NewMessageDomainEvent
-                                                                                .fromMessageResponse(response)
+                                                        .then(userService
+                                                                .findById(response.senderId())
+                                                                .switchIfEmpty(
+                                                                        Mono.error(
+                                                                                new UserNotFoundException("Пользователь с id %s не найден".formatted(response.senderId()))
+                                                                        )
                                                                 )
-                                                        ))
+                                                                .flatMap(user ->
+                                                                        Mono.fromRunnable(() ->
+                                                                                eventPublisher.publishEvent(
+                                                                                        NewMessageDomainEvent.fromMessageResponse(
+                                                                                                response,
+                                                                                                new MessageResponse.SenderInfo(
+                                                                                                        user.getName(),
+                                                                                                        user.getEmail()
+                                                                                                )
+                                                                                        )
+                                                                                )
+                                                                        )
+                                                                )
+                                                        )
                                                         .thenReturn(response);
                                             });
                                 })

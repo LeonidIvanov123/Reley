@@ -45,6 +45,8 @@ public class WebSocketEventListener {
                                 event.id(),
                                 event.dialogId(),
                                 event.senderId(),
+                                event.senderName(),
+                                event.senderEmail(),
                                 event.content(),
                                 event.createdAt()
                         )
@@ -54,21 +56,44 @@ public class WebSocketEventListener {
                 .findByDialogId(event.dialogId())
                 .map(DialogParticipant::getUserId)
                 .filter(userId -> !Objects.equals(userId, event.senderId()))
-                .flatMap(userId ->
-                        webSocketService
-                                .sendToUser(userId, webSocketEvent)
-                                .then(
-                                        sendDialogUpdated(
-                                                event.dialogId(),
-                                                userId,
-                                                event.createdAt()
-                                        )
-                                )
-                )
+                .flatMap(userId -> {
+
+                    log.debug(
+                            "Sending NEW_MESSAGE: dialogId={}, messageId={}, senderId={}, recipientId={}",
+                            event.dialogId(),
+                            event.id(),
+                            event.senderId(),
+                            userId
+                    );
+
+                    return webSocketService
+                            .sendToUser(userId, webSocketEvent)
+                            .doOnSuccess(v ->
+                                    log.debug(
+                                            "NEW_MESSAGE sent: recipientId={}",
+                                            userId
+                                    )
+                            )
+                            .then(
+                                    sendDialogUpdated(
+                                            event.dialogId(),
+                                            userId,
+                                            event.createdAt()
+                                    )
+                            )
+                            .doOnError(error ->
+                                    log.error(
+                                            "Failed for recipientId={}: {}",
+                                            userId,
+                                            error.getMessage(),
+                                            error
+                                    )
+                            );
+                })
                 .doOnError(error ->
                         log.error(
-                                "Failed to send NEW_MESSAGE event: "
-                                        + "dialogId={}, messageId={}, senderId={}",
+                                "Failed to send NEW_MESSAGE event: " +
+                                        "dialogId={}, messageId={}, senderId={}",
                                 event.dialogId(),
                                 event.id(),
                                 event.senderId(),
@@ -124,14 +149,16 @@ public class WebSocketEventListener {
     ) {
         return dialogParticipantRepository
                 .findByDialogIdAndUserId(dialogId, userId)
-                .map(DialogParticipant::getLastReadMessageId)
-                .flatMap(Mono::justOrEmpty)
-                .flatMap(lastReadMessageId ->
-                        messageReaderService.countMessagesAfterId(
-                                dialogId,
-                                lastReadMessageId
-                        )
-                )
+                .flatMap(participant -> {
+
+                    Long lastReadMessageId =
+                            participant.getLastReadMessageId();
+
+                    return messageReaderService.countMessagesAfterId(
+                            dialogId,
+                            lastReadMessageId
+                    );
+                })
                 .switchIfEmpty(
                         messageReaderService.countMessagesAfterId(
                                 dialogId,
