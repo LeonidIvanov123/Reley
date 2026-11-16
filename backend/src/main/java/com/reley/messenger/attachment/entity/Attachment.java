@@ -23,6 +23,9 @@ public class Attachment {
     @Id
     private UUID id;
 
+    @Column("file_uuid")
+    private UUID fileUuid;
+
     @Column("original_file_name")
     private String originalFileName;
 

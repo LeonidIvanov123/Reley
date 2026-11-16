@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="013-add-file-uuid-to-attachment" author="reley">
+
+        <delete tableName="message_attachment"/>
+        <delete tableName="file_attachment"/>
+
+        <dropForeignKeyConstraint
+                baseTableName="message_attachment"
+                constraintName="fk_message_attachment_attachment"/>
+
+        <addColumn tableName="file_attachment">
+            <column name="file_uuid" type="UUID"/>
+        </addColumn>
+
+        <addNotNullConstraint
+                tableName="file_attachment"
+                columnName="file_uuid"
+                columnDataType="UUID"/>
+
+    </changeSet>
+
+</databaseChangeLog>

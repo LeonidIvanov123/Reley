@@ -19,4 +19,7 @@ public interface AttachmentService {
     Mono<Void> delete(UUID id);
 
     Flux<AttachmentResponse> findMyAttachments();
+
+    Mono<AttachmentResponse> saveToMyFiles(UUID attachmentId);
+
 }

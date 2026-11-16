@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record AttachmentResponse(
         UUID id,
+        UUID fileUuid,
         String fileName,
         String extension,
         String contentType,
@@ -17,6 +18,7 @@ public record AttachmentResponse(
     public static AttachmentResponse fromEntity(Attachment attachment) {
         return new AttachmentResponse(
                 attachment.getId(),
+                attachment.getFileUuid(),
                 attachment.getOriginalFileName(),
                 attachment.getExtension(),
                 attachment.getContentType(),

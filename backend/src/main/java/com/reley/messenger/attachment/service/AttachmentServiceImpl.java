@@ -36,14 +36,16 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         String extension = extractExtension(fileName);
 
-        UUID fileId = UUID.randomUUID();
+        UUID attachmentId = UUID.randomUUID();
+        UUID fileUuid = UUID.randomUUID();
 
         return userServiceInfo.getCurrentUser()
                 .flatMap(user -> {
 
                     Attachment attachment =
                             Attachment.builder()
-                                    .id(fileId)
+                                    .id(attachmentId)
+                                    .fileUuid(fileUuid)
                                     .createdBy(user.userId())
                                     .originalFileName(fileName)
                                     .extension(extension)
@@ -55,14 +57,15 @@ public class AttachmentServiceImpl implements AttachmentService {
                                                     : "application/octet-stream"
                                     )
                                     .size(file.headers().getContentLength())
-                                    .storageKey(fileId.toString())
+                                    .storageKey(fileUuid.toString())
                                     .createdAt(OffsetDateTime.now())
                                     .build();
 
-                    return fileService.save(fileId, file.content())
+                    return fileService.save(fileUuid, file.content())
                             .then(
                                     attachmentRepository.insert(
                                             attachment.getId(),
+                                            attachment.getFileUuid(),
                                             attachment.getCreatedBy(),
                                             attachment.getOriginalFileName(),
                                             attachment.getExtension(),
@@ -72,8 +75,9 @@ public class AttachmentServiceImpl implements AttachmentService {
                                             attachment.getCreatedAt())
                             ).doOnError(error ->
                                     log.error(
-                                            "Failed to save attachment: id={}, userId={}",
-                                            fileId,
+                                            "Failed to save attachment: id={}, fileUuid={}, userId={}",
+                                            attachmentId,
+                                            fileUuid,
                                             user.userId(),
                                             error
                                     )
@@ -105,14 +109,79 @@ public class AttachmentServiceImpl implements AttachmentService {
     }
 
     @Override
-    public Mono<Void> delete(UUID id) {
+    public Mono<Void> delete(UUID attachmentId) {
 
-        return findById(id)
+        return attachmentRepository
+                .findById(attachmentId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found"))
+                )
                 .flatMap(attachment ->
-                        fileService
-                                .delete(attachment.id())
-                                .then(attachmentRepository.deleteById(attachment.id()))
+                        attachmentRepository
+                                .deleteById(attachment.getId())
+                                .then(attachmentRepository.existsByFileUuid(attachment.getFileUuid()))
+                                .flatMap(fileStillExists -> {
+
+                                    if (fileStillExists) {
+                                        return Mono.empty();
+                                    }
+
+                                    return fileService.delete(attachment.getFileUuid());
+                                })
                 );
+    }
+
+    @Override
+    public Mono<AttachmentResponse> saveToMyFiles(UUID attachmentId) {
+
+        return userServiceInfo.getCurrentUserId()
+                .flatMap(
+                        userId ->
+                                attachmentRepository
+                                        .findById(attachmentId)
+                                        .switchIfEmpty(
+                                                Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Attachment not found"))
+                                        )
+                                        .flatMap(
+                                                source ->
+                                                        attachmentRepository
+                                                                .findByFileUuidAndCreatedBy(source.getFileUuid(), userId)
+                                                                .switchIfEmpty(copyForUser(source, userId))
+                                        )
+                )
+                .map(AttachmentResponse::fromEntity);
+    }
+
+    private Mono<Attachment> copyForUser(
+            Attachment source,
+            Long userId
+    ) {
+        UUID newAttachmentId = UUID.randomUUID();
+
+        Attachment copy = Attachment.builder()
+                .id(newAttachmentId)
+                .fileUuid(source.getFileUuid())
+                .originalFileName(source.getOriginalFileName())
+                .extension(source.getExtension())
+                .contentType(source.getContentType())
+                .size(source.getSize())
+                .storageKey(source.getFileUuid().toString())
+                .createdAt(OffsetDateTime.now())
+                .createdBy(userId)
+                .build();
+
+        return attachmentRepository
+                .insert(
+                        copy.getId(),
+                        copy.getFileUuid(),
+                        copy.getCreatedBy(),
+                        copy.getOriginalFileName(),
+                        copy.getExtension(),
+                        copy.getContentType(),
+                        copy.getSize(),
+                        copy.getStorageKey(),
+                        copy.getCreatedAt()
+                )
+                .thenReturn(copy);
     }
 
     @Override
