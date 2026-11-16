@@ -27,4 +27,12 @@
 
     </changeSet>
 
+    <changeSet id="013-remove-storage-key-unique" author="reley">
+
+        <dropUniqueConstraint
+                tableName="file_attachment"
+                constraintName="file_attachment_storage_key_key"/>
+
+    </changeSet>
+
 </databaseChangeLog>

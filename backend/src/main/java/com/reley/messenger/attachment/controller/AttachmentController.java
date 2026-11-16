@@ -60,10 +60,9 @@ public class AttachmentController {
                 );
     }
 
-    @PostMapping("/{id}/copy")
+    @PostMapping("/api/attachments/{id}/copy")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> copyToMyFiles(
-            @PathVariable UUID id
+    public Mono<Void> copyToMyFiles(@PathVariable UUID id
     ) {
         return attachmentService
                 .saveToMyFiles(id)

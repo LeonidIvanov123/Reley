@@ -145,7 +145,9 @@ public class AttachmentServiceImpl implements AttachmentService {
                                                 source ->
                                                         attachmentRepository
                                                                 .findByFileUuidAndCreatedBy(source.getFileUuid(), userId)
-                                                                .switchIfEmpty(copyForUser(source, userId))
+                                                                .switchIfEmpty(
+                                                                        Mono.defer(() -> copyForUser(source, userId))
+                                                                )
                                         )
                 )
                 .map(AttachmentResponse::fromEntity);
@@ -181,6 +183,7 @@ public class AttachmentServiceImpl implements AttachmentService {
                         copy.getStorageKey(),
                         copy.getCreatedAt()
                 )
+                .doOnError(error -> log.error("COPIED ATTACHMENT: fileId={}, error={}", copy.getId(), copy.getFileUuid(), error))
                 .thenReturn(copy);
     }
 
