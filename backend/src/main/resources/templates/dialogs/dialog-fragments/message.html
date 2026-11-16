@@ -98,12 +98,14 @@
                 class="message-attachments"
                 th:if="${message.attachments != null and !message.attachments.isEmpty()}">
 
-            <a
+            <div
                     th:each="attachment : ${message.attachments}"
                     class="message-attachment"
-                    th:href="${attachment.downloadUrl}"
-                    target="_blank"
-                    rel="noopener noreferrer">
+                    role="button"
+                    tabindex="0"
+                    th:attr="
+                        data-attachment-id=${attachment.id},
+                        data-download-url=${attachment.downloadUrl}">
 
                 <div class="attachment-icon">
                     📎
@@ -117,8 +119,7 @@
                         file.txt
                     </div>
 
-                    <div
-                            class="attachment-meta">
+                    <div class="attachment-meta">
 
                         <span
                                 th:if="${attachment.extension != null}"
@@ -140,7 +141,7 @@
 
                 </div>
 
-            </a>
+            </div>
 
         </div>
 

@@ -5,6 +5,7 @@ import com.reley.messenger.attachment.service.AttachmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
@@ -57,6 +58,16 @@ public class AttachmentController {
                                     return builder.body(resource);
                                 })
                 );
+    }
+
+    @PostMapping("/{id}/copy")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> copyToMyFiles(
+            @PathVariable UUID id
+    ) {
+        return attachmentService
+                .saveToMyFiles(id)
+                .then();
     }
 
     @DeleteMapping("/api/attachments/{id}")

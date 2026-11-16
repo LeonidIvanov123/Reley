@@ -63,6 +63,31 @@ const selectedAttachments =
 
 /*
  * =========================
+ * Attachment menu
+ * =========================
+ */
+
+const messageAttachmentMenu =
+    document.getElementById(
+        'message-attachment-menu'
+    );
+
+const downloadMessageAttachmentButton =
+    document.getElementById(
+        'download-message-attachment'
+    );
+
+const saveMessageAttachmentButton =
+    document.getElementById(
+        'save-message-attachment'
+    );
+
+let selectedMessageAttachment =
+    null;
+
+
+/*
+ * =========================
  * Attachment picker
  * =========================
  */
@@ -140,6 +165,453 @@ document.addEventListener(
 
 /*
  * =========================
+ * Меню attachment сообщения
+ * =========================
+ */
+
+function closeMessageAttachmentMenu() {
+
+    if (!messageAttachmentMenu) {
+        return;
+    }
+
+    messageAttachmentMenu.hidden =
+        true;
+
+    messageAttachmentMenu.style.display =
+        'none';
+
+    selectedMessageAttachment =
+        null;
+}
+
+
+function openMessageAttachmentMenu(
+    attachmentElement
+) {
+
+    if (
+        !messageAttachmentMenu
+        ||
+        !attachmentElement
+    ) {
+        return;
+    }
+
+
+    const attachmentId =
+        attachmentElement.dataset.attachmentId;
+
+    const downloadUrl =
+        attachmentElement.dataset.downloadUrl;
+
+
+    if (
+        !attachmentId
+        ||
+        !downloadUrl
+    ) {
+        return;
+    }
+
+
+    selectedMessageAttachment = {
+        id: attachmentId,
+        downloadUrl: downloadUrl
+    };
+
+
+    /*
+     * Сначала показываем меню,
+     * чтобы получить его размеры.
+     */
+
+    messageAttachmentMenu.hidden =
+        false;
+
+    messageAttachmentMenu.style.display =
+        'block';
+
+
+    const rect =
+        attachmentElement.getBoundingClientRect();
+
+    const menuWidth =
+        messageAttachmentMenu.offsetWidth;
+
+    const menuHeight =
+        messageAttachmentMenu.offsetHeight;
+
+
+    let left =
+        rect.left;
+
+    let top =
+        rect.bottom + 5;
+
+
+    /*
+     * Если меню выходит за правую границу.
+     */
+
+    if (
+        left + menuWidth >
+        window.innerWidth - 10
+    ) {
+        left =
+            window.innerWidth -
+            menuWidth -
+            10;
+    }
+
+
+    /*
+     * Если меню выходит за нижнюю границу,
+     * показываем его над attachment.
+     */
+
+    if (
+        top + menuHeight >
+        window.innerHeight - 10
+    ) {
+        top =
+            rect.top -
+            menuHeight -
+            5;
+    }
+
+
+    /*
+     * Не позволяем меню выйти
+     * за верхнюю/левую границу.
+     */
+
+    left =
+        Math.max(
+            10,
+            left
+        );
+
+    top =
+        Math.max(
+            10,
+            top
+        );
+
+
+    messageAttachmentMenu.style.left =
+        `${left}px`;
+
+    messageAttachmentMenu.style.top =
+        `${top}px`;
+}
+
+
+/*
+ * =========================
+ * Клик по attachment
+ * =========================
+ */
+
+messagesContainer.addEventListener(
+    'click',
+    event => {
+
+        const attachment =
+            event.target.closest(
+                '.message-attachment'
+            );
+
+
+        if (!attachment) {
+            return;
+        }
+
+
+        event.preventDefault();
+        event.stopPropagation();
+
+
+        /*
+         * Закрываем другие меню.
+         */
+
+        closeContextMenu();
+
+
+        if (attachmentPicker) {
+
+            attachmentPicker.classList.remove(
+                'open'
+            );
+        }
+
+
+        openMessageAttachmentMenu(
+            attachment
+        );
+    }
+);
+
+
+/*
+ * =========================
+ * Скачать attachment
+ * =========================
+ */
+
+if (downloadMessageAttachmentButton) {
+
+    downloadMessageAttachmentButton.addEventListener(
+        'click',
+        event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            if (
+                !selectedMessageAttachment
+            ) {
+                return;
+            }
+
+
+            const downloadUrl =
+                selectedMessageAttachment.downloadUrl;
+
+
+            closeMessageAttachmentMenu();
+
+
+            /*
+             * Открываем endpoint скачивания.
+             */
+
+            window.location.href =
+                downloadUrl;
+        }
+    );
+}
+
+
+/*
+ * =========================
+ * Добавить в "Мои файлы"
+ * =========================
+ */
+
+if (saveMessageAttachmentButton) {
+
+    saveMessageAttachmentButton.addEventListener(
+        'click',
+        async event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            if (
+                !selectedMessageAttachment
+            ) {
+                return;
+            }
+
+
+            const attachmentId =
+                selectedMessageAttachment.id;
+
+
+            closeMessageAttachmentMenu();
+
+
+            showSendError('');
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/api/attachments/${attachmentId}/copy`,
+                        {
+                            method: 'POST'
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    let message =
+                        'Не удалось добавить файл в «Мои файлы»';
+
+
+                    try {
+
+                        const body =
+                            await response.json();
+
+
+                        if (body.message) {
+
+                            message =
+                                body.message;
+                        }
+
+                    } catch (_) {
+                    }
+
+
+                    throw new Error(
+                        message
+                    );
+                }
+
+
+                /*
+                 * Обновляем локальный список
+                 * "Моих файлов".
+                 *
+                 * Сервер может вернуть AttachmentResponse.
+                 */
+
+                if (
+                    response.status !== 204
+                ) {
+
+                    try {
+
+                        const attachment =
+                            await response.json();
+
+
+                        if (attachment) {
+
+                            const exists =
+                                myAttachmentsList.some(
+                                    item =>
+                                        item.id ===
+                                        attachment.id
+                                );
+
+
+                            if (!exists) {
+
+                                myAttachmentsList = [
+                                    attachment,
+                                    ...myAttachmentsList
+                                ];
+                            }
+
+                            myAttachmentsLoaded =
+                                true;
+                        }
+
+                    } catch (_) {
+                    }
+                }
+
+
+                /*
+                 * Если endpoint возвращает 204,
+                 * просто перезагрузим список.
+                 */
+
+                if (
+                    response.status === 204
+                ) {
+
+                    myAttachmentsLoaded =
+                        false;
+
+                    await loadMyAttachments();
+                }
+
+
+                showSendError(
+                    'Файл добавлен в «Мои файлы»'
+                );
+
+
+                setTimeout(
+                    () => {
+
+                        if (
+                            sendError &&
+                            sendError.textContent ===
+                            'Файл добавлен в «Мои файлы»'
+                        ) {
+                            showSendError('');
+                        }
+                    },
+                    2000
+                );
+
+            } catch (error) {
+
+                console.error(
+                    'Failed to save attachment:',
+                    error
+                );
+
+
+                showSendError(
+                    error.message
+                );
+            }
+        }
+    );
+}
+
+
+/*
+ * =========================
+ * Клик вне меню attachment
+ * =========================
+ */
+
+document.addEventListener(
+    'click',
+    event => {
+
+        if (
+            !messageAttachmentMenu
+        ) {
+            return;
+        }
+
+
+        if (
+            messageAttachmentMenu.hidden
+        ) {
+            return;
+        }
+
+
+        if (
+            messageAttachmentMenu.contains(
+                event.target
+            )
+        ) {
+            return;
+        }
+
+
+        if (
+            event.target.closest(
+                '.message-attachment'
+            )
+        ) {
+            return;
+        }
+
+
+        closeMessageAttachmentMenu();
+    }
+);
+
+
+/*
+ * =========================
  * Загрузка моих файлов
  * =========================
  */
@@ -150,6 +622,7 @@ async function loadMyAttachments() {
         return;
     }
 
+
     myAttachments.innerHTML =
         `
             <div class="attachments-loading">
@@ -157,12 +630,14 @@ async function loadMyAttachments() {
             </div>
         `;
 
+
     try {
 
         const response =
             await fetch(
                 '/api/attachments'
             );
+
 
         if (!response.ok) {
 
@@ -359,6 +834,7 @@ function renderMyAttachments(
                     toggleAttachment(
                         attachment
                     );
+
 
                     updateAttachmentElement(
                         element,
@@ -626,11 +1102,6 @@ async function uploadAttachment(
     }
 
 
-    /*
-     * Сервер сейчас ограничивает
-     * размер файла 15 MB.
-     */
-
     const maxFileSize =
         15 * 1024 * 1024;
 
@@ -712,11 +1183,6 @@ async function uploadAttachment(
             await response.json();
 
 
-        /*
-         * Добавляем новый файл
-         * в локальный список.
-         */
-
         myAttachmentsList =
             [
                 attachment,
@@ -727,11 +1193,6 @@ async function uploadAttachment(
         myAttachmentsLoaded =
             true;
 
-
-        /*
-         * Сразу выбираем загруженный файл
-         * для отправки.
-         */
 
         selectedAttachments.set(
             attachment.id,
@@ -1369,23 +1830,30 @@ function createMessageElement(
      * Текст
      */
 
-    const content =
-        document.createElement(
-            'div'
+    if (
+        message.content
+        &&
+        message.content.trim()
+    ) {
+
+        const content =
+            document.createElement(
+                'div'
+            );
+
+
+        content.className =
+            'message-content';
+
+
+        content.textContent =
+            message.content;
+
+
+        element.appendChild(
+            content
         );
-
-
-    content.className =
-        'message-content';
-
-
-    content.textContent =
-        message.content || '';
-
-
-    element.appendChild(
-        content
-    );
+    }
 
 
     /*
@@ -1410,26 +1878,34 @@ function createMessageElement(
         message.attachments.forEach(
             attachment => {
 
-                const link =
+                const attachmentElement =
                     document.createElement(
-                        'a'
+                        'div'
                     );
 
 
-                link.className =
+                attachmentElement.className =
                     'message-attachment';
 
 
-                link.href =
+                attachmentElement.setAttribute(
+                    'role',
+                    'button'
+                );
+
+
+                attachmentElement.setAttribute(
+                    'tabindex',
+                    '0'
+                );
+
+
+                attachmentElement.dataset.attachmentId =
+                    attachment.id;
+
+
+                attachmentElement.dataset.downloadUrl =
                     attachment.downloadUrl;
-
-
-                link.target =
-                    '_blank';
-
-
-                link.rel =
-                    'noopener noreferrer';
 
 
                 const icon =
@@ -1499,18 +1975,18 @@ function createMessageElement(
                 );
 
 
-                link.appendChild(
+                attachmentElement.appendChild(
                     icon
                 );
 
 
-                link.appendChild(
+                attachmentElement.appendChild(
                     info
                 );
 
 
                 attachmentsContainer.appendChild(
-                    link
+                    attachmentElement
                 );
             }
         );
@@ -2027,7 +2503,6 @@ function openContextMenu(
     const menuWidth =
         contextMenu.offsetWidth;
 
-
     const menuHeight =
         contextMenu.offsetHeight;
 
@@ -2060,6 +2535,21 @@ function openContextMenu(
 messagesContainer.addEventListener(
     'contextmenu',
     event => {
+
+        /*
+         * Не показываем контекстное меню
+         * сообщения при правом клике
+         * по attachment.
+         */
+
+        if (
+            event.target.closest(
+                '.message-attachment'
+            )
+        ) {
+            return;
+        }
+
 
         const messageElement =
             event.target.closest(
@@ -2105,6 +2595,20 @@ messagesContainer.addEventListener(
             ||
             !messageElement.classList.contains(
                 'mine'
+            )
+        ) {
+            return;
+        }
+
+
+        /*
+         * Не запускаем long press
+         * для attachment.
+         */
+
+        if (
+            event.target.closest(
+                '.message-attachment'
             )
         ) {
             return;
@@ -2449,33 +2953,43 @@ document.addEventListener(
 );
 
 
+/*
+ * =========================
+ * Escape
+ * =========================
+ */
+
 document.addEventListener(
     'keydown',
     event => {
 
-        if (event.key === 'Escape') {
-
-            closeContextMenu();
-
-
-            document
-                .querySelectorAll(
-                    '.reaction-picker.open'
-                )
-                .forEach(
-                    picker =>
-                        picker.classList.remove(
-                            'open'
-                        )
-                );
+        if (event.key !== 'Escape') {
+            return;
+        }
 
 
-            if (attachmentPicker) {
+        closeContextMenu();
 
-                attachmentPicker.classList.remove(
-                    'open'
-                );
-            }
+        closeMessageAttachmentMenu();
+
+
+        document
+            .querySelectorAll(
+                '.reaction-picker.open'
+            )
+            .forEach(
+                picker =>
+                    picker.classList.remove(
+                        'open'
+                    )
+            );
+
+
+        if (attachmentPicker) {
+
+            attachmentPicker.classList.remove(
+                'open'
+            );
         }
     }
 );
@@ -2568,9 +3082,18 @@ deleteMessageButton.addEventListener(
                     );
 
 
-                content.after(
-                    deletedLabel
-                );
+                if (content) {
+
+                    content.after(
+                        deletedLabel
+                    );
+
+                } else {
+
+                    messageElement.appendChild(
+                        deletedLabel
+                    );
+                }
             }
 
         } catch (error) {
