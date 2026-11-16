@@ -16,14 +16,25 @@ public interface AttachmentRepository extends ReactiveCrudRepository<Attachment,
     Flux<Attachment> findAllByCreatedBy(Long createdBy);
 
     @Query("""
-        INSERT INTO file_attachment (id, created_by, original_file_name, extension,
+        INSERT INTO file_attachment (id, file_uuid, created_by, original_file_name, extension,
                                      content_type, size, storage_key, created_at)
-        VALUES (:id, :createdBy, :originalFileName, :extension,
+        VALUES (:id, :fileUuid, :createdBy, :originalFileName, :extension,
                 :contentType, :size, :storageKey, :createdAt)
         RETURNING *
         """)
-    Mono<Attachment> insert(UUID id, Long createdBy, String originalFileName,
+    Mono<Attachment> insert(UUID id, UUID fileUuid, Long createdBy, String originalFileName,
                             String extension, String contentType, Long size,
                             String storageKey, OffsetDateTime createdAt);
+
+    @Query("""
+            SELECT EXISTS (SELECT 1 FROM file_attachment WHERE file_uuid = :fileUuid)
+            """)
+    Mono<Boolean> existsByFileUuid(UUID fileUuid);
+
+    @Query("""
+            SELECT * FROM file_attachment
+            WHERE file_uuid = :fileUuid AND created_by = :createdBy LIMIT 1
+            """)
+    Mono<Attachment> findByFileUuidAndCreatedBy(UUID fileUuid, Long createdBy);
 
 }

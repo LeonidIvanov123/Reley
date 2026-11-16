@@ -13,8 +13,8 @@
         Reley
     </title>
 
-    <link rel="stylesheet" th:href="@{/css/dialog.css}">
-
+    <link rel="stylesheet"
+          th:href="@{/css/dialog.css}">
 
 </head>
 
@@ -71,14 +71,16 @@
 
             <div id="empty-messages"
                  th:if="${#lists.isEmpty(messages)}">
+
                 Сообщений пока нет. Напишите первым!
+
             </div>
 
         </div>
 
 
         <!-- =========================
-             Ошибка
+             Ошибка отправки
              ========================= -->
 
         <div id="send-error"
@@ -87,7 +89,7 @@
 
 
         <!-- =========================
-             Отправка
+             Форма отправки
              ========================= -->
 
         <div th:replace="~{dialogs/dialog-fragments/send-form :: send-form}">
@@ -98,9 +100,51 @@
 </div>
 
 
-<!-- =========================
-     Контекстное меню
-     ========================= -->
+<!-- =========================================================
+     Всплывающее меню attachment
+     ========================================================= -->
+
+<div
+        id="message-attachment-menu"
+        class="message-attachment-menu"
+        hidden>
+
+    <button
+            type="button"
+            id="download-message-attachment"
+            class="message-attachment-menu-item">
+
+        <span class="message-attachment-menu-icon">
+            ↓
+        </span>
+
+        <span>
+            Скачать
+        </span>
+
+    </button>
+
+    <button
+            type="button"
+            id="save-message-attachment"
+            class="message-attachment-menu-item">
+
+        <span class="message-attachment-menu-icon">
+            📁
+        </span>
+
+        <span>
+            Добавить в «Мои файлы»
+        </span>
+
+    </button>
+
+</div>
+
+
+<!-- =========================================================
+     Picker файлов для отправки сообщения
+     ========================================================= -->
 
 <div
         id="attachment-picker"
@@ -108,13 +152,17 @@
 
     <div class="attachment-picker-header">
 
-        <span>Прикрепить файл</span>
+        <span>
+            Прикрепить файл
+        </span>
 
         <button
                 type="button"
                 id="close-attachment-picker"
                 class="attachment-picker-close">
+
             ×
+
         </button>
 
     </div>
@@ -149,16 +197,24 @@
                 multiple
                 hidden>
 
+
         <button
                 type="button"
                 id="upload-attachment-button"
                 class="upload-attachment-button">
+
             ＋ Загрузить с устройства
+
         </button>
 
     </div>
 
 </div>
+
+
+<!-- =========================================================
+     Контекстное меню сообщения
+     ========================================================= -->
 
 <div th:replace="~{dialogs/dialog-fragments/context-menu :: context-menu}">
 </div>
@@ -166,6 +222,6 @@
 
 <script th:src="@{/js/dialog.js}"></script>
 
-
 </body>
+
 </html>

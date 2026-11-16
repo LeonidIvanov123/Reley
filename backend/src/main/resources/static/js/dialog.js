@@ -19,6 +19,121 @@ const messageInput =
 const sendError =
     document.getElementById('send-error');
 
+let notificationAudioContext = null;
+
+function getNotificationAudioContext() {
+    if (!notificationAudioContext) {
+        const AudioContextClass =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContextClass) {
+            return null;
+        }
+
+        notificationAudioContext = new AudioContextClass();
+    }
+
+    return notificationAudioContext;
+}
+
+async function unlockNotificationAudio() {
+    const audioContext = getNotificationAudioContext();
+
+    if (!audioContext) {
+        return;
+    }
+
+    if (audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            console.warn(
+                'Unable to unlock notification audio:',
+                error
+            );
+        }
+    }
+}
+
+function playMessageNotificationSound() {
+    const audioContext = getNotificationAudioContext();
+
+    if (!audioContext) {
+        return;
+    }
+
+    try {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume().catch(() => {});
+        }
+
+        if (audioContext.state !== 'running') {
+            return;
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = 'sine';
+
+        oscillator.frequency.setValueAtTime(
+            880,
+            audioContext.currentTime
+        );
+
+        oscillator.frequency.exponentialRampToValueAtTime(
+            660,
+            audioContext.currentTime + 0.12
+        );
+
+        gain.gain.setValueAtTime(
+            0.0001,
+            audioContext.currentTime
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.12,
+            audioContext.currentTime + 0.01
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            audioContext.currentTime + 0.16
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(
+            audioContext.currentTime + 0.16
+        );
+    } catch (error) {
+        console.warn(
+            'Unable to play message notification sound:',
+            error
+        );
+    }
+}
+
+document.addEventListener(
+    'click',
+    () => unlockNotificationAudio(),
+    { once: true, passive: true }
+);
+
+document.addEventListener(
+    'keydown',
+    () => unlockNotificationAudio(),
+    { once: true, passive: true }
+);
+
+document.addEventListener(
+    'touchstart',
+    () => unlockNotificationAudio(),
+    { once: true, passive: true }
+);
 
 /*
  * =========================
@@ -50,7 +165,6 @@ const attachmentFileInput =
 const selectedAttachmentsContainer =
     document.getElementById('selected-attachments');
 
-
 let myAttachmentsLoaded =
     false;
 
@@ -59,6 +173,31 @@ let myAttachmentsList =
 
 const selectedAttachments =
     new Map();
+
+
+/*
+ * =========================
+ * Attachment menu
+ * =========================
+ */
+
+const messageAttachmentMenu =
+    document.getElementById(
+        'message-attachment-menu'
+    );
+
+const downloadMessageAttachmentButton =
+    document.getElementById(
+        'download-message-attachment'
+    );
+
+const saveMessageAttachmentButton =
+    document.getElementById(
+        'save-message-attachment'
+    );
+
+let selectedMessageAttachment =
+    null;
 
 
 /*
@@ -140,6 +279,465 @@ document.addEventListener(
 
 /*
  * =========================
+ * Всплывающее меню attachment
+ * =========================
+ */
+
+function closeMessageAttachmentMenu() {
+
+    if (!messageAttachmentMenu) {
+        return;
+    }
+
+    messageAttachmentMenu.hidden =
+        true;
+
+    messageAttachmentMenu.style.display =
+        'none';
+
+    selectedMessageAttachment =
+        null;
+}
+
+
+function openMessageAttachmentMenu(
+    attachmentElement
+) {
+
+    if (
+        !messageAttachmentMenu
+        ||
+        !attachmentElement
+    ) {
+        return;
+    }
+
+    const attachmentId =
+        attachmentElement.dataset.attachmentId;
+
+    const downloadUrl =
+        attachmentElement.dataset.downloadUrl;
+
+    if (
+        !attachmentId
+        ||
+        !downloadUrl
+    ) {
+        return;
+    }
+
+    selectedMessageAttachment = {
+        id: attachmentId,
+        downloadUrl: downloadUrl
+    };
+
+    /*
+     * Показываем меню перед расчётом размеров.
+     */
+    messageAttachmentMenu.hidden =
+        false;
+
+    messageAttachmentMenu.style.display =
+        'block';
+
+    /*
+     * Получаем размеры attachment
+     * и всплывающего меню.
+     */
+    const rect =
+        attachmentElement.getBoundingClientRect();
+
+    const menuWidth =
+        messageAttachmentMenu.offsetWidth;
+
+    const menuHeight =
+        messageAttachmentMenu.offsetHeight;
+
+    const margin =
+        8;
+
+    /*
+     * По умолчанию меню находится
+     * под attachment.
+     */
+    let left =
+        rect.left;
+
+    let top =
+        rect.bottom + margin;
+
+    /*
+     * Если справа места нет —
+     * сдвигаем меню влево.
+     */
+    if (
+        left + menuWidth >
+        window.innerWidth - margin
+    ) {
+        left =
+            window.innerWidth -
+            menuWidth -
+            margin;
+    }
+
+    /*
+     * Если снизу места нет —
+     * показываем меню над attachment.
+     */
+    if (
+        top + menuHeight >
+        window.innerHeight - margin
+    ) {
+        top =
+            rect.top -
+            menuHeight -
+            margin;
+    }
+
+    /*
+     * Если даже сверху места нет —
+     * оставляем внутри окна.
+     */
+    if (top < margin) {
+        top = margin;
+    }
+
+    /*
+     * Не позволяем меню выйти
+     * за левую границу.
+     */
+    if (left < margin) {
+        left = margin;
+    }
+
+    /*
+     * И на всякий случай не позволяем
+     * выйти за правую границу.
+     */
+    if (
+        left + menuWidth >
+        window.innerWidth - margin
+    ) {
+        left =
+            Math.max(
+                margin,
+                window.innerWidth -
+                menuWidth -
+                margin
+            );
+    }
+
+    messageAttachmentMenu.style.left =
+        `${left}px`;
+
+    messageAttachmentMenu.style.top =
+        `${top}px`;
+}
+
+
+/*
+ * =========================
+ * Клик по attachment
+ * =========================
+ */
+
+messagesContainer.addEventListener(
+    'click',
+    event => {
+
+        const attachment =
+            event.target.closest(
+                '.message-attachment'
+            );
+
+        if (!attachment) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        /*
+         * Закрываем обычное меню сообщения.
+         */
+        closeContextMenu();
+
+        /*
+         * Закрываем picker файлов.
+         */
+        if (attachmentPicker) {
+
+            attachmentPicker.classList.remove(
+                'open'
+            );
+        }
+
+        /*
+         * Открываем всплывающее меню.
+         */
+        openMessageAttachmentMenu(
+            attachment
+        );
+    }
+);
+
+
+/*
+ * =========================
+ * Скачать attachment
+ * =========================
+ */
+
+if (downloadMessageAttachmentButton) {
+
+    downloadMessageAttachmentButton.addEventListener(
+        'click',
+        event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (
+                !selectedMessageAttachment
+            ) {
+                return;
+            }
+
+            const downloadUrl =
+                selectedMessageAttachment.downloadUrl;
+
+            closeMessageAttachmentMenu();
+
+            /*
+             * Скачивание через обычный endpoint.
+             */
+            window.location.href =
+                downloadUrl;
+        }
+    );
+}
+
+
+/*
+ * =========================
+ * Добавить в "Мои файлы"
+ * =========================
+ */
+
+if (saveMessageAttachmentButton) {
+
+    saveMessageAttachmentButton.addEventListener(
+        'click',
+        async event => {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (
+                !selectedMessageAttachment
+            ) {
+                return;
+            }
+
+            const attachmentId =
+                selectedMessageAttachment.id;
+
+            closeMessageAttachmentMenu();
+
+            showSendError('');
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/api/attachments/${attachmentId}/copy`,
+                        {
+                            method: 'POST'
+                        }
+                    );
+
+                if (!response.ok) {
+
+                    let message =
+                        'Не удалось добавить файл в «Мои файлы»';
+
+                    try {
+
+                        const body =
+                            await response.json();
+
+                        if (body.message) {
+                            message =
+                                body.message;
+                        }
+
+                    } catch (_) {
+                    }
+
+                    throw new Error(
+                        message
+                    );
+                }
+
+                /*
+                 * Если сервер вернул AttachmentResponse,
+                 * добавляем его сразу в локальный список.
+                 */
+                if (
+                    response.status !== 204
+                ) {
+
+                    try {
+
+                        const attachment =
+                            await response.json();
+
+                        if (attachment) {
+
+                            const exists =
+                                myAttachmentsList.some(
+                                    item =>
+                                        item.id ===
+                                        attachment.id
+                                );
+
+                            if (!exists) {
+
+                                myAttachmentsList = [
+                                    attachment,
+                                    ...myAttachmentsList
+                                ];
+                            }
+
+                            myAttachmentsLoaded =
+                                true;
+                        }
+
+                    } catch (_) {
+                    }
+                }
+
+                /*
+                 * Если endpoint возвращает 204,
+                 * перезагружаем список файлов.
+                 */
+                if (
+                    response.status === 204
+                ) {
+
+                    myAttachmentsLoaded =
+                        false;
+
+                    await loadMyAttachments();
+                }
+
+                showSendError(
+                    'Файл добавлен в «Мои файлы»'
+                );
+
+                setTimeout(
+                    () => {
+
+                        if (
+                            sendError &&
+                            sendError.textContent ===
+                            'Файл добавлен в «Мои файлы»'
+                        ) {
+                            showSendError('');
+                        }
+
+                    },
+                    2000
+                );
+
+            } catch (error) {
+
+                console.error(
+                    'Failed to save attachment:',
+                    error
+                );
+
+                showSendError(
+                    error.message
+                );
+            }
+        }
+    );
+}
+
+
+/*
+ * =========================
+ * Закрытие всплывающего меню
+ * =========================
+ */
+
+document.addEventListener(
+    'click',
+    event => {
+
+        if (
+            !messageAttachmentMenu
+        ) {
+            return;
+        }
+
+        if (
+            messageAttachmentMenu.hidden
+        ) {
+            return;
+        }
+
+        /*
+         * Клик внутри меню.
+         */
+        if (
+            messageAttachmentMenu.contains(
+                event.target
+            )
+        ) {
+            return;
+        }
+
+        /*
+         * Клик по attachment —
+         * обработает основной handler.
+         */
+        if (
+            event.target.closest(
+                '.message-attachment'
+            )
+        ) {
+            return;
+        }
+
+        closeMessageAttachmentMenu();
+    }
+);
+
+
+/*
+ * =========================
+ * Закрытие при прокрутке
+ * =========================
+ */
+
+messagesContainer.addEventListener(
+    'scroll',
+    () => {
+
+        if (
+            messageAttachmentMenu &&
+            !messageAttachmentMenu.hidden
+        ) {
+            closeMessageAttachmentMenu();
+        }
+    }
+);
+
+
+/*
+ * =========================
  * Загрузка моих файлов
  * =========================
  */
@@ -171,20 +769,16 @@ async function loadMyAttachments() {
             );
         }
 
-
         const attachments =
             await response.json();
-
 
         myAttachmentsList =
             Array.isArray(attachments)
                 ? attachments
                 : [];
 
-
         myAttachmentsLoaded =
             true;
-
 
         renderMyAttachments(
             myAttachmentsList
@@ -196,7 +790,6 @@ async function loadMyAttachments() {
             'Failed to load attachments:',
             error
         );
-
 
         myAttachments.innerHTML =
             `
@@ -222,10 +815,8 @@ function renderMyAttachments(
         return;
     }
 
-
     myAttachments.innerHTML =
         '';
-
 
     const search =
         attachmentSearch
@@ -233,7 +824,6 @@ function renderMyAttachments(
                 .trim()
                 .toLowerCase()
             : '';
-
 
     const filteredAttachments =
         (attachments || []).filter(
@@ -243,20 +833,17 @@ function renderMyAttachments(
                     return true;
                 }
 
-
                 const fileName =
                     (
                         attachment.fileName ||
                         ''
                     ).toLowerCase();
 
-
                 return fileName.includes(
                     search
                 );
             }
         );
-
 
     if (
         !attachments ||
@@ -273,7 +860,6 @@ function renderMyAttachments(
         return;
     }
 
-
     if (
         filteredAttachments.length === 0
     ) {
@@ -288,7 +874,6 @@ function renderMyAttachments(
         return;
     }
 
-
     filteredAttachments.forEach(
         attachment => {
 
@@ -297,24 +882,19 @@ function renderMyAttachments(
                     'button'
                 );
 
-
             element.type =
                 'button';
-
 
             element.className =
                 'my-attachment';
 
-
             element.dataset.attachmentId =
                 attachment.id;
-
 
             const selected =
                 selectedAttachments.has(
                     attachment.id
                 );
-
 
             if (selected) {
 
@@ -322,7 +902,6 @@ function renderMyAttachments(
                     'selected'
                 );
             }
-
 
             element.innerHTML =
                 `
@@ -351,7 +930,6 @@ function renderMyAttachments(
                     </div>
                 `;
 
-
             element.addEventListener(
                 'click',
                 () => {
@@ -366,7 +944,6 @@ function renderMyAttachments(
                     );
                 }
             );
-
 
             myAttachments.appendChild(
                 element
@@ -392,18 +969,15 @@ function updateAttachmentElement(
             attachment.id
         );
 
-
     element.classList.toggle(
         'selected',
         selected
     );
 
-
     const check =
         element.querySelector(
             '.my-attachment-check'
         );
-
 
     if (check) {
 
@@ -455,7 +1029,6 @@ function toggleAttachment(
         );
     }
 
-
     renderSelectedAttachments();
 }
 
@@ -472,10 +1045,8 @@ function renderSelectedAttachments() {
         return;
     }
 
-
     selectedAttachmentsContainer.innerHTML =
         '';
-
 
     selectedAttachments.forEach(
         attachment => {
@@ -485,10 +1056,8 @@ function renderSelectedAttachments() {
                     'div'
                 );
 
-
             element.className =
                 'selected-attachment';
-
 
             element.innerHTML =
                 `
@@ -508,12 +1077,10 @@ function renderSelectedAttachments() {
                     </button>
                 `;
 
-
             const removeButton =
                 element.querySelector(
                     '.selected-attachment-remove'
                 );
-
 
             removeButton.addEventListener(
                 'click',
@@ -522,21 +1089,17 @@ function renderSelectedAttachments() {
                     event.preventDefault();
                     event.stopPropagation();
 
-
                     selectedAttachments.delete(
                         attachment.id
                     );
 
-
                     renderSelectedAttachments();
-
 
                     renderMyAttachments(
                         getCurrentMyAttachments()
                     );
                 }
             );
-
 
             selectedAttachmentsContainer.appendChild(
                 element
@@ -585,24 +1148,22 @@ if (
         }
     );
 
-
     attachmentFileInput.addEventListener(
         'change',
         async () => {
 
-            const file =
-                attachmentFileInput.files?.[0];
+            const files =
+                Array.from(
+                    attachmentFileInput.files || []
+                );
 
-
-            if (!file) {
+            if (files.length === 0) {
                 return;
             }
 
-
-            await uploadAttachment(
-                file
-            );
-
+            for (const file of files) {
+                await uploadAttachment(file);
+            }
 
             attachmentFileInput.value =
                 '';
@@ -625,15 +1186,8 @@ async function uploadAttachment(
         return;
     }
 
-
-    /*
-     * Сервер сейчас ограничивает
-     * размер файла 15 MB.
-     */
-
     const maxFileSize =
         15 * 1024 * 1024;
-
 
     if (
         file.size >
@@ -647,28 +1201,23 @@ async function uploadAttachment(
         return;
     }
 
-
     if (uploadAttachmentButton) {
 
         uploadAttachmentButton.disabled =
             true;
     }
 
-
     showSendError('');
-
 
     try {
 
         const formData =
             new FormData();
 
-
         formData.append(
             'file',
             file
         );
-
 
         const response =
             await fetch(
@@ -679,21 +1228,17 @@ async function uploadAttachment(
                 }
             );
 
-
         if (!response.ok) {
 
             let message =
                 'Не удалось загрузить файл';
-
 
             try {
 
                 const body =
                     await response.json();
 
-
                 if (body.message) {
-
                     message =
                         body.message;
                 }
@@ -701,21 +1246,13 @@ async function uploadAttachment(
             } catch (_) {
             }
 
-
             throw new Error(
                 message
             );
         }
 
-
         const attachment =
             await response.json();
-
-
-        /*
-         * Добавляем новый файл
-         * в локальный список.
-         */
 
         myAttachmentsList =
             [
@@ -723,29 +1260,19 @@ async function uploadAttachment(
                 ...myAttachmentsList
             ];
 
-
         myAttachmentsLoaded =
             true;
-
-
-        /*
-         * Сразу выбираем загруженный файл
-         * для отправки.
-         */
 
         selectedAttachments.set(
             attachment.id,
             attachment
         );
 
-
         renderSelectedAttachments();
-
 
         renderMyAttachments(
             myAttachmentsList
         );
-
 
     } catch (error) {
 
@@ -753,7 +1280,6 @@ async function uploadAttachment(
             'Failed to upload attachment:',
             error
         );
-
 
         showSendError(
             error.message
@@ -843,7 +1369,6 @@ const wsProtocol =
         ? 'wss:'
         : 'ws:';
 
-
 const socket =
     new WebSocket(
         `${wsProtocol}//${window.location.host}/ws`
@@ -884,12 +1409,10 @@ socket.onmessage = event => {
                 event.data
             );
 
-
         console.log(
             'WebSocket event:',
             wsEvent
         );
-
 
         switch (wsEvent.type) {
 
@@ -901,7 +1424,6 @@ socket.onmessage = event => {
 
                 break;
 
-
             case 'MESSAGE_READ':
 
                 handleMessageRead(
@@ -910,7 +1432,6 @@ socket.onmessage = event => {
 
                 break;
 
-
             case 'MESSAGE_REACTION_CHANGED':
 
                 handleMessageReactionChanged(
@@ -918,7 +1439,6 @@ socket.onmessage = event => {
                 );
 
                 break;
-
 
             default:
                 break;
@@ -951,26 +1471,21 @@ function handleNewMessage(
         return;
     }
 
-
     const message =
         wsEvent.payload;
-
 
     if (!message) {
         return;
     }
-
 
     const existingMessage =
         messagesContainer.querySelector(
             `[data-message-id="${message.id}"]`
         );
 
-
     if (existingMessage) {
         return;
     }
-
 
     const messageForUi = {
         ...message,
@@ -981,34 +1496,35 @@ function handleNewMessage(
             message.attachments || []
     };
 
+    if (
+        String(message.senderId) !==
+        String(currentUserId)
+    ) {
+        playMessageNotificationSound();
+    }
 
     const emptyMessage =
         document.getElementById(
             'empty-messages'
         );
 
-
     if (emptyMessage) {
         emptyMessage.remove();
     }
-
 
     const isNearBottom =
         messagesContainer.scrollHeight -
         messagesContainer.scrollTop -
         messagesContainer.clientHeight < 100;
 
-
     const element =
         createMessageElement(
             messageForUi
         );
 
-
     messagesContainer.appendChild(
         element
     );
-
 
     if (isNearBottom) {
         scrollToBottom();
@@ -1033,23 +1549,19 @@ function handleMessageRead(
         return;
     }
 
-
     const lastReadMessageId =
         Number(
             wsEvent.payload?.lastReadMessageId
         );
 
-
     if (!lastReadMessageId) {
         return;
     }
-
 
     const messageElements =
         messagesContainer.querySelectorAll(
             '.message.mine'
         );
-
 
     messageElements.forEach(
         messageElement => {
@@ -1059,7 +1571,6 @@ function handleMessageRead(
                     messageElement.dataset.messageId
                 );
 
-
             if (
                 messageId >
                 lastReadMessageId
@@ -1067,26 +1578,21 @@ function handleMessageRead(
                 return;
             }
 
-
             const status =
                 messageElement.querySelector(
                     '.message-status'
                 );
 
-
             if (!status) {
                 return;
             }
 
-
             status.textContent =
                 '✓✓';
-
 
             status.classList.remove(
                 'unread'
             );
-
 
             status.classList.add(
                 'read'
@@ -1113,35 +1619,28 @@ function handleMessageReactionChanged(
         return;
     }
 
-
     const payload =
         wsEvent.payload;
-
 
     if (!payload) {
         return;
     }
 
-
     const messageId =
         payload.messageId;
-
 
     if (!messageId) {
         return;
     }
-
 
     const messageElement =
         messagesContainer.querySelector(
             `[data-message-id="${messageId}"]`
         );
 
-
     if (!messageElement) {
         return;
     }
-
 
     renderReactions(
         messageElement,
@@ -1173,7 +1672,6 @@ function getMessageAuthor(
         };
     }
 
-
     if (
         message.senderEmail &&
         message.senderEmail.trim()
@@ -1186,7 +1684,6 @@ function getMessageAuthor(
                 false
         };
     }
-
 
     return {
         text:
@@ -1212,11 +1709,9 @@ function createMessageElement(
             'div'
         );
 
-
     const mine =
         String(message.senderId) ===
         String(currentUserId);
-
 
     element.className =
         'message ' +
@@ -1226,18 +1721,14 @@ function createMessageElement(
                 : 'theirs'
         );
 
-
     element.dataset.messageId =
         message.id;
-
 
     element.dataset.senderId =
         message.senderId;
 
-
     element.dataset.deletedAt =
         message.deletedAt || '';
-
 
     if (message.deletedAt) {
 
@@ -1245,7 +1736,6 @@ function createMessageElement(
             'deleted'
         );
     }
-
 
     /*
      * Автор
@@ -1258,16 +1748,13 @@ function createMessageElement(
                 message
             );
 
-
         const authorElement =
             document.createElement(
                 'div'
             );
 
-
         authorElement.className =
             'message-author';
-
 
         if (author.removed) {
 
@@ -1276,16 +1763,13 @@ function createMessageElement(
             );
         }
 
-
         authorElement.textContent =
             author.text;
-
 
         element.appendChild(
             authorElement
         );
     }
-
 
     /*
      * Реакция
@@ -1296,27 +1780,21 @@ function createMessageElement(
             'button'
         );
 
-
     reactionTrigger.type =
         'button';
-
 
     reactionTrigger.className =
         'reaction-trigger';
 
-
     reactionTrigger.title =
         'Поставить реакцию';
-
 
     reactionTrigger.textContent =
         '☺';
 
-
     element.appendChild(
         reactionTrigger
     );
-
 
     /*
      * Picker
@@ -1327,10 +1805,8 @@ function createMessageElement(
             'div'
         );
 
-
     reactionPicker.className =
         'reaction-picker';
-
 
     allowedReactions.forEach(
         reaction => {
@@ -1340,18 +1816,14 @@ function createMessageElement(
                     'button'
                 );
 
-
             button.type =
                 'button';
-
 
             button.dataset.reaction =
                 reaction;
 
-
             button.textContent =
                 reaction;
-
 
             reactionPicker.appendChild(
                 button
@@ -1359,34 +1831,35 @@ function createMessageElement(
         }
     );
 
-
     element.appendChild(
         reactionPicker
     );
-
 
     /*
      * Текст
      */
 
-    const content =
-        document.createElement(
-            'div'
+    if (
+        message.content
+        &&
+        message.content.trim()
+    ) {
+
+        const content =
+            document.createElement(
+                'div'
+            );
+
+        content.className =
+            'message-content';
+
+        content.textContent =
+            message.content;
+
+        element.appendChild(
+            content
         );
-
-
-    content.className =
-        'message-content';
-
-
-    content.textContent =
-        message.content || '';
-
-
-    element.appendChild(
-        content
-    );
-
+    }
 
     /*
      * Attachments
@@ -1402,84 +1875,74 @@ function createMessageElement(
                 'div'
             );
 
-
         attachmentsContainer.className =
             'message-attachments';
-
 
         message.attachments.forEach(
             attachment => {
 
-                const link =
+                const attachmentElement =
                     document.createElement(
-                        'a'
+                        'div'
                     );
 
-
-                link.className =
+                attachmentElement.className =
                     'message-attachment';
 
+                attachmentElement.setAttribute(
+                    'role',
+                    'button'
+                );
 
-                link.href =
+                attachmentElement.setAttribute(
+                    'tabindex',
+                    '0'
+                );
+
+                attachmentElement.dataset.attachmentId =
+                    attachment.id;
+
+                attachmentElement.dataset.downloadUrl =
                     attachment.downloadUrl;
-
-
-                link.target =
-                    '_blank';
-
-
-                link.rel =
-                    'noopener noreferrer';
-
 
                 const icon =
                     document.createElement(
                         'div'
                     );
 
-
                 icon.className =
                     'attachment-icon';
 
-
                 icon.textContent =
                     '📎';
-
 
                 const info =
                     document.createElement(
                         'div'
                     );
 
-
                 info.className =
                     'attachment-info';
-
 
                 const name =
                     document.createElement(
                         'div'
                     );
 
-
                 name.className =
                     'attachment-name';
-
 
                 name.textContent =
                     attachment.fileName ||
                     'Файл';
-
 
                 const meta =
                     document.createElement(
                         'div'
                     );
 
-
                 meta.className =
                     'attachment-meta';
-
 
                 meta.textContent =
                     attachment.extension
@@ -1488,39 +1951,32 @@ function createMessageElement(
                             attachment.size
                         );
 
-
                 info.appendChild(
                     name
                 );
-
 
                 info.appendChild(
                     meta
                 );
 
-
-                link.appendChild(
+                attachmentElement.appendChild(
                     icon
                 );
 
-
-                link.appendChild(
+                attachmentElement.appendChild(
                     info
                 );
 
-
                 attachmentsContainer.appendChild(
-                    link
+                    attachmentElement
                 );
             }
         );
-
 
         element.appendChild(
             attachmentsContainer
         );
     }
-
 
     /*
      * Удаление
@@ -1533,20 +1989,30 @@ function createMessageElement(
                 'div'
             );
 
-
         deletedLabel.className =
             'message-deleted-label';
-
 
         deletedLabel.textContent =
             'удалено';
 
+        const content =
+            element.querySelector(
+                '.message-content'
+            );
 
-        element.appendChild(
-            deletedLabel
-        );
+        if (content) {
+
+            content.after(
+                deletedLabel
+            );
+
+        } else {
+
+            element.appendChild(
+                deletedLabel
+            );
+        }
     }
-
 
     /*
      * Контейнер реакций
@@ -1557,21 +2023,17 @@ function createMessageElement(
             'div'
         );
 
-
     reactionsContainer.className =
         'message-reactions';
-
 
     element.appendChild(
         reactionsContainer
     );
 
-
     renderReactions(
         element,
         message.reactions || []
     );
-
 
     /*
      * Время
@@ -1582,16 +2044,13 @@ function createMessageElement(
             'div'
         );
 
-
     time.className =
         'message-time';
-
 
     const timeText =
         document.createElement(
             'span'
         );
-
 
     timeText.textContent =
         new Date(
@@ -1604,11 +2063,9 @@ function createMessageElement(
             }
         );
 
-
     time.appendChild(
         timeText
     );
-
 
     /*
      * Статус
@@ -1621,7 +2078,6 @@ function createMessageElement(
                 'span'
             );
 
-
         status.className =
             'message-status ' +
             (
@@ -1630,23 +2086,19 @@ function createMessageElement(
                     : 'unread'
             );
 
-
         status.textContent =
             message.readByOther
                 ? '✓✓'
                 : '✓';
-
 
         time.appendChild(
             status
         );
     }
 
-
     element.appendChild(
         time
     );
-
 
     return element;
 }
@@ -1668,7 +2120,6 @@ function renderReactions(
             '.message-reactions'
         );
 
-
     if (!reactionsContainer) {
 
         reactionsContainer =
@@ -1676,16 +2127,13 @@ function renderReactions(
                 'div'
             );
 
-
         reactionsContainer.className =
             'message-reactions';
-
 
         const messageTime =
             messageElement.querySelector(
                 '.message-time'
             );
-
 
         if (messageTime) {
 
@@ -1702,10 +2150,8 @@ function renderReactions(
         }
     }
 
-
     reactionsContainer.innerHTML =
         '';
-
 
     if (
         !reactions ||
@@ -1718,10 +2164,8 @@ function renderReactions(
         return;
     }
 
-
     reactionsContainer.style.display =
         'flex';
-
 
     reactions.forEach(
         reaction => {
@@ -1731,14 +2175,11 @@ function renderReactions(
                     'button'
                 );
 
-
             button.type =
                 'button';
 
-
             button.className =
                 'reaction-item';
-
 
             if (reaction.reactedByMe) {
 
@@ -1747,44 +2188,35 @@ function renderReactions(
                 );
             }
 
-
             button.dataset.reaction =
                 reaction.reaction;
-
 
             const emoji =
                 document.createElement(
                     'span'
                 );
 
-
             emoji.textContent =
                 reaction.reaction;
-
 
             const count =
                 document.createElement(
                     'span'
                 );
 
-
             count.className =
                 'reaction-count';
 
-
             count.textContent =
                 reaction.count;
-
 
             button.appendChild(
                 emoji
             );
 
-
             button.appendChild(
                 count
             );
-
 
             reactionsContainer.appendChild(
                 button
@@ -1820,11 +2252,9 @@ function getOldestMessageId() {
             '[data-message-id]'
         );
 
-
     if (messages.length === 0) {
         return null;
     }
-
 
     return messages[0]
         .dataset
@@ -1841,31 +2271,24 @@ async function loadOlderMessages() {
         return;
     }
 
-
     const oldestMessageId =
         getOldestMessageId();
-
 
     if (!oldestMessageId) {
         return;
     }
 
-
     loadingOlderMessages =
         true;
-
 
     loadingIndicator.style.display =
         'block';
 
-
     const previousScrollHeight =
         messagesContainer.scrollHeight;
 
-
     const previousScrollTop =
         messagesContainer.scrollTop;
-
 
     try {
 
@@ -1874,7 +2297,6 @@ async function loadOlderMessages() {
                 `/api/dialogs/${dialogId}/messages?beforeId=${oldestMessageId}&limit=${pageSize}`
             );
 
-
         if (!response.ok) {
 
             throw new Error(
@@ -1882,10 +2304,8 @@ async function loadOlderMessages() {
             );
         }
 
-
         const messages =
             await response.json();
-
 
         if (
             !messages ||
@@ -1898,10 +2318,8 @@ async function loadOlderMessages() {
             return;
         }
 
-
         const fragment =
             document.createDocumentFragment();
-
 
         messages.forEach(
             message => {
@@ -1911,13 +2329,11 @@ async function loadOlderMessages() {
                         message
                     );
 
-
                 fragment.appendChild(
                     element
                 );
             }
         );
-
 
         messagesContainer.insertBefore(
             fragment,
@@ -1925,7 +2341,6 @@ async function loadOlderMessages() {
                 '[data-message-id]'
             )
         );
-
 
         messagesContainer.scrollTop =
             previousScrollTop +
@@ -1940,7 +2355,6 @@ async function loadOlderMessages() {
             error
         );
 
-
         showSendError(
             error.message
         );
@@ -1949,7 +2363,6 @@ async function loadOlderMessages() {
 
         loadingOlderMessages =
             false;
-
 
         loadingIndicator.style.display =
             'none';
@@ -1985,9 +2398,12 @@ messagesContainer.addEventListener(
 
 function closeContextMenu() {
 
+    if (!contextMenu) {
+        return;
+    }
+
     contextMenu.style.display =
         'none';
-
 
     selectedMessage =
         null;
@@ -2015,22 +2431,17 @@ function openContextMenu(
         return;
     }
 
-
     selectedMessage =
         messageElement;
-
 
     contextMenu.style.display =
         'block';
 
-
     const menuWidth =
         contextMenu.offsetWidth;
 
-
     const menuHeight =
         contextMenu.offsetHeight;
-
 
     contextMenu.style.left =
         Math.min(
@@ -2039,7 +2450,6 @@ function openContextMenu(
             menuWidth -
             10
         ) + 'px';
-
 
     contextMenu.style.top =
         Math.min(
@@ -2061,19 +2471,30 @@ messagesContainer.addEventListener(
     'contextmenu',
     event => {
 
+        /*
+         * Не показываем контекстное меню
+         * сообщения при правом клике
+         * по attachment.
+         */
+
+        if (
+            event.target.closest(
+                '.message-attachment'
+            )
+        ) {
+            return;
+        }
+
         const messageElement =
             event.target.closest(
                 '[data-message-id]'
             );
 
-
         if (!messageElement) {
             return;
         }
 
-
         event.preventDefault();
-
 
         openContextMenu(
             messageElement,
@@ -2099,7 +2520,6 @@ messagesContainer.addEventListener(
                 '[data-message-id]'
             );
 
-
         if (
             !messageElement
             ||
@@ -2110,6 +2530,18 @@ messagesContainer.addEventListener(
             return;
         }
 
+        /*
+         * Не запускаем long press
+         * для attachment.
+         */
+
+        if (
+            event.target.closest(
+                '.message-attachment'
+            )
+        ) {
+            return;
+        }
 
         longPressTimer =
             setTimeout(
@@ -2117,7 +2549,6 @@ messagesContainer.addEventListener(
 
                     const touch =
                         event.touches[0];
-
 
                     openContextMenu(
                         messageElement,
@@ -2172,7 +2603,6 @@ messagesContainer.addEventListener(
                 '.reaction-trigger'
             );
 
-
         if (trigger) {
 
             const messageElement =
@@ -2180,22 +2610,18 @@ messagesContainer.addEventListener(
                     '[data-message-id]'
                 );
 
-
             if (!messageElement) {
                 return;
             }
-
 
             const picker =
                 messageElement.querySelector(
                     '.reaction-picker'
                 );
 
-
             if (!picker) {
                 return;
             }
-
 
             document
                 .querySelectorAll(
@@ -2215,21 +2641,17 @@ messagesContainer.addEventListener(
                     }
                 );
 
-
             picker.classList.toggle(
                 'open'
             );
 
-
             return;
         }
-
 
         const pickerButton =
             event.target.closest(
                 '.reaction-picker button'
             );
-
 
         if (pickerButton) {
 
@@ -2238,27 +2660,22 @@ messagesContainer.addEventListener(
                     '[data-message-id]'
                 );
 
-
             if (!messageElement) {
                 return;
             }
-
 
             await setMessageReaction(
                 messageElement,
                 pickerButton.dataset.reaction
             );
 
-
             return;
         }
-
 
         const reactionButton =
             event.target.closest(
                 '.reaction-item'
             );
-
 
         if (reactionButton) {
 
@@ -2267,11 +2684,9 @@ messagesContainer.addEventListener(
                     '[data-message-id]'
                 );
 
-
             if (!messageElement) {
                 return;
             }
-
 
             await setMessageReaction(
                 messageElement,
@@ -2301,13 +2716,10 @@ async function setMessageReaction(
         return;
     }
 
-
     const messageId =
         messageElement.dataset.messageId;
 
-
     showSendError('');
-
 
     try {
 
@@ -2329,18 +2741,15 @@ async function setMessageReaction(
                 }
             );
 
-
         if (!response.ok) {
 
             let message =
                 'Не удалось установить реакцию';
 
-
             try {
 
                 const body =
                     await response.json();
-
 
                 if (body.message) {
 
@@ -2351,28 +2760,23 @@ async function setMessageReaction(
             } catch (_) {
             }
 
-
             throw new Error(
                 message
             );
         }
 
-
         const reactions =
             await response.json();
-
 
         renderReactions(
             messageElement,
             reactions
         );
 
-
         const picker =
             messageElement.querySelector(
                 '.reaction-picker'
             );
-
 
         if (picker) {
 
@@ -2412,7 +2816,6 @@ document.addEventListener(
             return;
         }
 
-
         document
             .querySelectorAll(
                 '.reaction-picker.open'
@@ -2438,6 +2841,7 @@ document.addEventListener(
     event => {
 
         if (
+            contextMenu &&
             !contextMenu.contains(
                 event.target
             )
@@ -2449,33 +2853,40 @@ document.addEventListener(
 );
 
 
+/*
+ * =========================
+ * Escape
+ * =========================
+ */
+
 document.addEventListener(
     'keydown',
     event => {
 
-        if (event.key === 'Escape') {
+        if (event.key !== 'Escape') {
+            return;
+        }
 
-            closeContextMenu();
+        closeContextMenu();
 
+        closeMessageAttachmentMenu();
 
-            document
-                .querySelectorAll(
-                    '.reaction-picker.open'
-                )
-                .forEach(
-                    picker =>
-                        picker.classList.remove(
-                            'open'
-                        )
-                );
+        document
+            .querySelectorAll(
+                '.reaction-picker.open'
+            )
+            .forEach(
+                picker =>
+                    picker.classList.remove(
+                        'open'
+                    )
+            );
 
+        if (attachmentPicker) {
 
-            if (attachmentPicker) {
-
-                attachmentPicker.classList.remove(
-                    'open'
-                );
-            }
+            attachmentPicker.classList.remove(
+                'open'
+            );
         }
     }
 );
@@ -2487,100 +2898,98 @@ document.addEventListener(
  * =========================
  */
 
-deleteMessageButton.addEventListener(
-    'click',
-    async () => {
+if (deleteMessageButton) {
 
-        if (!selectedMessage) {
-            return;
-        }
+    deleteMessageButton.addEventListener(
+        'click',
+        async () => {
 
+            if (!selectedMessage) {
+                return;
+            }
 
-        const messageElement =
-            selectedMessage;
+            const messageElement =
+                selectedMessage;
 
+            const messageId =
+                messageElement.dataset.messageId;
 
-        const messageId =
-            messageElement.dataset.messageId;
+            closeContextMenu();
 
+            showSendError('');
 
-        closeContextMenu();
+            try {
 
+                const response =
+                    await fetch(
+                        `/api/dialogs/${dialogId}/messages/${messageId}`,
+                        {
+                            method: 'DELETE'
+                        }
+                    );
 
-        showSendError('');
+                if (!response.ok) {
 
+                    throw new Error(
+                        'Не удалось удалить сообщение'
+                    );
+                }
 
-        try {
+                const updatedMessage =
+                    await response.json();
 
-            const response =
-                await fetch(
-                    `/api/dialogs/${dialogId}/messages/${messageId}`,
-                    {
-                        method: 'DELETE'
+                messageElement.dataset.deletedAt =
+                    updatedMessage.deletedAt || '';
+
+                messageElement.classList.add(
+                    'deleted'
+                );
+
+                if (
+                    !messageElement.querySelector(
+                        '.message-deleted-label'
+                    )
+                ) {
+
+                    const deletedLabel =
+                        document.createElement(
+                            'div'
+                        );
+
+                    deletedLabel.className =
+                        'message-deleted-label';
+
+                    deletedLabel.textContent =
+                        'удалено';
+
+                    const content =
+                        messageElement.querySelector(
+                            '.message-content'
+                        );
+
+                    if (content) {
+
+                        content.after(
+                            deletedLabel
+                        );
+
+                    } else {
+
+                        messageElement.appendChild(
+                            deletedLabel
+                        );
                     }
-                );
+                }
 
+            } catch (error) {
 
-            if (!response.ok) {
-
-                throw new Error(
-                    'Не удалось удалить сообщение'
-                );
-            }
-
-
-            const updatedMessage =
-                await response.json();
-
-
-            messageElement.dataset.deletedAt =
-                updatedMessage.deletedAt || '';
-
-
-            messageElement.classList.add(
-                'deleted'
-            );
-
-
-            if (
-                !messageElement.querySelector(
-                    '.message-deleted-label'
-                )
-            ) {
-
-                const deletedLabel =
-                    document.createElement(
-                        'div'
-                    );
-
-
-                deletedLabel.className =
-                    'message-deleted-label';
-
-
-                deletedLabel.textContent =
-                    'удалено';
-
-
-                const content =
-                    messageElement.querySelector(
-                        '.message-content'
-                    );
-
-
-                content.after(
-                    deletedLabel
+                showSendError(
+                    error.message
                 );
             }
-
-        } catch (error) {
-
-            showSendError(
-                error.message
-            );
         }
-    }
-);
+    );
+}
 
 
 /*
@@ -2604,16 +3013,13 @@ sendForm.addEventListener(
 
         event.preventDefault();
 
-
         const content =
             messageInput.value.trim();
-
 
         const attachmentIds =
             Array.from(
                 selectedAttachments.keys()
             );
-
 
         /*
          * Нельзя отправить полностью пустое
@@ -2630,9 +3036,7 @@ sendForm.addEventListener(
             return;
         }
 
-
         showSendError('');
-
 
         try {
 
@@ -2655,18 +3059,15 @@ sendForm.addEventListener(
                     }
                 );
 
-
             if (!response.ok) {
 
                 let message =
                     'Не удалось отправить сообщение';
 
-
                 try {
 
                     const body =
                         await response.json();
-
 
                     if (body.message) {
 
@@ -2677,22 +3078,18 @@ sendForm.addEventListener(
                 } catch (_) {
                 }
 
-
                 throw new Error(
                     message
                 );
             }
 
-
             const message =
                 await response.json();
-
 
             const existingMessage =
                 messagesContainer.querySelector(
                     `[data-message-id="${message.id}"]`
                 );
-
 
             if (!existingMessage) {
 
@@ -2701,12 +3098,10 @@ sendForm.addEventListener(
                         message
                     );
 
-
                 messagesContainer.appendChild(
                     element
                 );
             }
-
 
             /*
              * Очищаем текст.
@@ -2715,16 +3110,13 @@ sendForm.addEventListener(
             messageInput.value =
                 '';
 
-
             /*
              * Очищаем выбранные attachments.
              */
 
             selectedAttachments.clear();
 
-
             renderSelectedAttachments();
-
 
             /*
              * Обновляем список файлов,
@@ -2734,7 +3126,6 @@ sendForm.addEventListener(
             renderMyAttachments(
                 getCurrentMyAttachments()
             );
-
 
             scrollToBottom();
 
@@ -2762,7 +3153,6 @@ function showSendError(
         return;
     }
 
-
     sendError.textContent =
         message || '';
 }
@@ -2785,16 +3175,13 @@ function escapeHtml(
         return '';
     }
 
-
     const div =
         document.createElement(
             'div'
         );
 
-
     div.textContent =
         String(value);
-
 
     return div.innerHTML;
 }
@@ -2820,16 +3207,13 @@ function formatFileSize(
         return '';
     }
 
-
     const bytes =
         Number(size);
-
 
     if (bytes < 1024) {
 
         return `${bytes} Б`;
     }
-
 
     if (bytes < 1024 * 1024) {
 
@@ -2838,7 +3222,6 @@ function formatFileSize(
         ).toFixed(1)} КБ`;
     }
 
-
     if (bytes < 1024 * 1024 * 1024) {
 
         return `${(
@@ -2846,7 +3229,6 @@ function formatFileSize(
             (1024 * 1024)
         ).toFixed(1)} МБ`;
     }
-
 
     return `${(
         bytes /

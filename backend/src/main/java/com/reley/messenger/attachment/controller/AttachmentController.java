@@ -4,7 +4,9 @@ import com.reley.messenger.attachment.dto.AttachmentResponse;
 import com.reley.messenger.attachment.service.AttachmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Controller
@@ -44,9 +47,9 @@ public class AttachmentController {
                                                     .contentType(MediaType.parseMediaType(attachment.contentType()))
                                                     .header(
                                                             HttpHeaders.CONTENT_DISPOSITION,
-                                                            "attachment; filename=\""
-                                                                    + attachment.fileName()
-                                                                    + "\"");
+                                                            ContentDisposition.attachment()
+                                                                    .filename(attachment.fileName(), StandardCharsets.UTF_8)
+                                                                    .build().toString());
 
                                     if (attachment.size() >= 0) {
                                         builder.contentLength(
@@ -57,6 +60,15 @@ public class AttachmentController {
                                     return builder.body(resource);
                                 })
                 );
+    }
+
+    @PostMapping("/api/attachments/{id}/copy")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public Mono<Void> copyToMyFiles(@PathVariable UUID id
+    ) {
+        return attachmentService
+                .saveToMyFiles(id)
+                .then();
     }
 
     @DeleteMapping("/api/attachments/{id}")
