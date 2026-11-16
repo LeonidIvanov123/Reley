@@ -19,6 +19,121 @@ const messageInput =
 const sendError =
     document.getElementById('send-error');
 
+let notificationAudioContext = null;
+
+function getNotificationAudioContext() {
+    if (!notificationAudioContext) {
+        const AudioContextClass =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContextClass) {
+            return null;
+        }
+
+        notificationAudioContext = new AudioContextClass();
+    }
+
+    return notificationAudioContext;
+}
+
+async function unlockNotificationAudio() {
+    const audioContext = getNotificationAudioContext();
+
+    if (!audioContext) {
+        return;
+    }
+
+    if (audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            console.warn(
+                'Unable to unlock notification audio:',
+                error
+            );
+        }
+    }
+}
+
+function playMessageNotificationSound() {
+    const audioContext = getNotificationAudioContext();
+
+    if (!audioContext) {
+        return;
+    }
+
+    try {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume().catch(() => {});
+        }
+
+        if (audioContext.state !== 'running') {
+            return;
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = 'sine';
+
+        oscillator.frequency.setValueAtTime(
+            880,
+            audioContext.currentTime
+        );
+
+        oscillator.frequency.exponentialRampToValueAtTime(
+            660,
+            audioContext.currentTime + 0.12
+        );
+
+        gain.gain.setValueAtTime(
+            0.0001,
+            audioContext.currentTime
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.12,
+            audioContext.currentTime + 0.01
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            audioContext.currentTime + 0.16
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(
+            audioContext.currentTime + 0.16
+        );
+    } catch (error) {
+        console.warn(
+            'Unable to play message notification sound:',
+            error
+        );
+    }
+}
+
+document.addEventListener(
+    'click',
+    () => unlockNotificationAudio(),
+    { once: true, passive: true }
+);
+
+document.addEventListener(
+    'keydown',
+    () => unlockNotificationAudio(),
+    { once: true, passive: true }
+);
+
+document.addEventListener(
+    'touchstart',
+    () => unlockNotificationAudio(),
+    { once: true, passive: true }
+);
 
 /*
  * =========================
@@ -1380,6 +1495,13 @@ function handleNewMessage(
         attachments:
             message.attachments || []
     };
+
+    if (
+        String(message.senderId) !==
+        String(currentUserId)
+    ) {
+        playMessageNotificationSound();
+    }
 
     const emptyMessage =
         document.getElementById(
