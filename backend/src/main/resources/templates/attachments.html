@@ -464,19 +464,18 @@
 
                 <div class="file-meta">
 
-                    <span
-                            th:text="${attachment.contentType}">
+                    <span th:text="${attachment.contentType}">
                         application/pdf
                     </span>
 
                     ·
 
                     <span
-                            th:text="${#numbers.formatInteger(attachment.size, 1, 'COMMA')}">
+                            class="file-size"
+                            th:attr="data-size=${attachment.size}"
+                            th:text="${attachment.size}">
                         123456
                     </span>
-
-                    байт
 
                 </div>
 
@@ -534,12 +533,38 @@
     const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 
+    /*
+     * =========================
+     * INITIALIZATION
+     * =========================
+     */
+
+    document
+        .querySelectorAll('.file-size')
+        .forEach(element => {
+
+            const size =
+                Number(element.dataset.size);
+
+            element.textContent =
+                formatFileSize(size);
+
+        });
+
+
+    /*
+     * =========================
+     * UPLOAD
+     * =========================
+     */
+
     function uploadFile() {
 
         const input =
             document.getElementById('fileInput');
 
-        const file = input.files[0];
+        const file =
+            input.files[0];
 
         clearMessages();
 
@@ -717,6 +742,12 @@
     }
 
 
+    /*
+     * =========================
+     * DELETE
+     * =========================
+     */
+
     function deleteFile(button) {
 
         const id =
@@ -777,6 +808,12 @@
     }
 
 
+    /*
+     * =========================
+     * VIEW
+     * =========================
+     */
+
     function viewFile(button) {
 
         const url =
@@ -788,6 +825,12 @@
         );
     }
 
+
+    /*
+     * =========================
+     * ADD NEW ATTACHMENT
+     * =========================
+     */
 
     function addAttachmentToList(
         attachment
@@ -856,8 +899,7 @@
             ' · ' +
             formatFileSize(
                 attachment.size
-            ) +
-            ' байт';
+            );
 
 
         fileInfo.appendChild(
@@ -975,6 +1017,12 @@
     }
 
 
+    /*
+     * =========================
+     * EMPTY LIST
+     * =========================
+     */
+
     function checkEmptyList() {
 
         const rows =
@@ -999,6 +1047,7 @@
                 'div'
             );
 
+
         empty.className =
             'empty';
 
@@ -1015,13 +1064,59 @@
     }
 
 
-    function formatFileSize(size) {
+    /*
+     * =========================
+     * FILE SIZE
+     * =========================
+     */
 
-        return new Intl.NumberFormat(
-            'ru-RU'
-        ).format(size);
+    function formatFileSize(bytes) {
+
+        if (
+            bytes === null ||
+            bytes === undefined ||
+            bytes < 0
+        ) {
+            return '0 B';
+        }
+
+
+        if (bytes < 1024) {
+            return `${bytes} B`;
+        }
+
+
+        const kb =
+            bytes / 1024;
+
+
+        if (kb < 1024) {
+            return `${kb.toFixed(1)} KB`;
+        }
+
+
+        const mb =
+            kb / 1024;
+
+
+        if (mb < 1024) {
+            return `${mb.toFixed(1)} MB`;
+        }
+
+
+        const gb =
+            mb / 1024;
+
+
+        return `${gb.toFixed(1)} GB`;
     }
 
+
+    /*
+     * =========================
+     * MESSAGES
+     * =========================
+     */
 
     function clearMessages() {
 

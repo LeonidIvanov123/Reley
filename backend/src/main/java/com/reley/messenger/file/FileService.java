@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface FileService {
 
-    Mono<Void> save(UUID fileId, Flux<DataBuffer> content);
+    Mono<Long> save(UUID fileId, Flux<DataBuffer> content);
 
     Mono<Resource> load(UUID fileId);
 

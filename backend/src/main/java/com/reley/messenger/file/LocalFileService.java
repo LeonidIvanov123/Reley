@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @ConditionalOnProperty(
@@ -43,16 +44,20 @@ public class LocalFileService implements FileService {
     }
 
     @Override
-    public Mono<Void> save(UUID fileId, Flux<DataBuffer> content) {
-
+    public Mono<Long> save(UUID fileId, Flux<DataBuffer> content) {
         Path filePath =
                 storagePath.resolve(fileId.toString());
 
-        return DataBufferUtils.write(
-                        content,
+        AtomicLong size = new AtomicLong();
+
+        return DataBufferUtils
+                .write(
+                        content.doOnNext(buffer -> size.addAndGet(buffer.readableByteCount())),
                         filePath,
                         StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING).then();
+                        StandardOpenOption.TRUNCATE_EXISTING
+                )
+                .then(Mono.fromSupplier(size::get));
     }
 
     @Override

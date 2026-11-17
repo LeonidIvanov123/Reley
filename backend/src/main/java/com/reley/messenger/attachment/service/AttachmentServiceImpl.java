@@ -33,56 +33,64 @@ public class AttachmentServiceImpl implements AttachmentService {
     public Mono<AttachmentResponse> upload(FilePart file) {
 
         String fileName = file.filename();
-
         String extension = extractExtension(fileName);
 
         UUID attachmentId = UUID.randomUUID();
         UUID fileUuid = UUID.randomUUID();
 
         return userServiceInfo.getCurrentUser()
-                .flatMap(user -> {
+                .flatMap(user ->
 
-                    Attachment attachment =
-                            Attachment.builder()
-                                    .id(attachmentId)
-                                    .fileUuid(fileUuid)
-                                    .createdBy(user.userId())
-                                    .originalFileName(fileName)
-                                    .extension(extension)
-                                    .contentType(
-                                            file.headers().getContentType() != null
-                                                    ? file.headers()
-                                                    .getContentType()
-                                                    .toString()
-                                                    : "application/octet-stream"
-                                    )
-                                    .size(file.headers().getContentLength())
-                                    .storageKey(fileUuid.toString())
-                                    .createdAt(OffsetDateTime.now())
-                                    .build();
+                        fileService
+                                .save(fileUuid, file.content())
+                                .flatMap(size -> {
 
-                    return fileService.save(fileUuid, file.content())
-                            .then(
-                                    attachmentRepository.insert(
-                                            attachment.getId(),
-                                            attachment.getFileUuid(),
-                                            attachment.getCreatedBy(),
-                                            attachment.getOriginalFileName(),
-                                            attachment.getExtension(),
-                                            attachment.getContentType(),
-                                            attachment.getSize(),
-                                            attachment.getStorageKey(),
-                                            attachment.getCreatedAt())
-                            ).doOnError(error ->
-                                    log.error(
-                                            "Failed to save attachment: id={}, fileUuid={}, userId={}",
-                                            attachmentId,
-                                            fileUuid,
-                                            user.userId(),
-                                            error
-                                    )
-                            );
-                })
+                                    Attachment attachment =
+                                            Attachment.builder()
+                                                    .id(attachmentId)
+                                                    .fileUuid(fileUuid)
+                                                    .createdBy(user.userId())
+                                                    .originalFileName(fileName)
+                                                    .extension(extension)
+                                                    .contentType(
+                                                            file.headers()
+                                                                    .getContentType() != null
+                                                                    ? file.headers()
+                                                                    .getContentType()
+                                                                    .toString()
+                                                                    : "application/octet-stream"
+                                                    )
+                                                    .size(size)
+                                                    .storageKey(fileUuid.toString())
+                                                    .createdAt(
+                                                            OffsetDateTime.now()
+                                                    )
+                                                    .build();
+
+                                    return attachmentRepository
+                                            .insert(
+                                                    attachment.getId(),
+                                                    attachment.getFileUuid(),
+                                                    attachment.getCreatedBy(),
+                                                    attachment.getOriginalFileName(),
+                                                    attachment.getExtension(),
+                                                    attachment.getContentType(),
+                                                    attachment.getSize(),
+                                                    attachment.getStorageKey(),
+                                                    attachment.getCreatedAt()
+                                            )
+                                            .thenReturn(attachment);
+                                })
+                                .doOnError(error ->
+                                        log.error(
+                                                "Failed to save attachment: id={}, fileUuid={}, userId={}",
+                                                attachmentId,
+                                                fileUuid,
+                                                user.userId(),
+                                                error
+                                        )
+                                )
+                )
                 .map(AttachmentResponse::fromEntity);
     }
 
