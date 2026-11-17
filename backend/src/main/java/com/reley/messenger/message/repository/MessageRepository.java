@@ -77,4 +77,13 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
         """)
     Mono<Long> findLastMessageId(Long dialogId);
 
+    @Query("""
+        SELECT * FROM messages
+        WHERE dialog_id = :dialogId AND content ILIKE '%' || :query || '%'
+        ORDER BY id DESC
+        LIMIT :limit
+        OFFSET :offset
+        """)
+    Flux<Message> search(Long dialogId, String query, int limit, int offset);
+
 }

@@ -13,10 +13,12 @@
         ←
     </a>
 
+
     <div class="chat-avatar"
          th:text="${dialog.groupChat ? '👥' : '👤'}">
         👤
     </div>
+
 
     <div class="chat-title">
 
@@ -34,7 +36,57 @@
             Reley messenger
         </div>
 
+
+        <!-- =========================
+             Поиск по сообщениям
+             ========================= -->
+
+        <div
+                id="messageSearch"
+                class="message-search">
+
+            <div class="message-search-row">
+
+                <input
+                        type="text"
+                        id="messageSearchInput"
+                        class="message-search-input"
+                        placeholder="Поиск по сообщениям..."
+                        autocomplete="off">
+
+                <button
+                        type="button"
+                        id="messageSearchClose"
+                        class="message-search-close"
+                        title="Закрыть поиск">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div
+                    id="messageSearchResults"
+                    class="message-search-results">
+            </div>
+
+        </div>
+
     </div>
+
+
+    <!-- =========================
+         Кнопки справа
+         ========================= -->
+
+    <button
+            type="button"
+            id="messageSearchButton"
+            class="message-search-button"
+            title="Поиск по сообщениям">
+        🔍
+    </button>
+
 
     <a th:if="${dialog.groupChat}"
        th:href="@{/dialogs/{id}/settings(id=${dialog.id})}"

@@ -19,121 +19,625 @@ const messageInput =
 const sendError =
     document.getElementById('send-error');
 
-let notificationAudioContext = null;
 
-function getNotificationAudioContext() {
-    if (!notificationAudioContext) {
-        const AudioContextClass =
-            window.AudioContext ||
-            window.webkitAudioContext;
+/*
+ * =========================
+ * Поиск сообщений
+ * =========================
+ */
 
-        if (!AudioContextClass) {
-            return null;
-        }
+const messageSearchButton =
+    document.getElementById('messageSearchButton');
 
-        notificationAudioContext = new AudioContextClass();
-    }
+const messageSearch =
+    document.getElementById('messageSearch');
 
-    return notificationAudioContext;
-}
+const messageSearchInput =
+    document.getElementById('messageSearchInput');
 
-async function unlockNotificationAudio() {
-    const audioContext = getNotificationAudioContext();
+const messageSearchClose =
+    document.getElementById('messageSearchClose');
 
-    if (!audioContext) {
+const messageSearchResults =
+    document.getElementById('messageSearchResults');
+
+let messageSearchTimeout = null;
+
+let messageSearchController = null;
+
+
+/*
+ * =========================
+ * Открыть поиск
+ * =========================
+ */
+
+function openMessageSearch() {
+
+    if (!messageSearch) {
         return;
     }
 
-    if (audioContext.state === 'suspended') {
-        try {
-            await audioContext.resume();
-        } catch (error) {
-            console.warn(
-                'Unable to unlock notification audio:',
-                error
+    messageSearch.classList.add(
+        'open'
+    );
+
+    if (messageSearchInput) {
+
+        messageSearchInput.focus();
+    }
+}
+
+
+/*
+ * =========================
+ * Закрыть поиск
+ * =========================
+ */
+
+function closeMessageSearch() {
+
+    if (!messageSearch) {
+        return;
+    }
+
+    messageSearch.classList.remove(
+        'open'
+    );
+
+    if (messageSearchInput) {
+
+        messageSearchInput.value =
+            '';
+    }
+
+    if (messageSearchResults) {
+
+        messageSearchResults.innerHTML =
+            '';
+    }
+
+    if (messageSearchController) {
+
+        messageSearchController.abort();
+
+        messageSearchController =
+            null;
+    }
+
+    clearTimeout(
+        messageSearchTimeout
+    );
+}
+
+
+if (messageSearchButton) {
+
+    messageSearchButton.addEventListener(
+        'click',
+        openMessageSearch
+    );
+}
+
+
+if (messageSearchClose) {
+
+    messageSearchClose.addEventListener(
+        'click',
+        closeMessageSearch
+    );
+}
+
+
+/*
+ * =========================
+ * Ввод поискового запроса
+ * =========================
+ */
+
+if (messageSearchInput) {
+
+    messageSearchInput.addEventListener(
+        'input',
+        () => {
+
+            clearTimeout(
+                messageSearchTimeout
             );
+
+            const query =
+                messageSearchInput.value.trim();
+
+            /*
+             * Не отправляем запросы
+             * для пустого или слишком короткого
+             * запроса.
+             */
+
+            if (query.length < 2) {
+
+                if (messageSearchResults) {
+
+                    messageSearchResults.innerHTML =
+                        '';
+                }
+
+                if (messageSearchController) {
+
+                    messageSearchController.abort();
+
+                    messageSearchController =
+                        null;
+                }
+
+                return;
+            }
+
+            messageSearchTimeout =
+                setTimeout(
+                    () => searchMessages(query),
+                    350
+                );
         }
-    }
+    );
 }
 
-function playMessageNotificationSound() {
-    const audioContext = getNotificationAudioContext();
 
-    if (!audioContext) {
+/*
+ * =========================
+ * Поиск сообщений через API
+ * =========================
+ */
+
+async function searchMessages(
+    query
+) {
+
+    if (!messageSearchResults) {
         return;
     }
+
+    /*
+     * Отменяем предыдущий запрос,
+     * если пользователь уже ввёл новый текст.
+     */
+
+    if (messageSearchController) {
+
+        messageSearchController.abort();
+    }
+
+    messageSearchController =
+        new AbortController();
+
+    messageSearchResults.innerHTML =
+        `
+            <div class="message-search-loading">
+                Поиск...
+            </div>
+        `;
 
     try {
-        if (audioContext.state === 'suspended') {
-            audioContext.resume().catch(() => {});
+
+        const url =
+            `/api/dialogs/${dialogId}/messages/search` +
+            `?q=${encodeURIComponent(query)}` +
+            `&limit=50` +
+            `&offset=0`;
+
+        const response =
+            await fetch(
+                url,
+                {
+                    method: 'GET',
+
+                    signal:
+                        messageSearchController.signal
+                }
+            );
+
+        if (!response.ok) {
+
+            let errorMessage =
+                'Не удалось выполнить поиск';
+
+            try {
+
+                const body =
+                    await response.text();
+
+                if (body) {
+
+                    const parser =
+                        new DOMParser();
+
+                    const document =
+                        parser.parseFromString(
+                            body,
+                            'text/html'
+                        );
+
+                    const bodyMessage =
+                        document.body
+                            ?.textContent
+                            ?.trim();
+
+                    if (bodyMessage) {
+
+                        errorMessage =
+                            bodyMessage;
+                    }
+                }
+
+            } catch (_) {
+            }
+
+            throw new Error(
+                errorMessage
+            );
         }
 
-        if (audioContext.state !== 'running') {
+        const messages =
+            await response.json();
+
+        renderMessageSearchResults(
+            messages,
+            query
+        );
+
+    } catch (error) {
+
+        /*
+         * AbortError возникает нормально,
+         * когда пользователь быстро меняет запрос.
+         */
+
+        if (
+            error.name ===
+            'AbortError'
+        ) {
             return;
         }
 
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-
-        oscillator.type = 'sine';
-
-        oscillator.frequency.setValueAtTime(
-            880,
-            audioContext.currentTime
-        );
-
-        oscillator.frequency.exponentialRampToValueAtTime(
-            660,
-            audioContext.currentTime + 0.12
-        );
-
-        gain.gain.setValueAtTime(
-            0.0001,
-            audioContext.currentTime
-        );
-
-        gain.gain.exponentialRampToValueAtTime(
-            0.12,
-            audioContext.currentTime + 0.01
-        );
-
-        gain.gain.exponentialRampToValueAtTime(
-            0.0001,
-            audioContext.currentTime + 0.16
-        );
-
-        oscillator.connect(gain);
-        gain.connect(audioContext.destination);
-
-        oscillator.start();
-        oscillator.stop(
-            audioContext.currentTime + 0.16
-        );
-    } catch (error) {
-        console.warn(
-            'Unable to play message notification sound:',
+        console.error(
+            'Message search failed:',
             error
         );
+
+        messageSearchResults.innerHTML =
+            `
+                <div class="message-search-empty">
+                    ${escapeHtml(
+                        error.message ||
+                        'Не удалось выполнить поиск'
+                    )}
+                </div>
+            `;
+
+    } finally {
+
+        messageSearchController =
+            null;
     }
 }
 
-document.addEventListener(
-    'click',
-    () => unlockNotificationAudio(),
-    { once: true, passive: true }
-);
 
-document.addEventListener(
-    'keydown',
-    () => unlockNotificationAudio(),
-    { once: true, passive: true }
-);
+/*
+ * =========================
+ * Отображение результатов поиска
+ * =========================
+ */
 
-document.addEventListener(
-    'touchstart',
-    () => unlockNotificationAudio(),
-    { once: true, passive: true }
-);
+function renderMessageSearchResults(
+    messages,
+    query
+) {
+
+    if (!messageSearchResults) {
+        return;
+    }
+
+    messageSearchResults.innerHTML =
+        '';
+
+    if (
+        !Array.isArray(messages) ||
+        messages.length === 0
+    ) {
+
+        messageSearchResults.innerHTML =
+            `
+                <div class="message-search-empty">
+                    Ничего не найдено
+                </div>
+            `;
+
+        return;
+    }
+
+    messages.forEach(
+        message => {
+
+            const result =
+                document.createElement(
+                    'div'
+                );
+
+            result.className =
+                'message-search-result';
+
+            result.dataset.messageId =
+                message.id;
+
+
+            /*
+             * Header
+             */
+
+            const header =
+                document.createElement(
+                    'div'
+                );
+
+            header.className =
+                'message-search-result-header';
+
+
+            /*
+             * Автор
+             */
+
+            const sender =
+                document.createElement(
+                    'span'
+                );
+
+            sender.className =
+                'message-search-result-sender';
+
+            sender.textContent =
+                message.senderName ||
+                message.senderEmail ||
+                'Участник';
+
+
+            /*
+             * Дата
+             */
+
+            const date =
+                document.createElement(
+                    'span'
+                );
+
+            date.className =
+                'message-search-result-date';
+
+            date.textContent =
+                formatSearchMessageDate(
+                    message.createdAt
+                );
+
+
+            header.appendChild(
+                sender
+            );
+
+            header.appendChild(
+                date
+            );
+
+
+            /*
+             * Текст
+             */
+
+            const content =
+                document.createElement(
+                    'div'
+                );
+
+            content.className =
+                'message-search-result-content';
+
+            content.innerHTML =
+                highlightSearchQuery(
+                    escapeHtml(
+                        message.content || ''
+                    ),
+                    query
+                );
+
+
+            result.appendChild(
+                header
+            );
+
+            result.appendChild(
+                content
+            );
+
+
+            /*
+             * Клик по результату
+             */
+
+            result.addEventListener(
+                'click',
+                () => {
+
+                    focusMessage(
+                        message.id
+                    );
+                }
+            );
+
+
+            messageSearchResults.appendChild(
+                result
+            );
+        }
+    );
+}
+
+
+/*
+ * =========================
+ * Безопасное экранирование HTML
+ * =========================
+ */
+
+function escapeHtml(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return '';
+    }
+
+    const div =
+        document.createElement(
+            'div'
+        );
+
+    div.textContent =
+        String(value);
+
+    return div.innerHTML;
+}
+
+
+/*
+ * =========================
+ * Подсветка поискового запроса
+ * =========================
+ */
+
+function highlightSearchQuery(
+    html,
+    query
+) {
+
+    if (!query) {
+        return html;
+    }
+
+    const escapedQuery =
+        query.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            '\\$&'
+        );
+
+    return html.replace(
+        new RegExp(
+            `(${escapedQuery})`,
+            'gi'
+        ),
+        '<span class="message-search-highlight">$1</span>'
+    );
+}
+
+
+/*
+ * =========================
+ * Дата результата поиска
+ * =========================
+ */
+
+function formatSearchMessageDate(
+    value
+) {
+
+    if (!value) {
+        return '';
+    }
+
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return '';
+    }
+
+    return date.toLocaleString(
+        'ru-RU',
+        {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        }
+    );
+}
+
+
+/*
+ * =========================
+ * Переход к сообщению
+ * =========================
+ */
+
+function focusMessage(
+    messageId
+) {
+
+    const messageElement =
+        messagesContainer.querySelector(
+            `[data-message-id="${messageId}"]`
+        );
+
+    /*
+     * Если сообщение уже загружено
+     * в текущий DOM — прокручиваем к нему.
+     */
+
+    if (messageElement) {
+
+        messageElement.scrollIntoView(
+            {
+                behavior: 'smooth',
+                block: 'center'
+            }
+        );
+
+        messageElement.classList.add(
+            'message-search-highlight-active'
+        );
+
+        setTimeout(
+            () => {
+
+                messageElement.classList.remove(
+                    'message-search-highlight-active'
+                );
+
+            },
+            2000
+        );
+
+        return;
+    }
+
+    /*
+     * Пока сообщение не загружено в DOM.
+     *
+     * Это нормально для первого этапа.
+     * Позже здесь добавим загрузку истории
+     * до нужного messageId.
+     */
+
+    console.log(
+        'Message is not currently loaded:',
+        messageId
+    );
+}
 
 
 /*
@@ -177,13 +681,6 @@ async function loadAvailableReactions() {
                 ? reactions
                 : [];
 
-        /*
-         * Сообщения из Thymeleaf уже находятся
-         * в DOM к этому моменту.
-         *
-         * Заполняем их reaction-picker полученным
-         * с backend каталогом.
-         */
         renderAllReactionPickers();
 
     } catch (error) {
@@ -197,32 +694,238 @@ async function loadAvailableReactions() {
     }
 }
 
-function renderReactionPicker(reactionPicker) {
+
+function renderReactionPicker(
+    reactionPicker
+) {
+
     if (!reactionPicker) {
         return;
     }
 
-    reactionPicker.innerHTML = '';
+    reactionPicker.innerHTML =
+        '';
 
-    availableReactions.forEach(reaction => {
-        const button = document.createElement('button');
+    availableReactions.forEach(
+        reaction => {
 
-        button.type = 'button';
-        button.dataset.reaction = reaction;
-        button.textContent = reaction;
+            const button =
+                document.createElement(
+                    'button'
+                );
 
-        reactionPicker.appendChild(button);
-    });
+            button.type =
+                'button';
+
+            button.dataset.reaction =
+                reaction;
+
+            button.textContent =
+                reaction;
+
+            reactionPicker.appendChild(
+                button
+            );
+        }
+    );
 }
 
 
 function renderAllReactionPickers() {
+
     document
-        .querySelectorAll('.reaction-picker')
-        .forEach(reactionPicker => {
-            renderReactionPicker(reactionPicker);
-        });
+        .querySelectorAll(
+            '.reaction-picker'
+        )
+        .forEach(
+            reactionPicker => {
+
+                renderReactionPicker(
+                    reactionPicker
+                );
+            }
+        );
 }
+
+
+/*
+ * =========================
+ * Audio notifications
+ * =========================
+ */
+
+let notificationAudioContext = null;
+
+
+function getNotificationAudioContext() {
+
+    if (!notificationAudioContext) {
+
+        const AudioContextClass =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContextClass) {
+            return null;
+        }
+
+        notificationAudioContext =
+            new AudioContextClass();
+    }
+
+    return notificationAudioContext;
+}
+
+
+async function unlockNotificationAudio() {
+
+    const audioContext =
+        getNotificationAudioContext();
+
+    if (!audioContext) {
+        return;
+    }
+
+    if (
+        audioContext.state ===
+        'suspended'
+    ) {
+
+        try {
+
+            await audioContext.resume();
+
+        } catch (error) {
+
+            console.warn(
+                'Unable to unlock notification audio:',
+                error
+            );
+        }
+    }
+}
+
+
+function playMessageNotificationSound() {
+
+    const audioContext =
+        getNotificationAudioContext();
+
+    if (!audioContext) {
+        return;
+    }
+
+    try {
+
+        if (
+            audioContext.state ===
+            'suspended'
+        ) {
+
+            audioContext
+                .resume()
+                .catch(
+                    () => {}
+                );
+        }
+
+        if (
+            audioContext.state !==
+            'running'
+        ) {
+            return;
+        }
+
+        const oscillator =
+            audioContext.createOscillator();
+
+        const gain =
+            audioContext.createGain();
+
+        oscillator.type =
+            'sine';
+
+        oscillator.frequency.setValueAtTime(
+            880,
+            audioContext.currentTime
+        );
+
+        oscillator.frequency.exponentialRampToValueAtTime(
+            660,
+            audioContext.currentTime + 0.12
+        );
+
+        gain.gain.setValueAtTime(
+            0.0001,
+            audioContext.currentTime
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.12,
+            audioContext.currentTime + 0.01
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            0.0001,
+            audioContext.currentTime + 0.16
+        );
+
+        oscillator.connect(
+            gain
+        );
+
+        gain.connect(
+            audioContext.destination
+        );
+
+        oscillator.start();
+
+        oscillator.stop(
+            audioContext.currentTime + 0.16
+        );
+
+    } catch (error) {
+
+        console.warn(
+            'Unable to play message notification sound:',
+            error
+        );
+    }
+}
+
+
+document.addEventListener(
+    'click',
+    () =>
+        unlockNotificationAudio(),
+    {
+        once: true,
+        passive: true
+    }
+);
+
+
+document.addEventListener(
+    'keydown',
+    () =>
+        unlockNotificationAudio(),
+    {
+        once: true,
+        passive: true
+    }
+);
+
+
+document.addEventListener(
+    'touchstart',
+    () =>
+        unlockNotificationAudio(),
+    {
+        once: true,
+        passive: true
+    }
+);
+
 
 /*
  * =========================
@@ -231,28 +934,44 @@ function renderAllReactionPickers() {
  */
 
 const attachmentButton =
-    document.getElementById('attachment-button');
+    document.getElementById(
+        'attachment-button'
+    );
 
 const attachmentPicker =
-    document.getElementById('attachment-picker');
+    document.getElementById(
+        'attachment-picker'
+    );
 
 const closeAttachmentPicker =
-    document.getElementById('close-attachment-picker');
+    document.getElementById(
+        'close-attachment-picker'
+    );
 
 const attachmentSearch =
-    document.getElementById('attachment-search');
+    document.getElementById(
+        'attachment-search'
+    );
 
 const myAttachments =
-    document.getElementById('my-attachments');
+    document.getElementById(
+        'my-attachments'
+    );
 
 const uploadAttachmentButton =
-    document.getElementById('upload-attachment-button');
+    document.getElementById(
+        'upload-attachment-button'
+    );
 
 const attachmentFileInput =
-    document.getElementById('attachment-file-input');
+    document.getElementById(
+        'attachment-file-input'
+    );
 
 const selectedAttachmentsContainer =
-    document.getElementById('selected-attachments');
+    document.getElementById(
+        'selected-attachments'
+    );
 
 let myAttachmentsLoaded =
     false;
@@ -318,6 +1037,7 @@ if (attachmentButton) {
                 &&
                 !myAttachmentsLoaded
             ) {
+
                 await loadMyAttachments();
             }
         }
@@ -344,8 +1064,7 @@ document.addEventListener(
     event => {
 
         if (
-            !attachmentPicker
-            ||
+            !attachmentPicker ||
             !attachmentButton
         ) {
             return;
@@ -356,8 +1075,10 @@ document.addEventListener(
                 event.target
             )
             &&
-            event.target !== attachmentButton
+            event.target !==
+            attachmentButton
         ) {
+
             attachmentPicker.classList.remove(
                 'open'
             );
@@ -394,8 +1115,7 @@ function openMessageAttachmentMenu(
 ) {
 
     if (
-        !messageAttachmentMenu
-        ||
+        !messageAttachmentMenu ||
         !attachmentElement
     ) {
         return;
@@ -408,16 +1128,18 @@ function openMessageAttachmentMenu(
         attachmentElement.dataset.downloadUrl;
 
     if (
-        !attachmentId
-        ||
+        !attachmentId ||
         !downloadUrl
     ) {
         return;
     }
 
     selectedMessageAttachment = {
-        id: attachmentId,
-        downloadUrl: downloadUrl
+        id:
+            attachmentId,
+
+        downloadUrl:
+            downloadUrl
     };
 
     messageAttachmentMenu.hidden =
@@ -442,12 +1164,16 @@ function openMessageAttachmentMenu(
         rect.left;
 
     let top =
-        rect.bottom + margin;
+        rect.bottom +
+        margin;
 
     if (
-        left + menuWidth >
-        window.innerWidth - margin
+        left +
+        menuWidth >
+        window.innerWidth -
+        margin
     ) {
+
         left =
             window.innerWidth -
             menuWidth -
@@ -455,9 +1181,12 @@ function openMessageAttachmentMenu(
     }
 
     if (
-        top + menuHeight >
-        window.innerHeight - margin
+        top +
+        menuHeight >
+        window.innerHeight -
+        margin
     ) {
+
         top =
             rect.top -
             menuHeight -
@@ -473,9 +1202,12 @@ function openMessageAttachmentMenu(
     }
 
     if (
-        left + menuWidth >
-        window.innerWidth - margin
+        left +
+        menuWidth >
+        window.innerWidth -
+        margin
     ) {
+
         left =
             Math.max(
                 margin,
@@ -513,6 +1245,7 @@ messagesContainer.addEventListener(
         }
 
         event.preventDefault();
+
         event.stopPropagation();
 
         closeContextMenu();
@@ -544,6 +1277,7 @@ if (downloadMessageAttachmentButton) {
         event => {
 
             event.preventDefault();
+
             event.stopPropagation();
 
             if (
@@ -553,7 +1287,8 @@ if (downloadMessageAttachmentButton) {
             }
 
             const downloadUrl =
-                selectedMessageAttachment.downloadUrl;
+                selectedMessageAttachment
+                    .downloadUrl;
 
             closeMessageAttachmentMenu();
 
@@ -577,6 +1312,7 @@ if (saveMessageAttachmentButton) {
         async event => {
 
             event.preventDefault();
+
             event.stopPropagation();
 
             if (
@@ -598,7 +1334,8 @@ if (saveMessageAttachmentButton) {
                     await fetch(
                         `/api/attachments/${attachmentId}/copy`,
                         {
-                            method: 'POST'
+                            method:
+                                'POST'
                         }
                     );
 
@@ -613,6 +1350,7 @@ if (saveMessageAttachmentButton) {
                             await response.json();
 
                         if (body.message) {
+
                             message =
                                 body.message;
                         }
@@ -626,7 +1364,8 @@ if (saveMessageAttachmentButton) {
                 }
 
                 if (
-                    response.status !== 204
+                    response.status !==
+                    204
                 ) {
 
                     try {
@@ -660,7 +1399,8 @@ if (saveMessageAttachmentButton) {
                 }
 
                 if (
-                    response.status === 204
+                    response.status ===
+                    204
                 ) {
 
                     myAttachmentsLoaded =
@@ -681,6 +1421,7 @@ if (saveMessageAttachmentButton) {
                             sendError.textContent ===
                             'Файл добавлен в «Мои файлы»'
                         ) {
+
                             showSendError('');
                         }
 
@@ -706,7 +1447,7 @@ if (saveMessageAttachmentButton) {
 
 /*
  * =========================
- * Закрытие всплывающего меню
+ * Закрытие attachment menu
  * =========================
  */
 
@@ -761,6 +1502,7 @@ messagesContainer.addEventListener(
             messageAttachmentMenu &&
             !messageAttachmentMenu.hidden
         ) {
+
             closeMessageAttachmentMenu();
         }
     }
@@ -825,7 +1567,9 @@ async function loadMyAttachments() {
         myAttachments.innerHTML =
             `
                 <div class="attachments-error">
-                    ${escapeHtml(error.message)}
+                    ${escapeHtml(
+                        error.message
+                    )}
                 </div>
             `;
     }
@@ -984,12 +1728,6 @@ function renderMyAttachments(
 }
 
 
-/*
- * =========================
- * Обновить состояние файла
- * =========================
- */
-
 function updateAttachmentElement(
     element,
     attachment
@@ -1019,12 +1757,6 @@ function updateAttachmentElement(
     }
 }
 
-
-/*
- * =========================
- * Получить текущий список
- * =========================
- */
 
 function getCurrentMyAttachments() {
 
@@ -1063,12 +1795,6 @@ function toggleAttachment(
     renderSelectedAttachments();
 }
 
-
-/*
- * =========================
- * Отображение выбранных
- * =========================
- */
 
 function renderSelectedAttachments() {
 
@@ -1118,6 +1844,7 @@ function renderSelectedAttachments() {
                 event => {
 
                     event.preventDefault();
+
                     event.stopPropagation();
 
                     selectedAttachments.delete(
@@ -1185,7 +1912,8 @@ if (
 
             const files =
                 Array.from(
-                    attachmentFileInput.files || []
+                    attachmentFileInput.files ||
+                    []
                 );
 
             if (files.length === 0) {
@@ -1193,7 +1921,10 @@ if (
             }
 
             for (const file of files) {
-                await uploadAttachment(file);
+
+                await uploadAttachment(
+                    file
+                );
             }
 
             attachmentFileInput.value =
@@ -1202,12 +1933,6 @@ if (
     );
 }
 
-
-/*
- * =========================
- * Upload attachment
- * =========================
- */
 
 async function uploadAttachment(
     file
@@ -1254,8 +1979,11 @@ async function uploadAttachment(
             await fetch(
                 '/api/attachments',
                 {
-                    method: 'POST',
-                    body: formData
+                    method:
+                        'POST',
+
+                    body:
+                        formData
                 }
             );
 
@@ -1270,6 +1998,7 @@ async function uploadAttachment(
                     await response.json();
 
                 if (body.message) {
+
                     message =
                         body.message;
                 }
@@ -1285,11 +2014,10 @@ async function uploadAttachment(
         const attachment =
             await response.json();
 
-        myAttachmentsList =
-            [
-                attachment,
-                ...myAttachmentsList
-            ];
+        myAttachmentsList = [
+            attachment,
+            ...myAttachmentsList
+        ];
 
         myAttachmentsLoaded =
             true;
@@ -1346,16 +2074,19 @@ messageInput.addEventListener(
 
             sendForm.requestSubmit();
         }
-
     }
 );
 
 
 const contextMenu =
-    document.getElementById('context-menu');
+    document.getElementById(
+        'context-menu'
+    );
 
 const deleteMessageButton =
-    document.getElementById('delete-message-button');
+    document.getElementById(
+        'delete-message-button'
+    );
 
 const pageSize =
     15;
@@ -1504,9 +2235,13 @@ function handleNewMessage(
 
     const messageForUi = {
         ...message,
-        readByOther: false,
+
+        readByOther:
+            false,
+
         reactions:
             message.reactions || [],
+
         attachments:
             message.attachments || []
     };
@@ -1515,6 +2250,7 @@ function handleNewMessage(
         String(message.senderId) !==
         String(currentUserId)
     ) {
+
         playMessageNotificationSound();
     }
 
@@ -1530,7 +2266,8 @@ function handleNewMessage(
     const isNearBottom =
         messagesContainer.scrollHeight -
         messagesContainer.scrollTop -
-        messagesContainer.clientHeight < 100;
+        messagesContainer.clientHeight <
+        100;
 
     const element =
         createMessageElement(
@@ -1566,7 +2303,8 @@ function handleMessageRead(
 
     const lastReadMessageId =
         Number(
-            wsEvent.payload?.lastReadMessageId
+            wsEvent.payload
+                ?.lastReadMessageId
         );
 
     if (!lastReadMessageId) {
@@ -1583,7 +2321,8 @@ function handleMessageRead(
 
             const messageId =
                 Number(
-                    messageElement.dataset.messageId
+                    messageElement.dataset
+                        .messageId
                 );
 
             if (
@@ -1682,6 +2421,7 @@ function getMessageAuthor(
         return {
             text:
                 message.senderName.trim(),
+
             removed:
                 false
         };
@@ -1695,6 +2435,7 @@ function getMessageAuthor(
         return {
             text:
                 message.senderEmail.trim(),
+
             removed:
                 false
         };
@@ -1703,6 +2444,7 @@ function getMessageAuthor(
     return {
         text:
             'Участник исключен',
+
         removed:
             true
     };
@@ -1752,10 +2494,6 @@ function createMessageElement(
         );
     }
 
-    /*
-     * Автор
-     */
-
     if (!mine) {
 
         const author =
@@ -1786,6 +2524,7 @@ function createMessageElement(
         );
     }
 
+
     /*
      * Реакция
      */
@@ -1810,6 +2549,7 @@ function createMessageElement(
     element.appendChild(
         reactionTrigger
     );
+
 
     /*
      * Picker
@@ -1850,13 +2590,13 @@ function createMessageElement(
         reactionPicker
     );
 
+
     /*
      * Текст
      */
 
     if (
-        message.content
-        &&
+        message.content &&
         message.content.trim()
     ) {
 
@@ -1875,6 +2615,7 @@ function createMessageElement(
             content
         );
     }
+
 
     /*
      * Attachments
@@ -1993,6 +2734,7 @@ function createMessageElement(
         );
     }
 
+
     /*
      * Удаление
      */
@@ -2029,6 +2771,7 @@ function createMessageElement(
         }
     }
 
+
     /*
      * Контейнер реакций
      */
@@ -2049,6 +2792,7 @@ function createMessageElement(
         element,
         message.reactions || []
     );
+
 
     /*
      * Время
@@ -2073,14 +2817,18 @@ function createMessageElement(
         ).toLocaleTimeString(
             [],
             {
-                hour: '2-digit',
-                minute: '2-digit'
+                hour:
+                    '2-digit',
+
+                minute:
+                    '2-digit'
             }
         );
 
     time.appendChild(
         timeText
     );
+
 
     /*
      * Статус
@@ -2530,8 +3278,7 @@ messagesContainer.addEventListener(
             );
 
         if (
-            !messageElement
-            ||
+            !messageElement ||
             !messageElement.classList.contains(
                 'mine'
             )
@@ -2565,7 +3312,8 @@ messagesContainer.addEventListener(
             );
     },
     {
-        passive: true
+        passive:
+            true
     }
 );
 
@@ -2594,7 +3342,7 @@ messagesContainer.addEventListener(
 
 /*
  * =========================
- * Реакции
+ * Реакции — click
  * =========================
  */
 
@@ -2635,7 +3383,8 @@ messagesContainer.addEventListener(
                     element => {
 
                         if (
-                            element !== picker
+                            element !==
+                            picker
                         ) {
 
                             element.classList.remove(
@@ -2731,7 +3480,8 @@ async function setMessageReaction(
             await fetch(
                 `/api/dialogs/${dialogId}/messages/${messageId}/reaction`,
                 {
-                    method: 'PUT',
+                    method:
+                        'PUT',
 
                     headers: {
                         'Content-Type':
@@ -2892,6 +3642,8 @@ document.addEventListener(
                 'open'
             );
         }
+
+        closeMessageSearch();
     }
 );
 
@@ -2928,7 +3680,8 @@ if (deleteMessageButton) {
                     await fetch(
                         `/api/dialogs/${dialogId}/messages/${messageId}`,
                         {
-                            method: 'DELETE'
+                            method:
+                                'DELETE'
                         }
                     );
 
@@ -3047,7 +3800,8 @@ sendForm.addEventListener(
                 await fetch(
                     `/api/dialogs/${dialogId}/messages`,
                     {
-                        method: 'POST',
+                        method:
+                            'POST',
 
                         headers: {
                             'Content-Type':
@@ -3150,35 +3904,6 @@ function showSendError(
 
 /*
  * =========================
- * Escape HTML
- * =========================
- */
-
-function escapeHtml(
-    value
-) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return '';
-    }
-
-    const div =
-        document.createElement(
-            'div'
-        );
-
-    div.textContent =
-        String(value);
-
-    return div.innerHTML;
-}
-
-
-/*
- * =========================
  * Размер файла
  * =========================
  */
@@ -3205,14 +3930,20 @@ function formatFileSize(
         return `${bytes} Б`;
     }
 
-    if (bytes < 1024 * 1024) {
+    if (
+        bytes <
+        1024 * 1024
+    ) {
 
         return `${(
             bytes / 1024
         ).toFixed(1)} КБ`;
     }
 
-    if (bytes < 1024 * 1024 * 1024) {
+    if (
+        bytes <
+        1024 * 1024 * 1024
+    ) {
 
         return `${(
             bytes /
