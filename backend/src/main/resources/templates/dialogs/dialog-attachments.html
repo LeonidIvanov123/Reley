@@ -31,6 +31,11 @@
             padding: 0 20px 40px;
         }
 
+
+        /* ==================== */
+        /* BACK */
+        /* ==================== */
+
         .back-button {
             display: inline-block;
 
@@ -45,6 +50,7 @@
             border-radius: 8px;
 
             text-decoration: none;
+
             font-size: 14px;
             font-weight: 500;
 
@@ -59,24 +65,82 @@
             text-decoration: none;
         }
 
+
+        /* ==================== */
+        /* CARD */
+        /* ==================== */
+
         .card {
             background: white;
             border-radius: 14px;
             padding: 24px;
+
             box-shadow:
                     0 4px 20px rgba(0, 0, 0, 0.08);
         }
 
+
+        /* ==================== */
+        /* HEADER */
+        /* ==================== */
+
         h1 {
             margin-top: 0;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
+
+
+        /* ==================== */
+        /* SEARCH */
+        /* ==================== */
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+
+            padding: 11px 13px;
+
+            border: 1px solid #d5d9df;
+            border-radius: 8px;
+
+            font-size: 15px;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: #7b8cff;
+        }
+
+
+        /* ==================== */
+        /* EMPTY */
+        /* ==================== */
 
         .empty {
             color: #777;
-            padding: 20px 0;
+
+            padding: 30px 0;
+
             text-align: center;
         }
+
+        .search-empty {
+            display: none;
+
+            color: #777;
+
+            padding: 30px 0;
+
+            text-align: center;
+        }
+
+
+        /* ==================== */
+        /* ATTACHMENTS */
+        /* ==================== */
 
         .attachments {
             display: flex;
@@ -85,11 +149,13 @@
 
         .attachment {
             display: flex;
+
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
 
-            padding: 14px 0;
+            gap: 20px;
+
+            padding: 15px 0;
 
             border-bottom: 1px solid #eee;
         }
@@ -98,6 +164,11 @@
             border-bottom: none;
         }
 
+
+        /* ==================== */
+        /* INFO */
+        /* ==================== */
+
         .attachment-info {
             min-width: 0;
             flex: 1;
@@ -105,43 +176,102 @@
 
         .attachment-name {
             font-weight: 600;
+
             word-break: break-word;
         }
 
         .attachment-meta {
-            margin-top: 5px;
+            margin-top: 6px;
+
             color: #777;
+
             font-size: 13px;
         }
 
         .attachment-extension {
             text-transform: uppercase;
+
             font-weight: 600;
+
+            color: #555;
         }
 
+
+        /* ==================== */
+        /* ACTIONS */
+        /* ==================== */
+
         .attachment-actions {
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
             flex-shrink: 0;
         }
 
-        .download-button {
+        .download-button,
+        .save-button {
             display: inline-block;
 
             padding: 8px 12px;
 
-            background: #4f63d9;
-            color: white;
-
             border-radius: 8px;
+
+            font-size: 14px;
 
             text-decoration: none;
 
-            font-size: 14px;
+            cursor: pointer;
+
+            border: none;
+        }
+
+        .download-button {
+            background: #4f63d9;
+            color: white;
         }
 
         .download-button:hover {
             background: #4053c7;
+
             text-decoration: none;
         }
+
+        .save-button {
+            background: #e9ecf1;
+            color: #222;
+        }
+
+        .save-button:hover {
+            background: #dfe3e9;
+        }
+
+        .save-button.saved {
+            background: #e8f5ed;
+            color: #198754;
+
+            cursor: default;
+        }
+
+
+        /* ==================== */
+        /* ERROR */
+        /* ==================== */
+
+        .attachment-error {
+            margin-top: 5px;
+
+            color: #dc3545;
+
+            font-size: 12px;
+        }
+
+
+        /* ==================== */
+        /* RESPONSIVE */
+        /* ==================== */
 
         @media (max-width: 600px) {
 
@@ -155,15 +285,20 @@
 
             .attachment {
                 align-items: flex-start;
+
                 flex-direction: column;
+
+                gap: 12px;
             }
 
             .attachment-actions {
                 width: 100%;
             }
 
-            .download-button {
-                display: block;
+            .download-button,
+            .save-button {
+                flex: 1;
+
                 text-align: center;
             }
 
@@ -177,6 +312,7 @@
 
 <div class="page">
 
+
     <!-- ==================== -->
     <!-- ВОЗВРАТ В ДИАЛОГ -->
     <!-- ==================== -->
@@ -189,9 +325,29 @@
 
     <div class="card">
 
+
+        <!-- ==================== -->
+        <!-- TITLE -->
+        <!-- ==================== -->
+
         <h1>
             Все прикрепления диалога
         </h1>
+
+
+        <!-- ==================== -->
+        <!-- SEARCH -->
+        <!-- ==================== -->
+
+        <div class="search-container"
+             th:if="${!#lists.isEmpty(attachments)}">
+
+            <input id="attachmentSearch"
+                   class="search-input"
+                   type="text"
+                   placeholder="Поиск по имени файла...">
+
+        </div>
 
 
         <!-- ==================== -->
@@ -207,49 +363,71 @@
 
 
         <!-- ==================== -->
+        <!-- НЕ НАЙДЕНО -->
+        <!-- ==================== -->
+
+        <div id="searchEmpty"
+             class="search-empty">
+
+            По вашему запросу ничего не найдено.
+
+        </div>
+
+
+        <!-- ==================== -->
         <!-- ПРИКРЕПЛЕНИЯ -->
         <!-- ==================== -->
 
         <div th:unless="${#lists.isEmpty(attachments)}"
+             id="attachments"
              class="attachments">
 
+
             <div th:each="attachment : ${attachments}"
-                 class="attachment">
+                 class="attachment"
+                 th:attr="data-file-name=${attachment.fileName}">
+
+
+                <!-- ==================== -->
+                <!-- INFO -->
+                <!-- ==================== -->
 
                 <div class="attachment-info">
 
                     <div class="attachment-name"
                          th:text="${attachment.fileName}">
+
                         file.txt
+
                     </div>
+
 
                     <div class="attachment-meta">
 
-                        <!-- Расширение -->
+
+                        <!-- EXTENSION -->
 
                         <span th:if="${attachment.extension != null
                                       && !attachment.extension.isBlank()}"
                               class="attachment-extension"
                               th:text="${attachment.extension}">
+
                             txt
+
                         </span>
 
 
-                        <!-- Размер -->
+                        <!-- SIZE -->
 
-                        <span th:if="${attachment.extension != null
-                                      && !attachment.extension.isBlank()}">
-                            ·
+                        <span class="attachment-size"
+                              th:attr="data-size=${attachment.size}">
+
+                            0 B
+
                         </span>
 
-                        <span th:text="${attachment.size}">
-                            0
-                        </span>
 
-                        байт
-
-
-                        <!-- Content-Type -->
+                        <!-- CONTENT TYPE -->
 
                         <span th:if="${attachment.contentType != null}">
                             ·
@@ -258,23 +436,56 @@
                             </span>
                         </span>
 
+
                     </div>
 
                 </div>
 
 
                 <!-- ==================== -->
-                <!-- СКАЧАТЬ -->
+                <!-- ACTIONS -->
                 <!-- ==================== -->
 
                 <div class="attachment-actions">
 
+
+                    <!-- DOWNLOAD -->
+
                     <a class="download-button"
                        th:href="${attachment.downloadUrl}">
+
                         Скачать
+
                     </a>
 
+
+                    <!-- SAVE -->
+
+                    <button th:if="${!attachment.savedToMyFiles}"
+                            type="button"
+                            class="save-button"
+                            th:attr="data-attachment-id=${attachment.id}"
+                            onclick="saveToMyFiles(this)">
+
+                        В мои файлы
+
+                    </button>
+
+
+                    <!-- ALREADY SAVED -->
+
+                    <button th:if="${attachment.savedToMyFiles}"
+                            type="button"
+                            class="save-button saved"
+                            disabled>
+
+                        ✓ В моих файлах
+
+                    </button>
+
+
                 </div>
+
 
             </div>
 
@@ -283,6 +494,223 @@
     </div>
 
 </div>
+
+
+<script>
+
+    // =========================
+    // FORMAT SIZE
+    // =========================
+
+    function formatFileSize(bytes) {
+
+        if (bytes === null || bytes === undefined) {
+            return '0 B';
+        }
+
+        if (bytes < 1024) {
+            return `${bytes} B`;
+        }
+
+        const kb = bytes / 1024;
+
+        if (kb < 1024) {
+            return `${kb.toFixed(1)} KB`;
+        }
+
+        const mb = kb / 1024;
+
+        if (mb < 1024) {
+            return `${mb.toFixed(1)} MB`;
+        }
+
+        const gb = mb / 1024;
+
+        return `${gb.toFixed(1)} GB`;
+    }
+
+
+    // =========================
+    // FORMAT ALL SIZES
+    // =========================
+
+    document
+        .querySelectorAll('.attachment-size')
+        .forEach(element => {
+
+            const size =
+                Number(
+                    element.dataset.size
+                );
+
+            element.textContent =
+                `· ${formatFileSize(size)}`;
+        });
+
+
+    // =========================
+    // SEARCH
+    // =========================
+
+    const searchInput =
+        document.getElementById(
+            'attachmentSearch'
+        );
+
+    const searchEmpty =
+        document.getElementById(
+            'searchEmpty'
+        );
+
+    const attachments =
+        document.querySelectorAll(
+            '.attachment'
+        );
+
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            'input',
+            () => {
+
+                const search =
+                    searchInput.value
+                        .trim()
+                        .toLowerCase();
+
+                let visibleCount = 0;
+
+
+                attachments.forEach(
+                    attachment => {
+
+                        const fileName =
+                            (
+                                attachment.dataset.fileName
+                                || ''
+                            ).toLowerCase();
+
+                        const visible =
+                            fileName.includes(
+                                search
+                            );
+
+                        attachment.style.display =
+                            visible
+                                ? ''
+                                : 'none';
+
+                        if (visible) {
+                            visibleCount++;
+                        }
+
+                    }
+                );
+
+
+                if (searchEmpty) {
+
+                    searchEmpty.style.display =
+                        visibleCount === 0
+                        && search.length > 0
+                            ? 'block'
+                            : 'none';
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // =========================
+    // SAVE TO MY FILES
+    // =========================
+
+    async function saveToMyFiles(button) {
+
+        const attachmentId =
+            button.dataset.attachmentId;
+
+        if (!attachmentId) {
+            return;
+        }
+
+
+        button.disabled = true;
+
+        button.textContent =
+            'Сохранение...';
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/attachments/${attachmentId}/copy`,
+                    {
+                        method: 'POST'
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                throw new Error(
+                    text
+                    || 'Не удалось добавить файл'
+                );
+
+            }
+
+
+            button.classList.add(
+                'saved'
+            );
+
+            button.textContent =
+                '✓ В моих файлах';
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            button.disabled = false;
+
+            button.textContent =
+                'В мои файлы';
+
+
+            const errorElement =
+                document.createElement(
+                    'div'
+                );
+
+            errorElement.className =
+                'attachment-error';
+
+            errorElement.textContent =
+                error.message
+                || 'Не удалось добавить файл';
+
+
+            button.parentElement
+                .appendChild(
+                    errorElement
+                );
+
+        }
+
+    }
+
+</script>
 
 </body>
 

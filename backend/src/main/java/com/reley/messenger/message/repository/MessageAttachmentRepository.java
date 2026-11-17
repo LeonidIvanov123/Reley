@@ -45,6 +45,7 @@ public class MessageAttachmentRepository {
                 .map((row, metadata) ->
                         Attachment.builder()
                                 .id(row.get("id", UUID.class))
+                                .fileUuid(row.get("file_uuid", UUID.class))
                                 .createdBy(row.get("created_by", Long.class))
                                 .originalFileName(row.get("original_file_name", String.class))
                                 .extension(row.get("extension", String.class))
@@ -70,6 +71,7 @@ public class MessageAttachmentRepository {
                 .map((row, metadata) ->
                         Attachment.builder()
                                 .id(row.get("id", UUID.class))
+                                .fileUuid(row.get("file_uuid", UUID.class))
                                 .createdBy(row.get("created_by", Long.class))
                                 .originalFileName(row.get("original_file_name", String.class))
                                 .extension(row.get("extension", String.class))
@@ -99,6 +101,7 @@ public class MessageAttachmentRepository {
                                 row.get("message_id", Long.class),
                                 Attachment.builder()
                                         .id(row.get("id", UUID.class))
+                                        .fileUuid(row.get("file_uuid", UUID.class))
                                         .createdBy(row.get("created_by", Long.class))
                                         .originalFileName(row.get("original_file_name", String.class))
                                         .extension(row.get("extension", String.class))

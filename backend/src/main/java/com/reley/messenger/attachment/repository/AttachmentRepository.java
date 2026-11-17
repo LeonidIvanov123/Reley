@@ -37,4 +37,11 @@ public interface AttachmentRepository extends ReactiveCrudRepository<Attachment,
             """)
     Mono<Attachment> findByFileUuidAndCreatedBy(UUID fileUuid, Long createdBy);
 
+    @Query("""
+        SELECT file_uuid
+        FROM file_attachment
+        WHERE created_by = :createdBy
+        """)
+    Flux<UUID> findFileUuidsByCreatedBy(Long createdBy);
+
 }
