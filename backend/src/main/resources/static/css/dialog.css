@@ -1,3 +1,4 @@
+
 * {
     box-sizing: border-box;
 }
@@ -29,6 +30,8 @@ body {
    ========================= */
 
 .chat-header {
+    position: relative;
+
     display: flex;
     align-items: center;
 
@@ -135,6 +138,248 @@ body {
 .settings-button:hover {
     background: #e5edfa;
     color: #3978d5;
+}
+
+
+/* =========================
+   Message search
+   ========================= */
+
+.message-search-button {
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 9px;
+
+    background: #f1f4f8;
+    color: #697586;
+
+    font-size: 18px;
+
+    cursor: pointer;
+
+    transition:
+        background .2s,
+        color .2s;
+}
+
+.message-search-button:hover {
+    background: #e5edfa;
+    color: #3978d5;
+}
+
+.message-search {
+    display: none;
+
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    top: 100%;
+
+    background: #fff;
+
+    border: 1px solid #e5e9f0;
+    border-top: none;
+
+    border-radius: 0 0 12px 12px;
+
+    box-shadow:
+        0 6px 18px rgba(30, 50, 80, .10);
+
+    z-index: 100;
+}
+
+.message-search.open {
+    display: block;
+}
+
+.message-search-row {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 10px 12px;
+}
+
+.message-search-input {
+    flex: 1;
+    min-width: 0;
+
+    height: 38px;
+
+    padding: 0 12px;
+
+    border: 1px solid #e0e5ed;
+    border-radius: 8px;
+
+    outline: none;
+
+    background: #f8f9fb;
+    color: #252a34;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    transition:
+        border-color .2s,
+        background .2s;
+}
+
+.message-search-input:focus {
+    background: #fff;
+    border-color: #3978d5;
+}
+
+.message-search-input::placeholder {
+    color: #a0a8b5;
+}
+
+.message-search-close {
+    width: 36px;
+    height: 36px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+    color: #8992a1;
+
+    font-size: 24px;
+    line-height: 1;
+
+    cursor: pointer;
+
+    transition:
+        background .15s,
+        color .15s;
+}
+
+.message-search-close:hover {
+    background: #f1f4f8;
+    color: #252a34;
+}
+
+.message-search-results {
+    max-height: 360px;
+
+    overflow-y: auto;
+
+    border-top: 1px solid #eef1f5;
+}
+
+.message-search-result {
+    padding: 10px 14px;
+
+    border-bottom: 1px solid #eef1f5;
+
+    cursor: pointer;
+
+    transition: background .15s;
+}
+
+.message-search-result:hover {
+    background: #f5f9ff;
+}
+
+.message-search-result:last-child {
+    border-bottom: none;
+}
+
+.message-search-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 4px;
+}
+
+.message-search-result-sender {
+    min-width: 0;
+
+    overflow: hidden;
+
+    color: #3978d5;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.message-search-result-date {
+    flex-shrink: 0;
+
+    color: #8992a1;
+
+    font-size: 11px;
+}
+
+.message-search-result-content {
+    overflow: hidden;
+
+    color: #4d5663;
+
+    font-size: 13px;
+    line-height: 1.4;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+
+    overflow-wrap: anywhere;
+}
+
+.message-search-empty,
+.message-search-loading {
+    padding: 20px;
+
+    color: #8992a1;
+
+    font-size: 13px;
+
+    text-align: center;
+}
+
+.message-search-highlight {
+    background: #fff3a3;
+
+    border-radius: 2px;
+}
+
+.message-search-highlight-active {
+    animation: message-search-highlight 2s ease;
+}
+
+@keyframes message-search-highlight {
+    0% {
+        background: #fff3a3;
+    }
+
+    100% {
+        background: transparent;
+    }
 }
 
 /* =========================
@@ -1273,6 +1518,23 @@ body {
         border-radius: 0;
 
         padding: 13px 15px;
+    }
+
+
+    .message-search {
+        border-radius: 0;
+    }
+
+    .message-search-row {
+        padding: 8px 10px;
+    }
+
+    .message-search-results {
+        max-height: 300px;
+    }
+
+    .message-search-result {
+        padding: 10px 12px;
     }
 
     .chat {

@@ -4,6 +4,7 @@ import com.reley.messenger.message.dto.MessageResponse;
 import com.reley.messenger.message.dto.SendMessageRequest;
 import com.reley.messenger.message.service.MessageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,5 +47,18 @@ public class MessageController {
             @PathVariable Long messageId
     ) {
         return messageService.deleteMessage(dialogId, messageId);
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("@dialogAccess.canAccess(#dialogId, authentication)")
+    public Mono<List<MessageResponse>> searchMessages(
+            @PathVariable Long dialogId,
+            @RequestParam String q,
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(defaultValue = "0") int offset
+    ) {
+        return messageService
+                .searchMessages(dialogId, q, limit, offset)
+                .collectList();
     }
 }
