@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Прикрепления диалога</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            color: #222;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px 40px;
+        }
+
+        .back-button {
+            display: inline-block;
+
+            margin-bottom: 16px;
+
+            padding: 9px 14px;
+
+            background: #ffffff;
+            color: #3978d5;
+
+            border: 1px solid #d9e1ec;
+            border-radius: 8px;
+
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+
+            transition:
+                    background .15s,
+                    border-color .15s;
+        }
+
+        .back-button:hover {
+            background: #f0f5fb;
+            border-color: #3978d5;
+            text-decoration: none;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow:
+                    0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+
+        .empty {
+            color: #777;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        .attachments {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .attachment {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+
+            padding: 14px 0;
+
+            border-bottom: 1px solid #eee;
+        }
+
+        .attachment:last-child {
+            border-bottom: none;
+        }
+
+        .attachment-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .attachment-name {
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .attachment-meta {
+            margin-top: 5px;
+            color: #777;
+            font-size: 13px;
+        }
+
+        .attachment-extension {
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .attachment-actions {
+            flex-shrink: 0;
+        }
+
+        .download-button {
+            display: inline-block;
+
+            padding: 8px 12px;
+
+            background: #4f63d9;
+            color: white;
+
+            border-radius: 8px;
+
+            text-decoration: none;
+
+            font-size: 14px;
+        }
+
+        .download-button:hover {
+            background: #4053c7;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+
+            .page {
+                margin-top: 20px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .attachment {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .attachment-actions {
+                width: 100%;
+            }
+
+            .download-button {
+                display: block;
+                text-align: center;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- ==================== -->
+    <!-- ВОЗВРАТ В ДИАЛОГ -->
+    <!-- ==================== -->
+
+    <a class="back-button"
+       th:href="@{/dialogs/{dialogId}(dialogId=${dialogId})}">
+        ← Вернуться в диалог
+    </a>
+
+
+    <div class="card">
+
+        <h1>
+            Все прикрепления диалога
+        </h1>
+
+
+        <!-- ==================== -->
+        <!-- НЕТ ПРИКРЕПЛЕНИЙ -->
+        <!-- ==================== -->
+
+        <div th:if="${#lists.isEmpty(attachments)}"
+             class="empty">
+
+            В этом диалоге пока нет прикреплений.
+
+        </div>
+
+
+        <!-- ==================== -->
+        <!-- ПРИКРЕПЛЕНИЯ -->
+        <!-- ==================== -->
+
+        <div th:unless="${#lists.isEmpty(attachments)}"
+             class="attachments">
+
+            <div th:each="attachment : ${attachments}"
+                 class="attachment">
+
+                <div class="attachment-info">
+
+                    <div class="attachment-name"
+                         th:text="${attachment.fileName}">
+                        file.txt
+                    </div>
+
+                    <div class="attachment-meta">
+
+                        <!-- Расширение -->
+
+                        <span th:if="${attachment.extension != null
+                                      && !attachment.extension.isBlank()}"
+                              class="attachment-extension"
+                              th:text="${attachment.extension}">
+                            txt
+                        </span>
+
+
+                        <!-- Размер -->
+
+                        <span th:if="${attachment.extension != null
+                                      && !attachment.extension.isBlank()}">
+                            ·
+                        </span>
+
+                        <span th:text="${attachment.size}">
+                            0
+                        </span>
+
+                        байт
+
+
+                        <!-- Content-Type -->
+
+                        <span th:if="${attachment.contentType != null}">
+                            ·
+                            <span th:text="${attachment.contentType}">
+                                application/octet-stream
+                            </span>
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================== -->
+                <!-- СКАЧАТЬ -->
+                <!-- ==================== -->
+
+                <div class="attachment-actions">
+
+                    <a class="download-button"
+                       th:href="${attachment.downloadUrl}">
+                        Скачать
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
