@@ -111,6 +111,14 @@
             flex-shrink: 0;
         }
 
+        .profile-status-dot.online {
+            background: #35b86b;
+        }
+
+        .profile-status-text.online {
+            color: #35a964;
+        }
+
         .profile-email {
             color: #7b8493;
             font-size: 14px;
@@ -219,8 +227,16 @@
 <div class="container">
 
     <div class="header">
-        <h1>Мой профиль</h1>
-        <a href="/" class="back-link">← К диалогам</a>
+
+        <h1 th:text="${ownProfile ? 'Мой профиль' : 'Профиль пользователя'}">
+            Мой профиль
+        </h1>
+
+        <a href="/"
+           class="back-link">
+            ← К диалогам
+        </a>
+
     </div>
 
     <div th:replace="~{fragments/show_error :: show-error}"></div>
@@ -230,104 +246,162 @@
         <div th:replace="~{fragments/avatar :: avatar(${user}, 76)}"></div>
 
         <div class="profile-name"
-             th:text="${user.name != null and !user.name.isEmpty() ? user.name : 'Пользователь'}">
+             th:text="${user.name != null and !user.name.isEmpty()
+                       ? user.name
+                       : 'Пользователь'}">
             Имя пользователя
         </div>
 
+        <div class="profile-username"
+             th:if="${user.username != null and !user.username.isEmpty()}"
+             th:text="'@' + ${user.username}">
+            @username
+        </div>
+
+        <!-- Статус -->
         <div class="profile-status">
 
-            <span class="profile-status-dot"></span>
-
-            <span th:if="${user.lastSeenAt == null}">
-                Статус неизвестен
+            <!-- Online -->
+            <span class="profile-status-dot online"
+                  th:if="${online}">
             </span>
 
-            <span th:if="${user.lastSeenAt != null}">
-                Был в сети
-                <span th:text="${#temporals.format(user.lastSeenAt, 'dd.MM.yyyy HH:mm')}">
-                    17.11.2026 15:30
+            <span class="profile-status-text online"
+                  th:if="${online}">
+                В сети
+            </span>
+
+            <!-- Offline -->
+            <span class="profile-status-dot"
+                  th:unless="${online}">
+            </span>
+
+            <span th:unless="${online}">
+
+                <span th:if="${user.lastSeenAt != null}">
+                    Был в сети
+                    <span th:text="${#temporals.format(
+                        user.lastSeenAt,
+                        'dd.MM.yyyy HH:mm'
+                    )}">
+                        17.11.2026 15:30
+                    </span>
                 </span>
+
+                <span th:if="${user.lastSeenAt == null}">
+                    Статус неизвестен
+                </span>
+
             </span>
 
         </div>
 
-        <div class="profile-email" th:text="${user.email}">
-            user@example.com
-        </div>
+        <!-- ========================= -->
+        <!-- Информация только владельца -->
+        <!-- ========================= -->
 
-        <div class="field">
-            <div class="field-label">Username</div>
+        <div th:if="${ownProfile}">
 
-            <div class="field-value username-value"
-                 th:text="${user.username != null and !user.username.isEmpty()
-                           ? '@' + user.username
-                           : 'Не указан'}">
-                @username
-            </div>
-        </div>
-
-        <div class="field">
-            <div class="field-label">Email</div>
-
-            <div class="field-value"
+            <div class="profile-email"
                  th:text="${user.email}">
                 user@example.com
             </div>
-        </div>
 
-        <div class="field">
-            <div class="field-label">Имя</div>
+            <div class="field">
 
-            <div class="field-value"
-                 th:text="${user.name != null and !user.name.isEmpty()
-                           ? user.name
-                           : 'Не указано'}">
-                Имя
+                <div class="field-label">
+                    Username
+                </div>
+
+                <div class="field-value username-value"
+                     th:text="${user.username != null and !user.username.isEmpty()
+                               ? '@' + user.username
+                               : 'Не указан'}">
+                    @username
+                </div>
+
             </div>
-        </div>
 
-        <div class="field">
-            <div class="field-label">Телефон</div>
+            <div class="field">
 
-            <div class="field-value"
-                 th:text="${user.phone != null and !user.phone.isEmpty()
-                           ? user.phone
-                           : 'Не указан'}">
-                +7 900 000-00-00
+                <div class="field-label">
+                    Email
+                </div>
+
+                <div class="field-value"
+                     th:text="${user.email}">
+                    user@example.com
+                </div>
+
             </div>
-        </div>
 
-        <div class="field">
-            <div class="field-label">Видимость в списке пользователей</div>
+            <div class="field">
 
-            <div class="field-value"
-                 th:text="${user.hiddenFromDirectory ? 'Скрыт' : 'Виден'}">
-                Виден
+                <div class="field-label">
+                    Имя
+                </div>
+
+                <div class="field-value"
+                     th:text="${user.name != null and !user.name.isEmpty()
+                               ? user.name
+                               : 'Не указано'}">
+                    Имя
+                </div>
+
             </div>
-        </div>
 
-        <div class="actions">
+            <div class="field">
 
-            <a href="/profile/edit"
-               class="button button-primary">
-                Редактировать профиль
-            </a>
+                <div class="field-label">
+                    Телефон
+                </div>
 
-            <a href="/attachments"
-               class="button button-secondary">
-                Мои файлы
-            </a>
+                <div class="field-value"
+                     th:text="${user.phone != null and !user.phone.isEmpty()
+                               ? user.phone
+                               : 'Не указан'}">
+                    +7 900 000-00-00
+                </div>
 
-            <form th:action="@{/logout}"
-                  method="post"
-                  class="logout-form">
+            </div>
 
-                <button type="submit"
-                        class="button button-danger">
-                    Выйти
-                </button>
+            <div class="field">
 
-            </form>
+                <div class="field-label">
+                    Видимость в списке пользователей
+                </div>
+
+                <div class="field-value"
+                     th:text="${user.hiddenFromDirectory ? 'Скрыт' : 'Виден'}">
+                    Виден
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <a href="/profile/edit"
+                   class="button button-primary">
+                    Редактировать профиль
+                </a>
+
+                <a href="/attachments"
+                   class="button button-secondary">
+                    Мои файлы
+                </a>
+
+                <form th:action="@{/logout}"
+                      method="post"
+                      class="logout-form">
+
+                    <button type="submit"
+                            class="button button-danger">
+                        Выйти
+                    </button>
+
+                </form>
+
+            </div>
 
         </div>
 

@@ -167,4 +167,11 @@ public interface DialogParticipantRepository extends org.springframework.data.re
             Long userId
     );
 
+    @Query("""
+            SELECT *
+            FROM dialog_participants
+            WHERE user_id = :userId
+            """)
+    Flux<DialogParticipant> findByUserId(Long userId);
+
 }

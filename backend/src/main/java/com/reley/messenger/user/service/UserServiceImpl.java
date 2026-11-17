@@ -224,8 +224,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<Integer> updateLastSeenAt(Long userId, OffsetDateTime lastSeenAt) {
-        return userRepository.updateLastSeenAt(userId, lastSeenAt);
+    public Mono<Void> updateLastSeenAt(Long userId) {
+        return userRepository.updateLastSeenAt(userId, OffsetDateTime.now()).then();
     }
 
     private String normalizeUsername(String username) {

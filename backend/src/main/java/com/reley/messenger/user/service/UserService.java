@@ -32,6 +32,6 @@ public interface UserService {
 
     Flux<UserSenderProjection> findSendersByDialogId(Long dialogId);
 
-    Mono<Integer> updateLastSeenAt(Long userId, OffsetDateTime lastSeenAt);
+    Mono<Void> updateLastSeenAt(Long userId);
 
 }
