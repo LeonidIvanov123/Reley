@@ -135,6 +135,95 @@ document.addEventListener(
     { once: true, passive: true }
 );
 
+
+/*
+ * =========================
+ * Реакции
+ * =========================
+ *
+ * Список реакций приходит с backend.
+ */
+
+let availableReactions = [];
+
+
+/*
+ * =========================
+ * Загрузка каталога реакций
+ * =========================
+ */
+
+async function loadAvailableReactions() {
+
+    try {
+
+        const response =
+            await fetch(
+                '/api/messages/reactions'
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                'Не удалось загрузить список реакций'
+            );
+        }
+
+        const reactions =
+            await response.json();
+
+        availableReactions =
+            Array.isArray(reactions)
+                ? reactions
+                : [];
+
+        /*
+         * Сообщения из Thymeleaf уже находятся
+         * в DOM к этому моменту.
+         *
+         * Заполняем их reaction-picker полученным
+         * с backend каталогом.
+         */
+        renderAllReactionPickers();
+
+    } catch (error) {
+
+        console.error(
+            'Failed to load reactions:',
+            error
+        );
+
+        availableReactions = [];
+    }
+}
+
+function renderReactionPicker(reactionPicker) {
+    if (!reactionPicker) {
+        return;
+    }
+
+    reactionPicker.innerHTML = '';
+
+    availableReactions.forEach(reaction => {
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.dataset.reaction = reaction;
+        button.textContent = reaction;
+
+        reactionPicker.appendChild(button);
+    });
+}
+
+
+function renderAllReactionPickers() {
+    document
+        .querySelectorAll('.reaction-picker')
+        .forEach(reactionPicker => {
+            renderReactionPicker(reactionPicker);
+        });
+}
+
 /*
  * =========================
  * Attachments
@@ -331,19 +420,12 @@ function openMessageAttachmentMenu(
         downloadUrl: downloadUrl
     };
 
-    /*
-     * Показываем меню перед расчётом размеров.
-     */
     messageAttachmentMenu.hidden =
         false;
 
     messageAttachmentMenu.style.display =
         'block';
 
-    /*
-     * Получаем размеры attachment
-     * и всплывающего меню.
-     */
     const rect =
         attachmentElement.getBoundingClientRect();
 
@@ -356,20 +438,12 @@ function openMessageAttachmentMenu(
     const margin =
         8;
 
-    /*
-     * По умолчанию меню находится
-     * под attachment.
-     */
     let left =
         rect.left;
 
     let top =
         rect.bottom + margin;
 
-    /*
-     * Если справа места нет —
-     * сдвигаем меню влево.
-     */
     if (
         left + menuWidth >
         window.innerWidth - margin
@@ -380,10 +454,6 @@ function openMessageAttachmentMenu(
             margin;
     }
 
-    /*
-     * Если снизу места нет —
-     * показываем меню над attachment.
-     */
     if (
         top + menuHeight >
         window.innerHeight - margin
@@ -394,26 +464,14 @@ function openMessageAttachmentMenu(
             margin;
     }
 
-    /*
-     * Если даже сверху места нет —
-     * оставляем внутри окна.
-     */
     if (top < margin) {
         top = margin;
     }
 
-    /*
-     * Не позволяем меню выйти
-     * за левую границу.
-     */
     if (left < margin) {
         left = margin;
     }
 
-    /*
-     * И на всякий случай не позволяем
-     * выйти за правую границу.
-     */
     if (
         left + menuWidth >
         window.innerWidth - margin
@@ -457,14 +515,8 @@ messagesContainer.addEventListener(
         event.preventDefault();
         event.stopPropagation();
 
-        /*
-         * Закрываем обычное меню сообщения.
-         */
         closeContextMenu();
 
-        /*
-         * Закрываем picker файлов.
-         */
         if (attachmentPicker) {
 
             attachmentPicker.classList.remove(
@@ -472,9 +524,6 @@ messagesContainer.addEventListener(
             );
         }
 
-        /*
-         * Открываем всплывающее меню.
-         */
         openMessageAttachmentMenu(
             attachment
         );
@@ -508,9 +557,6 @@ if (downloadMessageAttachmentButton) {
 
             closeMessageAttachmentMenu();
 
-            /*
-             * Скачивание через обычный endpoint.
-             */
             window.location.href =
                 downloadUrl;
         }
@@ -579,10 +625,6 @@ if (saveMessageAttachmentButton) {
                     );
                 }
 
-                /*
-                 * Если сервер вернул AttachmentResponse,
-                 * добавляем его сразу в локальный список.
-                 */
                 if (
                     response.status !== 204
                 ) {
@@ -617,10 +659,6 @@ if (saveMessageAttachmentButton) {
                     }
                 }
 
-                /*
-                 * Если endpoint возвращает 204,
-                 * перезагружаем список файлов.
-                 */
                 if (
                     response.status === 204
                 ) {
@@ -688,9 +726,6 @@ document.addEventListener(
             return;
         }
 
-        /*
-         * Клик внутри меню.
-         */
         if (
             messageAttachmentMenu.contains(
                 event.target
@@ -699,10 +734,6 @@ document.addEventListener(
             return;
         }
 
-        /*
-         * Клик по attachment —
-         * обработает основной handler.
-         */
         if (
             event.target.closest(
                 '.message-attachment'
@@ -1344,22 +1375,6 @@ let longPressTimer =
 
 /*
  * =========================
- * Разрешённые реакции
- * =========================
- */
-
-const allowedReactions = [
-    '👍',
-    '❤️',
-    '😂',
-    '😮',
-    '😢',
-    '😡'
-];
-
-
-/*
- * =========================
  * WebSocket
  * =========================
  */
@@ -1808,7 +1823,7 @@ function createMessageElement(
     reactionPicker.className =
         'reaction-picker';
 
-    allowedReactions.forEach(
+    availableReactions.forEach(
         reaction => {
 
             const button =
@@ -2471,12 +2486,6 @@ messagesContainer.addEventListener(
     'contextmenu',
     event => {
 
-        /*
-         * Не показываем контекстное меню
-         * сообщения при правом клике
-         * по attachment.
-         */
-
         if (
             event.target.closest(
                 '.message-attachment'
@@ -2529,11 +2538,6 @@ messagesContainer.addEventListener(
         ) {
             return;
         }
-
-        /*
-         * Не запускаем long press
-         * для attachment.
-         */
 
         if (
             event.target.closest(
@@ -2709,7 +2713,7 @@ async function setMessageReaction(
 ) {
 
     if (
-        !allowedReactions.includes(
+        !availableReactions.includes(
             reaction
         )
     ) {
@@ -2994,11 +2998,18 @@ if (deleteMessageButton) {
 
 /*
  * =========================
- * Первоначальная прокрутка
+ * Первоначальная загрузка
  * =========================
  */
 
-scrollToBottom();
+async function initializeDialog() {
+
+    await loadAvailableReactions();
+
+    scrollToBottom();
+}
+
+initializeDialog();
 
 
 /*
@@ -3020,14 +3031,6 @@ sendForm.addEventListener(
             Array.from(
                 selectedAttachments.keys()
             );
-
-        /*
-         * Нельзя отправить полностью пустое
-         * сообщение без файлов.
-         *
-         * Но сообщение только с файлами
-         * отправлять можно.
-         */
 
         if (
             !content &&
@@ -3103,25 +3106,12 @@ sendForm.addEventListener(
                 );
             }
 
-            /*
-             * Очищаем текст.
-             */
-
             messageInput.value =
                 '';
-
-            /*
-             * Очищаем выбранные attachments.
-             */
 
             selectedAttachments.clear();
 
             renderSelectedAttachments();
-
-            /*
-             * Обновляем список файлов,
-             * чтобы галочки исчезли.
-             */
 
             renderMyAttachments(
                 getCurrentMyAttachments()

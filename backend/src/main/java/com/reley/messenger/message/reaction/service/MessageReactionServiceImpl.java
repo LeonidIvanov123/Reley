@@ -1,5 +1,6 @@
 package com.reley.messenger.message.reaction.service;
 
+import com.reley.messenger.message.reaction.ReactionCatalog;
 import com.reley.messenger.message.reaction.dto.MessageReactionChangedDomainEvent;
 import com.reley.messenger.message.reaction.dto.MessageReactionCount;
 import com.reley.messenger.message.reaction.dto.MessageReactionResponse;
@@ -22,16 +23,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MessageReactionServiceImpl implements MessageReactionService {
-
-    private static final Set<String> ALLOWED_REACTIONS =
-            Set.of(
-                    "👍",
-                    "❤️",
-                    "😂",
-                    "😮",
-                    "😢",
-                    "😡"
-            );
 
     private final MessageReactionRepository messageReactionRepository;
     private final MessageRepository messageRepository;
@@ -274,7 +265,7 @@ public class MessageReactionServiceImpl implements MessageReactionService {
 
     private void validateReaction(String reaction) {
         if (reaction == null
-                || !ALLOWED_REACTIONS.contains(reaction)) {
+                || !ReactionCatalog.DEFAULT_REACTIONS.contains(reaction)) {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
