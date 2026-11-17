@@ -37,46 +37,7 @@
             ☺
         </button>
 
-
-        <div class="reaction-picker">
-
-            <button
-                    type="button"
-                    data-reaction="👍">
-                👍
-            </button>
-
-            <button
-                    type="button"
-                    data-reaction="❤️">
-                ❤️
-            </button>
-
-            <button
-                    type="button"
-                    data-reaction="😂">
-                😂
-            </button>
-
-            <button
-                    type="button"
-                    data-reaction="😮">
-                😮
-            </button>
-
-            <button
-                    type="button"
-                    data-reaction="😢">
-                😢
-            </button>
-
-            <button
-                    type="button"
-                    data-reaction="😡">
-                😡
-            </button>
-
-        </div>
+        <div class="reaction-picker"></div>
 
 
         <!-- =========================
@@ -196,7 +157,6 @@
                     th:text="${#temporals.format(message.createdAt, 'HH:mm')}">
                 12:30
             </span>
-
 
             <span
                     th:if="${mine}"
