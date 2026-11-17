@@ -28,11 +28,33 @@
             padding: 0 20px 40px;
         }
 
+        .back-button {
+            display: inline-block;
+            margin-bottom: 16px;
+            padding: 9px 14px;
+            background: #ffffff;
+            color: #3978d5;
+            border: 1px solid #d9e1ec;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition:
+                    background .15s,
+                    border-color .15s;
+        }
+
+        .back-button:hover {
+            background: #f0f5fb;
+            border-color: #3978d5;
+            text-decoration: none;
+        }
+
         .card {
             background: white;
             border-radius: 14px;
             padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
             margin-bottom: 20px;
         }
 
@@ -274,6 +296,16 @@
 
 <div class="page">
 
+    <!-- ==================== -->
+    <!-- ВОЗВРАТ В ДИАЛОГ -->
+    <!-- ==================== -->
+
+    <a class="back-button"
+       th:href="@{/dialogs/{dialogId}(dialogId=${group.id})}">
+        ← Вернуться в диалог
+    </a>
+
+
     <div class="card">
 
         <h1>Настройки группы</h1>
@@ -377,17 +409,27 @@
         <!-- СОХРАНИТЬ -->
         <!-- ==================== -->
 
-        <div th:if="${group.currentUserAdmin}">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+
+            <div th:if="${group.currentUserAdmin}">
+
+                <button type="button"
+                        class="btn-primary"
+                        onclick="saveGroupSettings()">
+                    Сохранить
+                </button>
+
+            </div>
 
             <button type="button"
-                    class="btn-primary"
-                    onclick="saveGroupSettings()">
-                Сохранить
+                    class="btn-secondary"
+                    onclick="openDialogAttachments()">
+                Все прикрепления диалога
             </button>
 
-            <div id="saveMessage"></div>
-
         </div>
+
+        <div id="saveMessage"></div>
 
     </div>
 
@@ -409,7 +451,7 @@
                        class="user-search"
                        type="text"
                        placeholder="Введите email для поиска..."
-                       oninput="filterUsers()">
+                       oninput="filterUsers">
 
                 <select id="userSelect"
                         size="5">
@@ -975,6 +1017,16 @@
             message.textContent =
                 'Не удалось скопировать ссылку';
         }
+    }
+
+
+    // =========================
+    // DIALOG ATTACHMENTS
+    // =========================
+
+    function openDialogAttachments() {
+    window.location.href =
+        `/dialogs/${groupId}/attachments`;
     }
 
 </script>

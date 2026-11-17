@@ -12,10 +12,18 @@ public record AttachmentResponse(
         String contentType,
         long size,
         String downloadUrl,
-        Long createdBy
+        Long createdBy,
+        boolean savedToMyFiles
 ) {
 
     public static AttachmentResponse fromEntity(Attachment attachment) {
+        return fromEntity(attachment, false);
+    }
+
+    public static AttachmentResponse fromEntity(
+            Attachment attachment,
+            boolean savedToMyFiles
+    ) {
         return new AttachmentResponse(
                 attachment.getId(),
                 attachment.getFileUuid(),
@@ -23,8 +31,10 @@ public record AttachmentResponse(
                 attachment.getExtension(),
                 attachment.getContentType(),
                 attachment.getSize(),
-                "/api/attachments/%s/download".formatted(attachment.getId()),
-                attachment.getCreatedBy()
+                "/api/attachments/%s/download"
+                        .formatted(attachment.getId()),
+                attachment.getCreatedBy(),
+                savedToMyFiles
         );
     }
 }
