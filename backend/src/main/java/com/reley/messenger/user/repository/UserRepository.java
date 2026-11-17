@@ -19,9 +19,14 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
 
     Mono<Boolean> existsByEmail(String email);
 
+    Mono<User> findByUsername(String username);
+
+    Mono<Boolean> existsByUsername(String username);
+
     @Modifying
     @Query("""
-        UPDATE users SET email = :email, name = :name, phone = :phone, hidden_from_directory = :hiddenFromDirectory, updated_at = :updatedAt
+        UPDATE users SET email = :email, name = :name, phone = :phone, username = :username, 
+                hidden_from_directory = :hiddenFromDirectory, updated_at = :updatedAt
         WHERE id = :userId
         """)
     Mono<Integer> updateProfile(
@@ -29,6 +34,7 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
             String email,
             String name,
             String phone,
+            String username,
             boolean hiddenFromDirectory,
             OffsetDateTime updatedAt
     );
@@ -52,5 +58,12 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
         WHERE dp.dialog_id = :dialogId
         """)
     Flux<UserSenderProjection> findSendersByDialogId(Long dialogId);
+
+    @Query("""
+        UPDATE users
+        SET last_seen_at = :lastSeenAt
+        WHERE id = :userId
+        """)
+    Mono<Integer> updateLastSeenAt(Long userId, OffsetDateTime lastSeenAt);
 
 }
