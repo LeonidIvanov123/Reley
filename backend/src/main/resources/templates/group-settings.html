@@ -570,6 +570,10 @@
     <!-- ВЫЙТИ -->
     <!-- ==================== -->
 
+    <!-- ==================== -->
+    <!-- ДЕЙСТВИЯ -->
+    <!-- ==================== -->
+
     <div class="card">
 
         <div class="bottom-actions">
@@ -578,15 +582,30 @@
                 ← Вернуться к чатам
             </a>
 
-            <button type="button"
-                    class="btn-danger"
-                    onclick="leaveGroup()">
-                Покинуть группу
-            </button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+
+                <!-- Только создатель -->
+                <button th:if="${group.ownerId == group.currentUserId}"
+                        type="button"
+                        class="btn-danger"
+                        onclick="deleteGroup()">
+                    Удалить группу
+                </button>
+
+                <!-- Все остальные -->
+                <button th:if="${group.ownerId != group.currentUserId}"
+                        type="button"
+                        class="btn-danger"
+                        onclick="leaveGroup()">
+                    Покинуть группу
+                </button>
+
+            </div>
 
         </div>
 
         <div id="leaveMessage"></div>
+        <div id="deleteGroupMessage"></div>
 
     </div>
 
@@ -968,6 +987,61 @@
             message.textContent =
                 error.message ||
                 'Не удалось покинуть группу';
+        }
+    }
+
+    // =========================
+    // DELETE GROUP
+    // =========================
+
+    async function deleteGroup() {
+
+        const confirmed = confirm(
+            'Удалить группу?\n\n' +
+            'Будут удалены все сообщения, участники и реакции.\n' +
+            'Файлы из «Мои файлы» удалены не будут.\n\n' +
+            'Это действие нельзя отменить.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const message =
+            document.getElementById('deleteGroupMessage');
+
+        message.className = '';
+        message.textContent = '';
+
+        try {
+
+            const response = await fetch(
+                `/dialogs/${groupId}`,
+                {
+                    method: 'DELETE'
+                }
+            );
+
+            if (!response.ok) {
+
+                const text =
+                    await response.text();
+
+                throw new Error(
+                    text || 'Не удалось удалить группу'
+                );
+            }
+
+            window.location.href = '/';
+
+        } catch (error) {
+
+            console.error(error);
+
+            message.className = 'error';
+            message.textContent =
+                error.message ||
+                'Не удалось удалить группу';
         }
     }
 

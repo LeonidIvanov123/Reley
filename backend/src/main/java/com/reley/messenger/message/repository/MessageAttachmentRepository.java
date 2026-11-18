@@ -9,7 +9,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Repository
@@ -17,6 +16,15 @@ import java.util.UUID;
 public class MessageAttachmentRepository {
 
     private final DatabaseClient databaseClient;
+
+    public Mono<Void> deleteByDialogId(Long dialogId) {
+        return databaseClient.sql("""
+                DELETE FROM message_attachment
+                WHERE dialog_id = :dialogId
+                """)
+                .bind("dialogId", dialogId)
+                .fetch().rowsUpdated().then();
+    }
 
     public Mono<Void> insert(UUID attachmentId, Long dialogId, Long messageId) {
 

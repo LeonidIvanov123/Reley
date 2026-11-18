@@ -994,7 +994,9 @@ public class DialogServiceImpl implements DialogService {
                                                                         dialog.getDialogLink(),
                                                                         currentParticipant.isAdmin(),
                                                                         tuple.getT1(),
-                                                                        tuple.getT2()
+                                                                        tuple.getT2(),
+                                                                        dialog.getOwnerId(),
+                                                                        currentUserId
                                                                 )
                                                         )
                                                 )

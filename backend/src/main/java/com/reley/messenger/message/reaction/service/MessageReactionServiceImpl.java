@@ -166,6 +166,11 @@ public class MessageReactionServiceImpl implements MessageReactionService {
     }
 
     @Override
+    public Mono<Long> deleteReactionsByDialog(Long dialogId) {
+        return messageReactionRepository.deleteByDialogId(dialogId);
+    }
+
+    @Override
     public Mono<List<MessageReactionResponse>> removeReaction(
             Long dialogId,
             Long messageId,

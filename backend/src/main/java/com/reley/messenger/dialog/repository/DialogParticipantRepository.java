@@ -174,4 +174,17 @@ public interface DialogParticipantRepository extends org.springframework.data.re
             """)
     Flux<DialogParticipant> findByUserId(Long userId);
 
+    @Query("""
+        DELETE FROM dialog_participants
+        WHERE dialog_id = :dialogId
+        """)
+    Mono<Void> deleteByDialogId(Long dialogId);
+
+    @Query("""
+        UPDATE dialog_participants
+        SET last_read_message_id = NULL
+        WHERE dialog_id = :dialogId
+        """)
+    Mono<Long> clearLastReadMessageId(Long dialogId);
+
 }
