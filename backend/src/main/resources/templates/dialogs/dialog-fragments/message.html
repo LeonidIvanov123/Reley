@@ -16,12 +16,14 @@
                 class="message-author"
                 th:if="${!mine}">
 
-            <span
+            <a
+                    class="message-author-link"
+                    th:href="@{/users/{userId}(userId=${message.senderId})}"
                     th:text="${message.senderName != null and !message.senderName.isBlank()
-                        ? message.senderName
-                        : message.senderEmail}">
+                ? message.senderName
+                : message.senderEmail}">
                 User
-            </span>
+            </a>
 
         </div>
 
