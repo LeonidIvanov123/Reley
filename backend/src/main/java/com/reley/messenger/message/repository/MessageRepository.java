@@ -9,11 +9,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 
 @Repository
 public interface MessageRepository extends ReactiveCrudRepository<Message, Long> {
-
-    Mono<Message> findTopByDialogIdOrderByIdDesc(Long dialogId);
 
     Flux<Message> findTop15ByDialogIdOrderByIdDesc(Long dialogId);
 
@@ -35,16 +34,6 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
     Mono<OffsetDateTime> findLastMessageDate(Long dialogId);
 
     @Query("""
-    SELECT *
-    FROM messages WHERE dialog_id = :dialogId AND sender_id <> :userId
-    ORDER BY id DESC LIMIT 1
-    """)
-    Mono<Message> findLastIncomingMessage(
-            Long dialogId,
-            Long userId
-    );
-
-    @Query("""
         SELECT EXISTS (
             SELECT 1
             FROM messages
@@ -53,6 +42,17 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
         )
         """)
     Mono<Boolean> existsByIdAndDialogId(
+            Long messageId,
+            Long dialogId
+    );
+
+    @Query("""
+        SELECT *
+        FROM messages
+        WHERE id = :messageId
+          AND dialog_id = :dialogId
+        """)
+    Mono<Message> findByIdAndDialogId(
             Long messageId,
             Long dialogId
     );
@@ -90,5 +90,12 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
         DELETE FROM messages WHERE dialog_id = :dialogId
         """)
     Mono<Void> deleteByDialogId(Long dialogId);
+
+    @Query("""
+        SELECT *
+        FROM messages
+        WHERE id IN (:messageIds)
+        """)
+    Flux<Message> findAllByIds(Collection<Long> messageIds);
 
 }

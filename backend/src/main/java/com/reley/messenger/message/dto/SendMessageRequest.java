@@ -5,7 +5,8 @@ import java.util.UUID;
 
 public record SendMessageRequest(
         String content,
-        List<UUID> attachmentIds
+        List<UUID> attachmentIds,
+        Long replyToMessageId
 ) {
 
     public List<UUID> attachmentIds() {

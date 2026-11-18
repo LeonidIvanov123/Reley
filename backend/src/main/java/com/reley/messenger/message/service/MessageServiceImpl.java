@@ -18,7 +18,9 @@ import com.reley.messenger.user.service.HydrateUserInfoApi;
 import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -106,7 +108,11 @@ public class MessageServiceImpl implements MessageService {
 
                                                         getSenderInfoMap(dialogId),
 
-                                                        getAttachmentsByMessageId(messageIds)
+                                                        getAttachmentsByMessageId(
+                                                                messageIds
+                                                        ),
+
+                                                        getReplyMessages(messages)
                                                 ).flatMapMany(tuple -> {
 
                                                     Long lastReadMessageId =
@@ -121,7 +127,12 @@ public class MessageServiceImpl implements MessageService {
                                                             tuple.getT3();
 
                                                     Map<Long, List<AttachmentResponse>>
-                                                            attachmentsByMessageId = tuple.getT4();
+                                                            attachmentsByMessageId =
+                                                            tuple.getT4();
+
+                                                    Map<Long, Message>
+                                                            replyMessagesById =
+                                                            tuple.getT5();
 
                                                     return Flux
                                                             .fromIterable(messages)
@@ -157,18 +168,57 @@ public class MessageServiceImpl implements MessageService {
                                                                 }
 
                                                                 List<AttachmentResponse> attachments =
-                                                                        attachmentsByMessageId.getOrDefault(
-                                                                                message.getId(),
-                                                                                List.of()
+                                                                        attachmentsByMessageId
+                                                                                .getOrDefault(
+                                                                                        message.getId(),
+                                                                                        List.of()
+                                                                                );
+
+                                                                MessageResponse response =
+                                                                        MessageResponse.fromEntity(
+                                                                                message,
+                                                                                readByOther,
+                                                                                reactions,
+                                                                                sender,
+                                                                                attachments
                                                                         );
 
-                                                                return MessageResponse.fromEntity(
-                                                                        message,
-                                                                        readByOther,
-                                                                        reactions,
-                                                                        sender,
-                                                                        attachments
-                                                                );
+                                                                if (message.getReplyToMessageId() == null) {
+                                                                    return response;
+                                                                }
+
+                                                                Message replyMessage =
+                                                                        replyMessagesById.get(
+                                                                                message.getReplyToMessageId()
+                                                                        );
+
+                                                                if (replyMessage == null) {
+                                                                    return response;
+                                                                }
+
+                                                                MessageResponse.SenderInfo replySender =
+                                                                        senderInfoByUserId.get(
+                                                                                replyMessage.getSenderId()
+                                                                        );
+
+                                                                String replyContent =
+                                                                        replyMessage.getDeletedAt() != null
+                                                                                ? null
+                                                                                : replyMessage.getContent();
+
+                                                                MessageResponse.ReplyMessageResponse replyTo =
+                                                                        new MessageResponse.ReplyMessageResponse(
+                                                                                replyMessage.getId(),
+                                                                                replyMessage.getSenderId(),
+                                                                                replySender != null
+                                                                                        ? replySender.name()
+                                                                                        : null,
+                                                                                replyContent,
+                                                                                replyMessage.getCreatedAt(),
+                                                                                replyMessage.getDeletedAt() != null
+                                                                        );
+
+                                                                return response.withReplyTo(replyTo);
                                                             });
                                                 });
                                             });
@@ -214,6 +264,22 @@ public class MessageServiceImpl implements MessageService {
                 );
     }
 
+    private Mono<Map<Long, Message>> getReplyMessages(List<Message> messages) {
+        List<Long> replyMessageIds = messages.stream()
+                .map(Message::getReplyToMessageId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (replyMessageIds.isEmpty()) {
+            return Mono.just(Map.of());
+        }
+
+        return messageRepository
+                .findAllByIds(replyMessageIds)
+                .collectMap(Message::getId);
+    }
+
     @Override
     public Mono<MessageResponse> sendMessage(
             Long dialogId,
@@ -226,101 +292,132 @@ public class MessageServiceImpl implements MessageService {
                                 .then(dialogService.findById(dialogId))
                                 .flatMap(dialog -> {
 
-                                    OffsetDateTime now =
-                                            OffsetDateTime.now();
+                                    Mono<Void> validateReply;
 
-                                    Message message = Message.builder()
-                                            .dialogId(dialogId)
-                                            .senderId(userId)
-                                            .content(
-                                                    request.content() == null
-                                                            ? ""
-                                                            : request.content().trim()
-                                            )
-                                            .createdAt(now)
-                                            .build();
+                                    if (request.replyToMessageId() == null) {
+                                        validateReply = Mono.empty();
+                                    } else {
+                                        validateReply = messageRepository
+                                                .existsByIdAndDialogId(
+                                                        request.replyToMessageId(),
+                                                        dialogId
+                                                )
+                                                .flatMap(exists -> {
+                                                    if (exists) {
+                                                        return Mono.empty();
+                                                    }
 
-                                    return messageRepository
-                                            .save(message)
-                                            .flatMap(savedMessage -> {
+                                                    return Mono.error(
+                                                            new ResponseStatusException(
+                                                                    HttpStatus.BAD_REQUEST,
+                                                                    "Сообщение для ответа не найдено"
+                                                            )
+                                                    );
+                                                });
+                                    }
 
-                                                Mono<Void> attachAttachments =
-                                                        Flux.fromIterable(request.attachmentIds())
-                                                                .concatMap(attachmentId ->
-                                                                        messageAttachmentService.attachToMessage(
-                                                                                attachmentId,
-                                                                                dialogId,
-                                                                                savedMessage.getId()
-                                                                        )
-                                                                )
-                                                                .then();
-
-                                                return attachAttachments
-                                                        .then(
-                                                                participantRepository
-                                                                        .updateLastReadMessageId(
-                                                                                dialogId,
-                                                                                userId,
-                                                                                savedMessage.getId()
-                                                                        )
-                                                        )
-                                                        .then(
-                                                                messageAttachmentService
-                                                                        .findAttachmentsByMessageId(
-                                                                                savedMessage.getId()
-                                                                        )
-                                                                        .map(AttachmentResponse::fromEntity)
-                                                                        .collectList()
-                                                        )
-                                                        .flatMap(attachments ->
-                                                                userService
-                                                                        .findById(
-                                                                                savedMessage.getSenderId()
-                                                                        )
-                                                                        .switchIfEmpty(
-                                                                                Mono.error(
-                                                                                        new UserNotFoundException(
-                                                                                                "Пользователь с id %s не найден"
-                                                                                                        .formatted(
-                                                                                                                savedMessage.getSenderId()
-                                                                                                        )
-                                                                                        )
-                                                                                )
-                                                                        )
-                                                                        .map(user ->
-                                                                                new MessageResponse.SenderInfo(
-                                                                                        user.getName(),
-                                                                                        user.getEmail()
-                                                                                )
-                                                                        )
-                                                                        .map(sender ->
-                                                                                MessageResponse.fromEntity(
-                                                                                        savedMessage,
-                                                                                        false,
-                                                                                        List.of(),
-                                                                                        sender,
-                                                                                        attachments
-                                                                                )
-                                                                        )
-                                                        )
-                                                        .flatMap(response ->
-                                                                Mono.fromRunnable(() ->
-                                                                                eventPublisher.publishEvent(
-                                                                                        NewMessageDomainEvent.fromMessageResponse(
-                                                                                                response,
-                                                                                                new MessageResponse.SenderInfo(
-                                                                                                        response.senderName(),
-                                                                                                        response.senderEmail()
-                                                                                                ),
-                                                                                                response.attachments()
-                                                                                        )
-                                                                                )
-                                                                        )
-                                                                        .thenReturn(response)
-                                                        );
-                                            });
+                                    return validateReply.then(sendMessageInternal(dialogId, userId, request));
                                 })
                 );
+    }
+
+    private Mono<MessageResponse> sendMessageInternal(
+            Long dialogId,
+            Long userId,
+            SendMessageRequest request
+    ) {
+        OffsetDateTime now = OffsetDateTime.now();
+
+        Message message = Message.builder()
+                .dialogId(dialogId)
+                .senderId(userId)
+                .content(
+                        request.content() == null
+                                ? ""
+                                : request.content().trim()
+                )
+                .replyToMessageId(request.replyToMessageId())
+                .createdAt(now)
+                .build();
+
+        return messageRepository
+                .save(message)
+                .flatMap(savedMessage -> {
+
+                    Mono<Void> attachAttachments =
+                            Flux.fromIterable(request.attachmentIds())
+                                    .concatMap(attachmentId ->
+                                            messageAttachmentService.attachToMessage(
+                                                    attachmentId,
+                                                    dialogId,
+                                                    savedMessage.getId()
+                                            )
+                                    )
+                                    .then();
+
+                    return attachAttachments
+                            .then(
+                                    participantRepository.updateLastReadMessageId(
+                                            dialogId,
+                                            userId,
+                                            savedMessage.getId()
+                                    )
+                            )
+                            .then(
+                                    messageAttachmentService
+                                            .findAttachmentsByMessageId(
+                                                    savedMessage.getId()
+                                            )
+                                            .map(AttachmentResponse::fromEntity)
+                                            .collectList()
+                            )
+                            .flatMap(attachments ->
+                                    userService
+                                            .findById(savedMessage.getSenderId())
+                                            .switchIfEmpty(
+                                                    Mono.error(
+                                                            new UserNotFoundException(
+                                                                    "Пользователь с id %s не найден"
+                                                                            .formatted(
+                                                                                    savedMessage.getSenderId()
+                                                                            )
+                                                            )
+                                                    )
+                                            )
+                                            .map(user ->
+                                                    new MessageResponse.SenderInfo(
+                                                            user.getName(),
+                                                            user.getEmail()
+                                                    )
+                                            )
+                                            .map(sender ->
+                                                    MessageResponse.fromEntity(
+                                                            savedMessage,
+                                                            false,
+                                                            List.of(),
+                                                            sender,
+                                                            attachments
+                                                    )
+                                            )
+                            )
+                            .flatMap(response ->
+                                    enrichReply(response, dialogId)
+                            )
+                            .flatMap(response ->
+                                    Mono.fromRunnable(() ->
+                                            eventPublisher.publishEvent(
+                                                    NewMessageDomainEvent.fromMessageResponse(
+                                                            response,
+                                                            new MessageResponse.SenderInfo(
+                                                                    response.senderName(),
+                                                                    response.senderEmail()
+                                                            ),
+                                                            response.attachments()
+                                                    )
+                                            )
+                                    ).thenReturn(response)
+                            );
+                });
     }
 
     @Override
@@ -483,6 +580,42 @@ public class MessageServiceImpl implements MessageService {
                                             });
                                 })
                 );
+    }
+
+    private Mono<MessageResponse> enrichReply(MessageResponse response, Long dialogId) {
+        if (response.replyToMessageId() == null) {
+            return Mono.just(response);
+        }
+
+        return messageRepository
+                .findByIdAndDialogId(response.replyToMessageId(), dialogId)
+                .flatMap(replyMessage ->
+                        getSenderInfoMap(dialogId)
+                                .map(senderInfoByUserId -> {
+
+                                    MessageResponse.SenderInfo replySender =
+                                            senderInfoByUserId.get(
+                                                    replyMessage.getSenderId()
+                                            );
+
+                                    MessageResponse.ReplyMessageResponse replyTo =
+                                            new MessageResponse.ReplyMessageResponse(
+                                                    replyMessage.getId(),
+                                                    replyMessage.getSenderId(),
+                                                    replySender != null
+                                                            ? replySender.name()
+                                                            : null,
+                                                    replyMessage.getDeletedAt() != null
+                                                            ? null
+                                                            : replyMessage.getContent(),
+                                                    replyMessage.getCreatedAt(),
+                                                    replyMessage.getDeletedAt() != null
+                                            );
+
+                                    return response.withReplyTo(replyTo);
+                                })
+                )
+                .defaultIfEmpty(response);
     }
 
 }

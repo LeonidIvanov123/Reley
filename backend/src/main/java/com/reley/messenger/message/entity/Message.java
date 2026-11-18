@@ -37,4 +37,7 @@ public class Message {
     @Column("deleted_at")
     private OffsetDateTime deletedAt;
 
+    @Column("reply_to_message_id")
+    private Long replyToMessageId;
+
 }

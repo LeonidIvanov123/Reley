@@ -15,7 +15,9 @@ public record NewMessageDomainEvent(
         String senderEmail,
         String content,
         OffsetDateTime createdAt,
-        List<AttachmentResponse> attachments
+        List<AttachmentResponse> attachments,
+        Long replyToMessageId,
+        MessageResponse.ReplyMessageResponse replyTo
 ) {
 
     public static NewMessageDomainEvent fromMessageResponse(MessageResponse message,
@@ -29,7 +31,9 @@ public record NewMessageDomainEvent(
                 senderInfo.email(),
                 message.content(),
                 message.createdAt(),
-                attachments
+                attachments,
+                message.replyToMessageId(),
+                message.replyTo()
         );
     }
 
