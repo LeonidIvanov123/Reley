@@ -14,4 +14,6 @@ public interface MessageReactionService {
 
     Mono<List<MessageReactionResponse>> removeReaction(Long dialogId, Long messageId, Long userId);
 
+    Mono<Long> deleteReactionsByDialog(Long dialogId);
+
 }

@@ -22,6 +22,8 @@ import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.util.Base64;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -66,6 +68,8 @@ public class UserServiceImpl implements UserService {
                         user.getEmail(),
                         user.getName(),
                         user.getPhone(),
+                        user.getUsername(),
+                        user.getLastSeenAt(),
                         user.isHiddenFromDirectory(),
                         user.getAvatar(),
                         user.getAvatarContentType())
@@ -76,38 +80,73 @@ public class UserServiceImpl implements UserService {
     public Mono<UserResponse> updateProfile(UpdateProfileRequest request) {
 
         return userServiceInfo.getCurrentUserId()
-                .flatMap(userId ->
-                        userRepository.updateProfile(
-                                        userId,
-                                        request.email(),
-                                        request.name(),
-                                        request.phone(),
-                                        Optional.ofNullable(request.hiddenFromDirectory()).orElse(false),
-                                        OffsetDateTime.now()
-                                )
-                                .flatMap(updated -> {
-                                    if (updated == 0) {
-                                        return Mono.error(
-                                                new GlobalException(
-                                                        "Пользователь не найден",
-                                                        "profile-edit"
-                                                ) {}
-                                        );
-                                    }
+                .flatMap(userId -> {
 
-                                    return userRepository.findById(userId);
-                                })
-                )
+                    String username =
+                            normalizeUsername(request.username());
+
+                    return validateUsername(userId, username)
+                            .then(
+                                    userRepository.updateProfile(
+                                            userId,
+                                            request.email(),
+                                            request.name(),
+                                            request.phone(),
+                                            username,
+                                            Optional
+                                                    .ofNullable(request.hiddenFromDirectory())
+                                                    .orElse(false),
+                                            OffsetDateTime.now()
+                                    )
+                            )
+                            .flatMap(updated -> {
+
+                                if (updated == 0) {
+                                    return Mono.error(
+                                            new GlobalException(
+                                                    "Пользователь не найден",
+                                                    "profile-edit"
+                                            ) {}
+                                    );
+                                }
+
+                                return userRepository.findById(userId);
+                            });
+                })
                 .map(user ->
                         new UserResponse(
                                 user.getId(),
                                 user.getEmail(),
                                 user.getName(),
                                 user.getPhone(),
+                                user.getUsername(),
+                                user.getLastSeenAt(),
                                 user.isHiddenFromDirectory(),
                                 user.getAvatar(),
-                                user.getAvatarContentType())
+                                user.getAvatarContentType()
+                        )
                 );
+    }
+
+    private Mono<Void> validateUsername(Long userId, String username) {
+        if (username == null || username.isBlank()) {
+            return Mono.empty();
+        }
+
+        return userRepository
+                .findByUsername(username)
+                .flatMap(existingUser -> {
+                    if (!existingUser.getId().equals(userId)) {
+                        return Mono.error(
+                                new GlobalException(
+                                        "Username уже занят",
+                                        "profile-edit"
+                                ) {}
+                        );
+                    }
+
+                    return Mono.empty();
+                });
     }
 
     @Override
@@ -182,6 +221,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public Flux<UserSenderProjection> findSendersByDialogId(Long dialogId) {
         return userRepository.findSendersByDialogId(dialogId);
+    }
+
+    @Override
+    public Mono<Void> updateLastSeenAt(Long userId) {
+        return userRepository.updateLastSeenAt(userId, OffsetDateTime.now()).then();
+    }
+
+    private String normalizeUsername(String username) {
+        if (Objects.nonNull(username) && !username.isBlank()) {
+            return username
+                    .trim()
+                    .toLowerCase(Locale.ROOT);
+        } else {
+            return null;
+        }
     }
 
 }

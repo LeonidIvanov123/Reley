@@ -86,4 +86,9 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
         """)
     Flux<Message> search(Long dialogId, String query, int limit, int offset);
 
+    @Query("""
+        DELETE FROM messages WHERE dialog_id = :dialogId
+        """)
+    Mono<Void> deleteByDialogId(Long dialogId);
+
 }

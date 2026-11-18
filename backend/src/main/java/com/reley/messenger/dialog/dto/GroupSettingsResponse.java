@@ -9,6 +9,8 @@ public record GroupSettingsResponse(
         String dialogLink,
         boolean currentUserAdmin,
         List<GroupParticipantResponse> participants,
-        List<UserIdAndEmail> users
+        List<UserIdAndEmail> users,
+        Long ownerId,
+        Long currentUserId
 ) {
 }

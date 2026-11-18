@@ -72,4 +72,11 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
         """)
     Mono<Dialog> findGroupByDialogLink(String dialogLink);
 
+    @Query("""
+        DELETE FROM dialogs
+        WHERE id = :dialogId
+          AND group_chat = true
+        """)
+    Mono<Void> deleteGroup(Long dialogId);
+
 }

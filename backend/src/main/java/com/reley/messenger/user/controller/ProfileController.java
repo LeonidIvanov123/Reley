@@ -5,15 +5,19 @@ import com.reley.messenger.user.repository.UserRepository;
 import com.reley.messenger.user.service.HydrateUserInfo;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import com.reley.messenger.user.service.UserService;
+import com.reley.messenger.websocket.ReleyWebSocketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 @Controller
@@ -23,6 +27,7 @@ public class ProfileController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final HydrateUserInfoApi userServiceInfo;
+    private final ReleyWebSocketService webSocketService;
 
     @GetMapping("/profile/edit")
     public Mono<String> editProfile(Model model) {
@@ -48,9 +53,27 @@ public class ProfileController {
 
         return userServiceInfo.getCurrentUserId()
                 .flatMap(userRepository::findById)
-                .doOnNext(user ->
-                        model.addAttribute("user", user)
+                .doOnNext(user -> {
+                        model.addAttribute("user", user);
+                        model.addAttribute("ownProfile", true);
+                        model.addAttribute("online", webSocketService.isOnline(user.getId()));
+                })
+                .thenReturn("profile");
+    }
+
+    @GetMapping("/users/{userId}")
+    public Mono<String> userProfile(@PathVariable Long userId, Model model) {
+        return userRepository.findById(userId)
+                .switchIfEmpty(
+                        Mono.error(
+                                new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь не найден")
+                        )
                 )
+                .doOnNext(user -> {
+                    model.addAttribute("user", user);
+                    model.addAttribute("ownProfile", false);
+                    model.addAttribute("online", webSocketService.isOnline(user.getId()));
+                })
                 .thenReturn("profile");
     }
 

@@ -62,6 +62,7 @@
         }
 
         /* Аватар */
+
         .reley-avatar {
             width: var(--avatar-size);
             height: var(--avatar-size);
@@ -82,11 +83,12 @@
         }
 
         .reley-avatar img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                display: block;
-            }
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
         .avatar-section {
             display: flex;
             align-items: center;
@@ -143,10 +145,30 @@
             cursor: not-allowed;
         }
 
+        .username-input-wrapper {
+            position: relative;
+        }
+
+        .username-prefix {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #3978d5;
+            font-size: 15px;
+            font-weight: 500;
+            pointer-events: none;
+        }
+
+        .username-input {
+            padding-left: 29px !important;
+        }
+
         .hint {
             color: #8992a1;
             font-size: 12px;
             margin-top: 7px;
+            line-height: 1.5;
         }
 
         /* Checkbox */
@@ -270,11 +292,14 @@
 <div class="container">
 
     <div class="header">
+
         <h1>Редактирование профиля</h1>
 
-        <a href="/profile" class="back-link">
+        <a href="/profile"
+           class="back-link">
             ← Назад
         </a>
+
     </div>
 
     <div th:replace="~{fragments/show_error :: show-error}"></div>
@@ -354,6 +379,36 @@
 
                 <div class="hint">
                     Email используется для входа и не может быть изменён здесь.
+                </div>
+
+            </div>
+
+            <!-- Username -->
+
+            <div class="form-group">
+
+                <label for="username">
+                    Username
+                </label>
+
+                <div class="username-input-wrapper">
+
+                    <span class="username-prefix">@</span>
+
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           class="username-input"
+                           th:value="${user.username}"
+                           maxlength="32"
+                           autocomplete="username"
+                           placeholder="username">
+
+                </div>
+
+                <div class="hint">
+                    Уникальное имя пользователя. В профиле будет отображаться как @username.
+                    Можно оставить пустым.
                 </div>
 
             </div>

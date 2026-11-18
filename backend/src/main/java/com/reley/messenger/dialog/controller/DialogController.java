@@ -4,11 +4,13 @@ import com.reley.messenger.dialog.dto.AddDialogParticipantRequest;
 import com.reley.messenger.dialog.dto.CreateDialogRequest;
 import com.reley.messenger.dialog.dto.CreateGroupRequest;
 import com.reley.messenger.dialog.dto.UpdateGroupRequest;
+import com.reley.messenger.dialog.service.DialogDeletionService;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import com.reley.messenger.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,6 +36,7 @@ public class DialogController {
     private final UserService userService;
     private final HydrateUserInfoApi userInfo;
     private final DialogService dialogService;
+    private final DialogDeletionService dialogDeletionService;
 
     @GetMapping("new")
     public Mono<String> newDialog(@RequestParam(required = false) String error, Model model) {
@@ -48,6 +51,18 @@ public class DialogController {
     public Mono<String> newGroup(Model model) {
         model.addAttribute("group", new CreateGroupRequest(""));
         return Mono.just("group-new");
+    }
+
+    @GetMapping("/with/{userId}")
+    public Mono<String> openDialogWithUser(@PathVariable Long userId) {
+        return userInfo.getCurrentUserId()
+                .flatMap(currentUserId ->
+                        dialogService.findOrCreatePrivateDialog(
+                                currentUserId,
+                                userId
+                        )
+                )
+                .map(dialog -> "redirect:/dialogs/" + dialog.id());
     }
 
     @GetMapping("/{dialogId}/settings")
@@ -175,6 +190,13 @@ public class DialogController {
                                 })
                 )
                 .then();
+    }
+
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/{dialogId}")
+    @PreAuthorize("@dialogAccess.canAccess(#dialogId, authentication)")
+    public Mono<Void> deleteGroup(@PathVariable Long dialogId) {
+        return dialogDeletionService.deleteGroup(dialogId);
     }
 
 }

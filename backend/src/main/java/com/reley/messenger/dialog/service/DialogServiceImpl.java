@@ -7,11 +7,11 @@ import com.reley.messenger.dialog.dto.GroupParticipantResponse;
 import com.reley.messenger.dialog.dto.GroupSettingsResponse;
 import com.reley.messenger.dialog.dto.UserIdAndEmail;
 import com.reley.messenger.dialog.entity.Dialog;
-import com.reley.messenger.dialog.entity.DialogParticipant;
 import com.reley.messenger.dialog.repository.DialogParticipantRepository;
 import com.reley.messenger.dialog.repository.DialogRepository;
 import com.reley.messenger.exception.ChatHaveNoAccess;
 import com.reley.messenger.exception.CreateDialogException;
+import com.reley.messenger.exception.GlobalException;
 import com.reley.messenger.exception.UserNotFoundException;
 import com.reley.messenger.message.service.MessageReaderService;
 import com.reley.messenger.user.entity.User;
@@ -994,12 +994,26 @@ public class DialogServiceImpl implements DialogService {
                                                                         dialog.getDialogLink(),
                                                                         currentParticipant.isAdmin(),
                                                                         tuple.getT1(),
-                                                                        tuple.getT2()
+                                                                        tuple.getT2(),
+                                                                        dialog.getOwnerId(),
+                                                                        currentUserId
                                                                 )
                                                         )
                                                 )
                                 )
                 );
+    }
+
+    @Override
+    public Mono<DialogResponse> findOrCreatePrivateDialog(Long currentUserId, Long otherUserId) {
+
+        if (currentUserId.equals(otherUserId)) {
+            return Mono.error(
+                    new GlobalException("Нельзя создать диалог с самим собой", "profile") {}
+            );
+        }
+
+        return createDialog(otherUserId);
     }
 
     @Override

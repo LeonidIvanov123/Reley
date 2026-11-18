@@ -45,6 +45,20 @@ public class MessageReactionRepository {
                 .rowsUpdated();
     }
 
+    public Mono<Long> deleteByDialogId(Long dialogId) {
+        return databaseClient.sql("""
+            DELETE FROM message_reaction
+            WHERE message_id IN (
+                SELECT id
+                FROM messages
+                WHERE dialog_id = :dialogId
+            )
+            """)
+                .bind("dialogId", dialogId)
+                .fetch()
+                .rowsUpdated();
+    }
+
     public Mono<Long> update(
             Long messageId,
             Long userId,

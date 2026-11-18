@@ -2514,10 +2514,30 @@ function createMessageElement(
             authorElement.classList.add(
                 'removed'
             );
-        }
 
-        authorElement.textContent =
-            author.text;
+            authorElement.textContent =
+                author.text;
+
+        } else {
+
+            const authorLink =
+                document.createElement(
+                    'a'
+                );
+
+            authorLink.className =
+                'message-author-link';
+
+            authorLink.href =
+                `/users/${message.senderId}`;
+
+            authorLink.textContent =
+                author.text;
+
+            authorElement.appendChild(
+                authorLink
+            );
+        }
 
         element.appendChild(
             authorElement

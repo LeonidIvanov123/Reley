@@ -26,6 +26,12 @@ public class User {
 
     private String phone;
 
+    @Column("username")
+    private String username;
+
+    @Column("last_seen_at")
+    private OffsetDateTime lastSeenAt;
+
     @Column("avatar")
     private String avatar;
 

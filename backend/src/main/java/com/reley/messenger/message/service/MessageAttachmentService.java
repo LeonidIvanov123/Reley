@@ -52,6 +52,10 @@ public class MessageAttachmentService {
                 );
     }
 
+    public Mono<Void> deleteByDialogId(Long dialogId) {
+        return messageAttachmentRepository.deleteByDialogId(dialogId);
+    }
+
     public Flux<MessageAttachmentRepository.MessageAttachment> findAttachmentsByMessageIds(List<Long> messageIds) {
         return messageAttachmentRepository.findAttachmentsByMessageIds(messageIds);
     }

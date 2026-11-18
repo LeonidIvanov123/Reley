@@ -42,6 +42,15 @@ public class ReleyWebSocketService {
         log.info("WebSocket disconnected: user={}, session={}", userId, session.getId());
     }
 
+    public boolean isOnline(Long userId) {
+
+        Set<WebSocketSession> userSessions = sessions.get(userId);
+
+        return userSessions != null
+                && userSessions.stream()
+                .anyMatch(WebSocketSession::isOpen);
+    }
+
     public Mono<Void> sendToUser(Long userId, String message) {
 
         Set<WebSocketSession> userSessions = sessions.get(userId);

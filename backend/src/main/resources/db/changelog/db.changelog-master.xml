@@ -20,6 +20,6 @@
     <include file="db/changelog/changes/011-create-message-reactions.xml"/>
     <include file="db/changelog/changes/012-create-dialog-participant-table.xml"/>
     <include file="db/changelog/changes/013-file-attachments-update.xml"/>
-
+    <include file="db/changelog/changes/014-profile-user-update.xml"/>
 
 </databaseChangeLog>

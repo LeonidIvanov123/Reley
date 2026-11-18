@@ -1587,4 +1587,17 @@ body {
     .reaction-picker {
         bottom: calc(100% + 8px);
     }
+
+    .message-author-link {
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color 0.15s ease;
+    }
+
+    .message-author-link:hover {
+        color: #3978d5;
+        text-decoration: none;
+    }
 }

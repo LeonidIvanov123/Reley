@@ -10,6 +10,8 @@ import org.springframework.http.codec.multipart.FilePart;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.OffsetDateTime;
+
 public interface UserService {
 
     Mono<UserResponse> createUser(CreateUserRequest request);
@@ -29,5 +31,7 @@ public interface UserService {
     Mono<Void> deleteAvatar();
 
     Flux<UserSenderProjection> findSendersByDialogId(Long dialogId);
+
+    Mono<Void> updateLastSeenAt(Long userId);
 
 }
