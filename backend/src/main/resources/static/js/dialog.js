@@ -50,8 +50,7 @@ const cancelReplyButton =
         'cancel-reply-button'
     );
 
-let replyToMessageId =
-    null;
+let replyToMessageId = null;
 
 /*
  * =========================
@@ -2127,8 +2126,14 @@ const pageSize =
 let loadingOlderMessages =
     false;
 
+let loadingNewerMessages =
+    false;
+
 let hasMoreMessages =
     true;
+
+let hasMoreNewerMessages =
+    false;
 
 let selectedMessage =
     null;
@@ -2483,10 +2488,50 @@ function getMessageAuthor(
     };
 }
 
-function scrollToMessage(messageId) {
-    const messageElement = document.querySelector(
-        `.message[data-message-id="${messageId}"]`
+/*
+ * =========================
+ * Прокрутка к сообщению
+ * =========================
+ */
+
+async function scrollToMessage(
+    messageId
+) {
+
+    if (!messageId) {
+        return;
+    }
+
+    const messageElement =
+        messagesContainer.querySelector(
+            `[data-message-id="${messageId}"]`
+        );
+
+    /*
+     * Сообщение уже загружено.
+     */
+    if (messageElement) {
+
+        highlightMessage(
+            messageElement
+        );
+
+        return;
+    }
+
+    /*
+     * Сообщения нет в текущем окне.
+     * Загружаем его вместе с контекстом.
+     */
+    await loadMessageContext(
+        messageId
     );
+}
+
+
+function highlightMessage(
+    messageElement
+) {
 
     if (!messageElement) {
         return;
@@ -2497,17 +2542,171 @@ function scrollToMessage(messageId) {
         block: 'center'
     });
 
-    messageElement.classList.remove('reply-highlight');
+    messageElement.classList.remove(
+        'reply-highlight'
+    );
 
-    // Перезапускаем animation
     void messageElement.offsetWidth;
 
-    messageElement.classList.add('reply-highlight');
+    messageElement.classList.add(
+        'reply-highlight'
+    );
 
-    setTimeout(() => {
-        messageElement.classList.remove('reply-highlight');
-    }, 1500);
+    setTimeout(
+        () => {
+
+            messageElement.classList.remove(
+                'reply-highlight'
+            );
+
+        },
+        1500
+    );
 }
+
+
+async function loadMessageContext(
+    messageId
+) {
+
+    try {
+
+        showSendError('');
+
+        const response =
+            await fetch(
+                `/api/dialogs/${dialogId}/messages/around/${messageId}` +
+                `?before=10&after=10`
+            );
+
+        if (!response.ok) {
+
+            let errorMessage =
+                'Не удалось найти сообщение';
+
+            try {
+
+                const body =
+                    await response.text();
+
+                if (body) {
+
+                    const parser =
+                        new DOMParser();
+
+                    const errorDocument =
+                        parser.parseFromString(
+                            body,
+                            'text/html'
+                        );
+
+                    const bodyMessage =
+                        errorDocument.body
+                            ?.textContent
+                            ?.trim();
+
+                    if (bodyMessage) {
+                        errorMessage =
+                            bodyMessage;
+                    }
+                }
+
+            } catch (_) {
+            }
+
+            throw new Error(
+                errorMessage
+            );
+        }
+
+        const messages =
+            await response.json();
+
+        if (
+            !Array.isArray(messages) ||
+            messages.length === 0
+        ) {
+            throw new Error(
+                'Сообщение не найдено'
+            );
+        }
+
+        /*
+         * Заменяем текущее окно сообщений
+         * новым контекстом.
+         */
+        messagesContainer.innerHTML = '';
+
+        messages.forEach(
+            message => {
+
+                const element =
+                    createMessageElement(
+                        message
+                    );
+
+                messagesContainer.appendChild(
+                    element
+                );
+            }
+        );
+
+        /*
+         * После перехода hasMoreMessages
+         * снова разрешаем загрузку истории.
+         *
+         * Если пользователь теперь прокрутит
+         * вверх, loadOlderMessages() возьмёт
+         * первый message из нового окна.
+         */
+        hasMoreMessages = true;
+
+        hasMoreNewerMessages = true;
+
+        /*
+         * Находим целевое сообщение.
+         */
+        const target =
+            messagesContainer.querySelector(
+                `[data-message-id="${messageId}"]`
+            );
+
+        if (!target) {
+            return;
+        }
+
+        /*
+         * Позиционируем сразу,
+         * без плавного движения.
+         */
+        target.scrollIntoView({
+            behavior: 'instant',
+            block: 'center'
+        });
+
+        /*
+         * И только после позиционирования
+         * подсвечиваем сообщение.
+         */
+        highlightMessage(
+            target
+        );
+
+    } catch (error) {
+
+        console.error(
+            'Failed to load message context:',
+            error
+        );
+
+        showSendError(
+            error.message ||
+            'Не удалось перейти к сообщению'
+        );
+    }
+}
+
+
 
 /*
  * =========================
@@ -3376,6 +3575,108 @@ function getOldestMessageId() {
         .messageId;
 }
 
+function getNewestMessageId() {
+
+    const messages =
+        messagesContainer.querySelectorAll(
+            '[data-message-id]'
+        );
+
+    if (messages.length === 0) {
+        return null;
+    }
+
+    return messages[messages.length - 1]
+        .dataset
+        .messageId;
+}
+
+async function loadNewerMessages() {
+
+    if (
+        loadingNewerMessages ||
+        !hasMoreNewerMessages
+    ) {
+        return;
+    }
+
+    const newestMessageId =
+        getNewestMessageId();
+
+    if (!newestMessageId) {
+        return;
+    }
+
+    loadingNewerMessages = true;
+
+    try {
+
+        const response =
+            await fetch(
+                `/api/dialogs/${dialogId}/messages/after?afterId=${newestMessageId}`
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                'Не удалось загрузить новые сообщения'
+            );
+        }
+
+        const messages =
+            await response.json();
+
+        if (
+            !messages ||
+            messages.length === 0
+        ) {
+
+            hasMoreNewerMessages =
+                false;
+
+            return;
+        }
+
+        const fragment =
+            document.createDocumentFragment();
+
+        messages.forEach(
+            message => {
+
+                const element =
+                    createMessageElement(
+                        message
+                    );
+
+                fragment.appendChild(
+                    element
+                );
+            }
+        );
+
+        messagesContainer.appendChild(
+            fragment
+        );
+
+        hasMoreNewerMessages =
+            messages.length >= pageSize;
+
+    } catch (error) {
+
+        console.error(
+            'Failed to load newer messages:',
+            error
+        );
+
+        showSendError(
+            error.message
+        );
+
+    } finally {
+
+        loadingNewerMessages = false;
+    }
+}
 
 async function loadOlderMessages() {
 
@@ -3464,6 +3765,9 @@ async function loadOlderMessages() {
                 previousScrollHeight
             );
 
+        hasMoreMessages =
+            messages.length >= pageSize;
+
     } catch (error) {
 
         console.error(
@@ -3495,11 +3799,33 @@ messagesContainer.addEventListener(
     'scroll',
     () => {
 
+        /*
+         * Дошли до верха —
+         * загружаем старые сообщения.
+         */
         if (
             messagesContainer.scrollTop <= 30
         ) {
 
             loadOlderMessages();
+
+            return;
+        }
+
+        /*
+         * Дошли до низа —
+         * загружаем более новые сообщения.
+         */
+        const distanceToBottom =
+            messagesContainer.scrollHeight -
+            messagesContainer.scrollTop -
+            messagesContainer.clientHeight;
+
+        if (
+            distanceToBottom <= 30
+        ) {
+
+            loadNewerMessages();
         }
     }
 );
@@ -4245,6 +4571,8 @@ sendForm.addEventListener(
             );
 
             cancelReply();
+
+            hasMoreNewerMessages = false;
 
             scrollToBottom();
 

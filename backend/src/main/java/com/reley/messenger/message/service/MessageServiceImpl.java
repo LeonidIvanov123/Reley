@@ -25,6 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,7 @@ public class MessageServiceImpl implements MessageService {
                                 beforeId == null
                                         ? messageRepository
                                         .findTop15ByDialogIdOrderByIdDesc(dialogId)
+
                                         : messageRepository
                                         .findTop15ByDialogIdAndIdLessThanOrderByIdDesc(
                                                 dialogId,
@@ -67,162 +69,33 @@ public class MessageServiceImpl implements MessageService {
 
                                     Collections.reverse(messages);
 
-                                    if (messages.isEmpty()) {
-                                        return Flux.empty();
-                                    }
-
-                                    List<Long> messageIds = messages.stream()
-                                            .map(Message::getId)
-                                            .toList();
-
-                                    return dialogService
-                                            .findById(dialogId)
-                                            .flatMapMany(dialog -> {
-
-                                                Long otherUserId;
-
-                                                if (Objects.equals(
-                                                        dialog.getOwnerId(),
-                                                        userId
-                                                )) {
-                                                    otherUserId =
-                                                            dialog.getParticipantId();
-                                                } else {
-                                                    otherUserId =
-                                                            dialog.getOwnerId();
-                                                }
-
-                                                return Mono.zip(
-                                                        dialogService
-                                                                .getLastReadMessageId(
-                                                                        dialogId,
-                                                                        otherUserId
-                                                                )
-                                                                .defaultIfEmpty(0L),
-
-                                                        messageReactionService
-                                                                .getReactions(
-                                                                        messageIds,
-                                                                        userId
-                                                                ),
-
-                                                        getSenderInfoMap(dialogId),
-
-                                                        getAttachmentsByMessageId(
-                                                                messageIds
-                                                        ),
-
-                                                        getReplyMessages(messages)
-                                                ).flatMapMany(tuple -> {
-
-                                                    Long lastReadMessageId =
-                                                            tuple.getT1();
-
-                                                    Map<Long, List<MessageReactionResponse>>
-                                                            reactionsByMessageId =
-                                                            tuple.getT2();
-
-                                                    Map<Long, MessageResponse.SenderInfo>
-                                                            senderInfoByUserId =
-                                                            tuple.getT3();
-
-                                                    Map<Long, List<AttachmentResponse>>
-                                                            attachmentsByMessageId =
-                                                            tuple.getT4();
-
-                                                    Map<Long, Message>
-                                                            replyMessagesById =
-                                                            tuple.getT5();
-
-                                                    return Flux
-                                                            .fromIterable(messages)
-                                                            .map(message -> {
-
-                                                                boolean readByOther =
-                                                                        Objects.equals(
-                                                                                message.getSenderId(),
-                                                                                userId
-                                                                        )
-                                                                                && message.getId()
-                                                                                <= lastReadMessageId;
-
-                                                                List<MessageReactionResponse>
-                                                                        reactions =
-                                                                        reactionsByMessageId
-                                                                                .getOrDefault(
-                                                                                        message.getId(),
-                                                                                        List.of()
-                                                                                );
-
-                                                                MessageResponse.SenderInfo sender =
-                                                                        senderInfoByUserId.get(
-                                                                                message.getSenderId()
-                                                                        );
-
-                                                                if (sender == null) {
-                                                                    sender =
-                                                                            new MessageResponse.SenderInfo(
-                                                                                    null,
-                                                                                    null
-                                                                            );
-                                                                }
-
-                                                                List<AttachmentResponse> attachments =
-                                                                        attachmentsByMessageId
-                                                                                .getOrDefault(
-                                                                                        message.getId(),
-                                                                                        List.of()
-                                                                                );
-
-                                                                MessageResponse response =
-                                                                        MessageResponse.fromEntity(
-                                                                                message,
-                                                                                readByOther,
-                                                                                reactions,
-                                                                                sender,
-                                                                                attachments
-                                                                        );
-
-                                                                if (message.getReplyToMessageId() == null) {
-                                                                    return response;
-                                                                }
-
-                                                                Message replyMessage =
-                                                                        replyMessagesById.get(
-                                                                                message.getReplyToMessageId()
-                                                                        );
-
-                                                                if (replyMessage == null) {
-                                                                    return response;
-                                                                }
-
-                                                                MessageResponse.SenderInfo replySender =
-                                                                        senderInfoByUserId.get(
-                                                                                replyMessage.getSenderId()
-                                                                        );
-
-                                                                String replyContent =
-                                                                        replyMessage.getDeletedAt() != null
-                                                                                ? null
-                                                                                : replyMessage.getContent();
-
-                                                                MessageResponse.ReplyMessageResponse replyTo =
-                                                                        new MessageResponse.ReplyMessageResponse(
-                                                                                replyMessage.getId(),
-                                                                                replyMessage.getSenderId(),
-                                                                                replySender != null
-                                                                                        ? replySender.name()
-                                                                                        : null,
-                                                                                replyContent,
-                                                                                replyMessage.getCreatedAt(),
-                                                                                replyMessage.getDeletedAt() != null
-                                                                        );
-
-                                                                return response.withReplyTo(replyTo);
-                                                            });
-                                                });
-                                            });
+                                    return enrichMessages(
+                                            dialogId,
+                                            userId,
+                                            messages
+                                    );
                                 })
+                );
+    }
+
+    @Override
+    public Flux<MessageResponse> getMessagesAfter(Long dialogId, Long afterId) {
+        return userServiceInfo.getCurrentUserId()
+                .flatMapMany(userId ->
+                        messageRepository
+                                .findTopByDialogIdAndIdGreaterThanOrderByIdAsc(
+                                        dialogId,
+                                        afterId,
+                                        15
+                                )
+                                .collectList()
+                                .flatMapMany(messages ->
+                                        enrichMessages(
+                                                dialogId,
+                                                userId,
+                                                messages
+                                        )
+                                )
                 );
     }
 
@@ -582,6 +455,67 @@ public class MessageServiceImpl implements MessageService {
                 );
     }
 
+    public Flux<MessageResponse> getMessageContext(
+            Long dialogId,
+            Long messageId,
+            int before,
+            int after
+    ) {
+        return userServiceInfo.getCurrentUserId()
+                .flatMapMany(userId ->
+                        messageRepository
+                                .findByIdAndDialogId(
+                                        messageId,
+                                        dialogId
+                                )
+                                .switchIfEmpty(
+                                        Mono.error(
+                                                new ResponseStatusException(
+                                                        HttpStatus.NOT_FOUND,
+                                                        "Сообщение не найдено"
+                                                )
+                                        )
+                                )
+                                .flatMap(targetMessage -> {
+
+                                    Mono<List<Message>> beforeMessages =
+                                            messageRepository
+                                                    .findBefore(dialogId, messageId, before)
+                                                    .collectList()
+                                                    .map(list -> {
+                                                        Collections.reverse(list);
+                                                        return list;
+                                                    });
+
+                                    Mono<List<Message>> afterMessages =
+                                            messageRepository
+                                                    .findAfter(dialogId, messageId, after)
+                                                    .collectList();
+
+                                    return Mono.zip(
+                                            beforeMessages,
+                                            Mono.just(targetMessage),
+                                            afterMessages
+                                    );
+                                })
+                                .flatMapMany(tuple -> {
+
+                                    List<Message> messages =
+                                            new ArrayList<>();
+
+                                    messages.addAll(tuple.getT1());
+                                    messages.add(tuple.getT2());
+                                    messages.addAll(tuple.getT3());
+
+                                    return enrichMessages(
+                                            dialogId,
+                                            userId,
+                                            messages
+                                    );
+                                })
+                );
+    }
+
     private Mono<MessageResponse> enrichReply(MessageResponse response, Long dialogId) {
         if (response.replyToMessageId() == null) {
             return Mono.just(response);
@@ -616,6 +550,159 @@ public class MessageServiceImpl implements MessageService {
                                 })
                 )
                 .defaultIfEmpty(response);
+    }
+
+    private Flux<MessageResponse> enrichMessages(
+            Long dialogId,
+            Long userId,
+            List<Message> messages
+    ) {
+        if (messages.isEmpty()) {
+            return Flux.empty();
+        }
+
+        List<Long> messageIds = messages.stream()
+                .map(Message::getId)
+                .toList();
+
+        return dialogService
+                .findById(dialogId)
+                .flatMapMany(dialog -> {
+
+                    Long otherUserId;
+
+                    if (Objects.equals(
+                            dialog.getOwnerId(),
+                            userId
+                    )) {
+                        otherUserId = dialog.getParticipantId();
+                    } else {
+                        otherUserId = dialog.getOwnerId();
+                    }
+
+                    return Mono.zip(
+                            dialogService
+                                    .getLastReadMessageId(
+                                            dialogId,
+                                            otherUserId
+                                    )
+                                    .defaultIfEmpty(0L),
+
+                            messageReactionService
+                                    .getReactions(
+                                            messageIds,
+                                            userId
+                                    ),
+
+                            getSenderInfoMap(dialogId),
+
+                            getAttachmentsByMessageId(messageIds),
+
+                            getReplyMessages(messages)
+
+                    ).flatMapMany(tuple -> {
+
+                        Long lastReadMessageId = tuple.getT1();
+
+                        Map<Long, List<MessageReactionResponse>>
+                                reactionsByMessageId = tuple.getT2();
+
+                        Map<Long, MessageResponse.SenderInfo>
+                                senderInfoByUserId = tuple.getT3();
+
+                        Map<Long, List<AttachmentResponse>>
+                                attachmentsByMessageId = tuple.getT4();
+
+                        Map<Long, Message>
+                                replyMessagesById = tuple.getT5();
+
+                        return Flux
+                                .fromIterable(messages)
+                                .map(message -> {
+
+                                    boolean readByOther =
+                                            Objects.equals(
+                                                    message.getSenderId(),
+                                                    userId
+                                            )
+                                                    && message.getId()
+                                                    <= lastReadMessageId;
+
+                                    List<MessageReactionResponse> reactions =
+                                            reactionsByMessageId
+                                                    .getOrDefault(
+                                                            message.getId(),
+                                                            List.of()
+                                                    );
+
+                                    MessageResponse.SenderInfo sender =
+                                            senderInfoByUserId.get(
+                                                    message.getSenderId()
+                                            );
+
+                                    if (sender == null) {
+                                        sender =
+                                                new MessageResponse.SenderInfo(
+                                                        null,
+                                                        null
+                                                );
+                                    }
+
+                                    List<AttachmentResponse> attachments =
+                                            attachmentsByMessageId
+                                                    .getOrDefault(
+                                                            message.getId(),
+                                                            List.of()
+                                                    );
+
+                                    MessageResponse response =
+                                            MessageResponse.fromEntity(
+                                                    message,
+                                                    readByOther,
+                                                    reactions,
+                                                    sender,
+                                                    attachments
+                                            );
+
+                                    if (message.getReplyToMessageId() == null) {
+                                        return response;
+                                    }
+
+                                    Message replyMessage =
+                                            replyMessagesById.get(
+                                                    message.getReplyToMessageId()
+                                            );
+
+                                    if (replyMessage == null) {
+                                        return response;
+                                    }
+
+                                    MessageResponse.SenderInfo replySender =
+                                            senderInfoByUserId.get(
+                                                    replyMessage.getSenderId()
+                                            );
+
+                                    String replyContent =
+                                            replyMessage.getDeletedAt() != null
+                                                    ? null
+                                                    : replyMessage.getContent();
+
+                                    MessageResponse.ReplyMessageResponse replyTo =
+                                            new MessageResponse.ReplyMessageResponse(
+                                                    replyMessage.getId(),
+                                                    replyMessage.getSenderId(),
+                                                    replySender != null
+                                                            ? replySender.name()
+                                                            : null,
+                                                    replyContent,
+                                                    replyMessage.getCreatedAt(),
+                                                    replyMessage.getDeletedAt() != null
+                                            );
+
+                                    return response.withReplyTo(replyTo);
+                                });
+                    });
+                });
     }
 
 }

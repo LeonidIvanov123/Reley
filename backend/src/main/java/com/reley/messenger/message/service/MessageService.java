@@ -17,4 +17,8 @@ public interface MessageService {
     Mono<MessageResponse> deleteMessage(Long dialogId, Long messageId);
 
     Flux<MessageResponse> searchMessages(Long dialogId, String query, int limit, int offset);
+
+    Flux<MessageResponse> getMessageContext(Long dialogId, Long messageId, int before, int after);
+
+    Flux<MessageResponse> getMessagesAfter(Long dialogId, Long afterId);
 }

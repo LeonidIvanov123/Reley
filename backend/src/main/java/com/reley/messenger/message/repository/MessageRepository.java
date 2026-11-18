@@ -18,6 +18,16 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
 
     Flux<Message> findTop15ByDialogIdAndIdLessThanOrderByIdDesc(Long dialogId, Long beforeId);
 
+    @Query("""
+        SELECT *
+        FROM messages
+        WHERE dialog_id = :dialogId
+          AND id > :afterId
+        ORDER BY id ASC
+        LIMIT :limit
+        """)
+    Flux<Message> findTopByDialogIdAndIdGreaterThanOrderByIdAsc(Long dialogId, Long afterId, int limit);
+
     @Modifying
     @Query("""
     UPDATE messages SET deleted_at = :deletedAt 
@@ -97,5 +107,33 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
         WHERE id IN (:messageIds)
         """)
     Flux<Message> findAllByIds(Collection<Long> messageIds);
+
+    @Query("""
+        SELECT *
+        FROM messages
+        WHERE dialog_id = :dialogId
+          AND id < :messageId
+        ORDER BY id DESC
+        LIMIT :limit
+        """)
+    Flux<Message> findBefore(
+            Long dialogId,
+            Long messageId,
+            int limit
+    );
+
+    @Query("""
+        SELECT *
+        FROM messages
+        WHERE dialog_id = :dialogId
+          AND id > :messageId
+        ORDER BY id ASC
+        LIMIT :limit
+        """)
+    Flux<Message> findAfter(
+            Long dialogId,
+            Long messageId,
+            int limit
+    );
 
 }
