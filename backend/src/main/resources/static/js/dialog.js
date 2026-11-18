@@ -19,6 +19,39 @@ const messageInput =
 const sendError =
     document.getElementById('send-error');
 
+/*
+ * =========================
+ * Reply
+ * =========================
+ */
+
+const replyMessageButton =
+    document.getElementById(
+        'reply-message-button'
+    );
+
+const replyPreview =
+    document.getElementById(
+        'reply-preview'
+    );
+
+const replyPreviewAuthor =
+    document.getElementById(
+        'reply-preview-author'
+    );
+
+const replyPreviewText =
+    document.getElementById(
+        'reply-preview-text'
+    );
+
+const cancelReplyButton =
+    document.getElementById(
+        'cancel-reply-button'
+    );
+
+let replyToMessageId =
+    null;
 
 /*
  * =========================
@@ -2450,6 +2483,31 @@ function getMessageAuthor(
     };
 }
 
+function scrollToMessage(messageId) {
+    const messageElement = document.querySelector(
+        `.message[data-message-id="${messageId}"]`
+    );
+
+    if (!messageElement) {
+        return;
+    }
+
+    messageElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    });
+
+    messageElement.classList.remove('reply-highlight');
+
+    // Перезапускаем animation
+    void messageElement.offsetWidth;
+
+    messageElement.classList.add('reply-highlight');
+
+    setTimeout(() => {
+        messageElement.classList.remove('reply-highlight');
+    }, 1500);
+}
 
 /*
  * =========================
@@ -2570,6 +2628,104 @@ function createMessageElement(
         reactionTrigger
     );
 
+        /*
+         * Reply
+         */
+
+        if (
+            message.replyTo
+        ) {
+
+            const replyElement =
+                document.createElement(
+                    'div'
+                );
+
+            replyElement.className =
+                'message-reply';
+
+            replyElement.dataset.replyMessageId =
+                message.replyTo.id;
+
+            const replyLine =
+                document.createElement(
+                    'div'
+                );
+
+            replyLine.className =
+                'message-reply-line';
+
+            const replyContent =
+                document.createElement(
+                    'div'
+                );
+
+            replyContent.className =
+                'message-reply-content';
+
+            const replyAuthor =
+                document.createElement(
+                    'div'
+                );
+
+            replyAuthor.className =
+                'message-reply-author';
+
+            replyAuthor.textContent =
+                message.replyTo.senderName ||
+                'Пользователь';
+
+            const replyText =
+                document.createElement(
+                    'div'
+                );
+
+            replyText.className =
+                'message-reply-text';
+
+            if (
+                message.replyTo.deleted
+            ) {
+
+                replyText.classList.add(
+                    'deleted'
+                );
+
+                replyText.textContent =
+                    'Сообщение удалено';
+
+            } else {
+
+                replyText.textContent =
+                    message.replyTo.content ||
+                    'Вложение';
+            }
+
+            replyContent.appendChild(
+                replyAuthor
+            );
+
+            replyContent.appendChild(
+                replyText
+            );
+
+            replyElement.appendChild(
+                replyLine
+            );
+
+            replyElement.appendChild(
+                replyContent
+            );
+
+            element.appendChild(
+                replyElement
+            );
+        }
+
+
+        /*
+         * Текст
+         */
 
     /*
      * Picker
@@ -2886,6 +3042,182 @@ function createMessageElement(
     return element;
 }
 
+/*
+ * =========================
+ * Reply
+ * =========================
+ */
+
+function startReply(
+    messageElement
+) {
+
+    if (!messageElement) {
+        return;
+    }
+
+    if (
+        messageElement.classList.contains(
+            'deleted'
+        )
+    ) {
+        return;
+    }
+
+    const messageId =
+        messageElement.dataset.messageId;
+
+    if (!messageId) {
+        return;
+    }
+
+    replyToMessageId =
+        Number(messageId);
+
+    let author =
+        'Пользователь';
+
+    const authorLink =
+        messageElement.querySelector(
+            '.message-author-link'
+        );
+
+    if (authorLink) {
+
+        author =
+            authorLink.textContent.trim();
+
+    } else if (
+        messageElement.classList.contains(
+            'mine'
+        )
+    ) {
+
+        author =
+            'Вы';
+    }
+
+    let text =
+        '';
+
+    const content =
+        messageElement.querySelector(
+            '.message-content'
+        );
+
+    if (content) {
+
+        text =
+            content.textContent.trim();
+    }
+
+    if (!text) {
+
+        const attachments =
+            messageElement.querySelector(
+                '.message-attachments'
+            );
+
+        if (attachments) {
+
+            text =
+                'Вложение';
+
+        } else {
+
+            text =
+                'Сообщение';
+        }
+    }
+
+    if (replyPreviewAuthor) {
+
+        replyPreviewAuthor.textContent =
+            author;
+    }
+
+    if (replyPreviewText) {
+
+        replyPreviewText.textContent =
+            text;
+    }
+
+    if (replyPreview) {
+
+        replyPreview.style.display =
+            'flex';
+    }
+
+    if (messageInput) {
+
+        messageInput.focus();
+    }
+
+    closeContextMenu();
+}
+
+
+function cancelReply() {
+
+    replyToMessageId =
+        null;
+
+    if (replyPreview) {
+
+        replyPreview.style.display =
+            'none';
+    }
+
+    if (replyPreviewAuthor) {
+
+        replyPreviewAuthor.textContent =
+            '';
+    }
+
+    if (replyPreviewText) {
+
+        replyPreviewText.textContent =
+            '';
+    }
+}
+
+
+if (replyMessageButton) {
+
+    replyMessageButton.addEventListener(
+        'click',
+        () => {
+
+            if (!selectedMessage) {
+                return;
+            }
+
+            const messageElement =
+                selectedMessage;
+
+            startReply(
+                messageElement
+            );
+        }
+    );
+}
+
+
+if (cancelReplyButton) {
+
+    cancelReplyButton.addEventListener(
+        'click',
+        () => {
+
+            cancelReply();
+
+            if (messageInput) {
+
+                messageInput.focus();
+            }
+        }
+    );
+}
 
 /*
  * =========================
@@ -3200,15 +3532,10 @@ function openContextMenu(
 ) {
 
     if (
-        !messageElement.classList.contains(
-            'mine'
-        )
-        ||
         messageElement.classList.contains(
             'deleted'
         )
     ) {
-
         closeContextMenu();
 
         return;
@@ -3216,6 +3543,21 @@ function openContextMenu(
 
     selectedMessage =
         messageElement;
+
+    const deleteButton =
+        document.getElementById(
+            'delete-message-button'
+        );
+
+    const isMine =
+        messageElement.classList.contains(
+            'mine'
+        );
+
+    if (deleteButton) {
+        deleteButton.style.display =
+            isMine ? '' : 'none';
+    }
 
     contextMenu.style.display =
         'block';
@@ -3297,12 +3639,7 @@ messagesContainer.addEventListener(
                 '[data-message-id]'
             );
 
-        if (
-            !messageElement ||
-            !messageElement.classList.contains(
-                'mine'
-            )
-        ) {
+        if (!messageElement) {
             return;
         }
 
@@ -3603,6 +3940,21 @@ document.addEventListener(
     }
 );
 
+document.addEventListener('click', event => {
+    const replyElement = event.target.closest('.message-reply');
+
+    if (!replyElement) {
+        return;
+    }
+
+    const messageId = replyElement.dataset.replyMessageId;
+
+    if (!messageId) {
+        return;
+    }
+
+    scrollToMessage(messageId);
+});
 
 /*
  * =========================
@@ -3831,7 +4183,8 @@ sendForm.addEventListener(
                         body:
                             JSON.stringify({
                                 content,
-                                attachmentIds
+                                attachmentIds,
+                                replyToMessageId
                             })
                     }
                 );
@@ -3890,6 +4243,8 @@ sendForm.addEventListener(
             renderMyAttachments(
                 getCurrentMyAttachments()
             );
+
+            cancelReply();
 
             scrollToBottom();
 

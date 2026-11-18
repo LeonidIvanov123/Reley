@@ -6,7 +6,9 @@
             class="message"
             th:classappend="${mine ? ' mine' : ' theirs'}
                 + (${message.deletedAt != null} ? ' deleted' : '')"
-            th:attr="data-message-id=${message.id}">
+            th:attr="
+                data-message-id=${message.id},
+                data-reply-to-message-id=${message.replyToMessageId}">
 
         <!-- =========================
              Автор
@@ -40,6 +42,47 @@
         </button>
 
         <div class="reaction-picker"></div>
+
+
+        <!-- =========================
+             Ответ на сообщение
+             ========================= -->
+
+        <div
+                class="message-reply"
+                th:if="${message.replyTo != null}"
+                th:attr="data-reply-message-id=${message.replyTo.id}">
+
+            <div class="message-reply-line"></div>
+
+            <div class="message-reply-content">
+
+                <div
+                        class="message-reply-author"
+                        th:text="${message.replyTo.senderName != null and !message.replyTo.senderName.isBlank()
+                            ? message.replyTo.senderName
+                            : 'Пользователь'}">
+                    Пользователь
+                </div>
+
+                <div
+                        class="message-reply-text"
+                        th:if="${!message.replyTo.deleted}"
+                        th:text="${message.replyTo.content != null and !message.replyTo.content.isBlank()
+                            ? message.replyTo.content
+                            : 'Вложение'}">
+                    Текст сообщения
+                </div>
+
+                <div
+                        class="message-reply-text deleted"
+                        th:if="${message.replyTo.deleted}">
+                    Сообщение удалено
+                </div>
+
+            </div>
+
+        </div>
 
 
         <!-- =========================
