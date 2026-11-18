@@ -50,6 +50,18 @@ public class DialogController {
         return Mono.just("group-new");
     }
 
+    @GetMapping("/with/{userId}")
+    public Mono<String> openDialogWithUser(@PathVariable Long userId) {
+        return userInfo.getCurrentUserId()
+                .flatMap(currentUserId ->
+                        dialogService.findOrCreatePrivateDialog(
+                                currentUserId,
+                                userId
+                        )
+                )
+                .map(dialog -> "redirect:/dialogs/" + dialog.id());
+    }
+
     @GetMapping("/{dialogId}/settings")
     public Mono<String> groupSettings(
             @PathVariable Long dialogId,

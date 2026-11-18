@@ -44,4 +44,6 @@ public interface DialogService {
 
     Mono<Long> joinGroup(String dialogLink);
 
+    Mono<DialogResponse> findOrCreatePrivateDialog(Long currentUserId, Long otherUserId);
+
 }

@@ -9,4 +9,4 @@ public record DialogResponse(
         String otherUserEmail,
         OffsetDateTime createdAt,
         boolean isGroupChat
-) {}
+) { }

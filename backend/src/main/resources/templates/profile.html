@@ -100,7 +100,7 @@
             gap: 6px;
             color: #7b8493;
             font-size: 14px;
-            margin-bottom: 28px;
+            margin-bottom: 18px;
         }
 
         .profile-status-dot {
@@ -198,6 +198,27 @@
             margin: 0;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #3978d5;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .back-button:hover {
+            text-decoration: underline;
+        }
+
         @media (max-width: 480px) {
             body {
                 padding: 20px 12px;
@@ -232,10 +253,20 @@
             Мой профиль
         </h1>
 
-        <a href="/"
-           class="back-link">
-            ← К диалогам
-        </a>
+        <div class="header-actions">
+
+            <button type="button"
+                    class="back-button"
+                    onclick="history.back()">
+                ← Назад
+            </button>
+
+            <a href="/"
+               class="back-link">
+                К диалогам
+            </a>
+
+        </div>
 
     </div>
 
@@ -243,8 +274,10 @@
 
     <div class="card">
 
+        <!-- Аватар -->
         <div th:replace="~{fragments/avatar :: avatar(${user}, 76)}"></div>
 
+        <!-- Имя -->
         <div class="profile-name"
              th:text="${user.name != null and !user.name.isEmpty()
                        ? user.name
@@ -252,6 +285,7 @@
             Имя пользователя
         </div>
 
+        <!-- Username -->
         <div class="profile-username"
              th:if="${user.username != null and !user.username.isEmpty()}"
              th:text="'@' + ${user.username}">
@@ -296,16 +330,36 @@
 
         </div>
 
-        <!-- ========================= -->
-        <!-- Информация только владельца -->
-        <!-- ========================= -->
+        <!-- Email показываем для любого профиля -->
+        <div class="profile-email"
+             th:text="${user.email}">
+            user@example.com
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- ЧУЖОЙ ПРОФИЛЬ -->
+        <!-- ================================= -->
+
+        <div th:if="${!ownProfile}">
+
+            <div class="actions">
+
+                <a th:href="@{/dialogs/with/{userId}(userId=${user.id})}"
+                   class="button button-primary">
+                    Написать
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- СОБСТВЕННЫЙ ПРОФИЛЬ -->
+        <!-- ================================= -->
 
         <div th:if="${ownProfile}">
-
-            <div class="profile-email"
-                 th:text="${user.email}">
-                user@example.com
-            </div>
 
             <div class="field">
 
