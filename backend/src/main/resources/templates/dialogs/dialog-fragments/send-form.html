@@ -2,12 +2,35 @@
         class="send-area"
         th:fragment="send-form">
 
-    <!-- Выбранные файлы -->
+    <!-- =========================
+         Выбранные файлы
+         ========================= -->
+
     <div
             id="selected-attachments"
             class="selected-attachments">
     </div>
 
+
+    <!-- =========================
+         Emoji picker
+         ========================= -->
+
+    <div
+            id="emoji-picker"
+            class="emoji-picker">
+
+        <div
+                id="emoji-picker-content"
+                class="emoji-picker-content">
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         Форма отправки
+         ========================= -->
 
     <form
             id="send-form"
@@ -19,6 +42,15 @@
                 class="attachment-button"
                 title="Прикрепить файл">
             📎
+        </button>
+
+
+        <button
+                type="button"
+                id="emoji-button"
+                class="emoji-button"
+                title="Добавить эмодзи">
+            😊
         </button>
 
 

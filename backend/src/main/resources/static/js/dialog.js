@@ -19,6 +19,20 @@ const messageInput =
 const sendError =
     document.getElementById('send-error');
 
+const editMessageButton =
+    document.getElementById(
+        'edit-message-button'
+    );
+
+const editPreview =
+    document.getElementById('edit-preview');
+
+const editPreviewText =
+    document.getElementById('edit-preview-text');
+
+const cancelEditButton =
+    document.getElementById('cancel-edit-button');
+
 /*
  * =========================
  * Reply
@@ -50,7 +64,18 @@ const cancelReplyButton =
         'cancel-reply-button'
     );
 
+const emojiButton =
+    document.getElementById('emoji-button');
+
+const emojiPicker =
+    document.getElementById('emoji-picker');
+
+const emojiPickerContent =
+    document.getElementById('emoji-picker-content');
+
 let replyToMessageId = null;
+
+let editingMessageId = null;
 
 /*
  * =========================
@@ -633,6 +658,138 @@ async function focusMessage(messageId) {
     await scrollToMessage(messageId);
 }
 
+function initializeEmojiPicker() {
+
+    if (
+        !emojiButton
+        || !emojiPicker
+        || !emojiPickerContent
+    ) {
+        return;
+    }
+
+    const emojis = [
+        '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣',
+        '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰',
+        '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜',
+        '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏',
+        '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+        '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠',
+        '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨',
+        '😰', '😥', '😓', '🤗', '🤔', '🫡', '🤭', '🤫',
+        '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦',
+        '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵',
+        '🤐', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑',
+
+        '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙',
+        '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️',
+        '👏', '🙌', '👐', '🤝', '🙏', '💪', '❤️', '🧡',
+        '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
+        '🔥', '⭐', '✨', '💯', '🎉', '🎊', '💥', '💫'
+    ];
+
+    emojis.forEach(emoji => {
+
+        const button =
+            document.createElement('button');
+
+        button.type = 'button';
+
+        button.dataset.emoji = emoji;
+
+        button.textContent = emoji;
+
+        button.title = emoji;
+
+        emojiPickerContent.appendChild(button);
+
+    });
+
+
+    emojiButton.addEventListener(
+        'click',
+        event => {
+
+            event.stopPropagation();
+
+            emojiPicker.classList.toggle('open');
+
+        }
+    );
+
+
+    emojiPicker.addEventListener(
+        'click',
+        event => {
+
+            const button =
+                event.target.closest(
+                    '[data-emoji]'
+                );
+
+            if (!button) {
+                return;
+            }
+
+            insertEmoji(
+                button.dataset.emoji
+            );
+
+        }
+    );
+
+
+    document.addEventListener(
+        'click',
+        event => {
+
+            if (
+                !emojiPicker.contains(event.target)
+                && event.target !== emojiButton
+            ) {
+                emojiPicker.classList.remove('open');
+            }
+
+        }
+    );
+}
+
+function insertEmoji(emoji) {
+
+    if (!messageInput) {
+        return;
+    }
+
+    const start =
+        messageInput.selectionStart;
+
+    const end =
+        messageInput.selectionEnd;
+
+    const value =
+        messageInput.value;
+
+    messageInput.value =
+        value.slice(0, start)
+        + emoji
+        + value.slice(end);
+
+    const cursorPosition =
+        start + emoji.length;
+
+    messageInput.focus();
+
+    messageInput.setSelectionRange(
+        cursorPosition,
+        cursorPosition
+    );
+
+    messageInput.dispatchEvent(
+        new Event('input', {
+            bubbles: true
+        })
+    );
+}
 
 /*
  * =========================
@@ -2178,6 +2335,14 @@ socket.onmessage = event => {
 
                 break;
 
+            case 'MESSAGE_EDITED':
+
+                handleMessageEdited(
+                    wsEvent
+                );
+
+                break;
+
             case 'MESSAGE_REACTION_CHANGED':
 
                 handleMessageReactionChanged(
@@ -2199,6 +2364,77 @@ socket.onmessage = event => {
     }
 };
 
+function handleMessageEdited(wsEvent) {
+
+    if (
+        Number(wsEvent.dialogId) !==
+        Number(dialogId)
+    ) {
+        return;
+    }
+
+    const payload =
+        wsEvent.payload;
+
+    if (!payload) {
+        return;
+    }
+
+    const messageElement =
+        messagesContainer.querySelector(
+            `[data-message-id="${payload.messageId}"]`
+        );
+
+    if (!messageElement) {
+        return;
+    }
+
+    const contentElement =
+        messageElement.querySelector(
+            '.message-content'
+        );
+
+    if (contentElement) {
+        contentElement.textContent =
+            payload.content || '';
+    }
+
+    messageElement.dataset.editedAt =
+        payload.editedAt || '';
+
+    const existingEdited =
+        messageElement.querySelector(
+            '.message-edited'
+        );
+
+    if (existingEdited) {
+        existingEdited.remove();
+    }
+
+    if (payload.editedAt) {
+
+        const timeElement =
+            messageElement.querySelector(
+                '.message-time'
+            );
+
+        if (timeElement) {
+
+            const editedElement =
+                document.createElement('span');
+
+            editedElement.className =
+                'message-edited';
+
+            editedElement.textContent =
+                ' · изменено';
+
+            timeElement.appendChild(
+                editedElement
+            );
+        }
+    }
+}
 
 /*
  * =========================
@@ -2666,6 +2902,9 @@ function createMessageElement(
     element.dataset.deletedAt =
         message.deletedAt || '';
 
+    element.dataset.editedAt =
+        message.editedAt || '';
+
     if (message.deletedAt) {
 
         element.classList.add(
@@ -3126,6 +3365,24 @@ function createMessageElement(
         timeText
     );
 
+    if (message.editedAt) {
+
+        const edited =
+            document.createElement(
+                'span'
+            );
+
+        edited.className =
+            'message-edited';
+
+        edited.textContent =
+            ' · изменено';
+
+        time.appendChild(
+            edited
+        );
+    }
+
 
     /*
      * Статус
@@ -3277,6 +3534,79 @@ function startReply(
     closeContextMenu();
 }
 
+function startEdit(messageElement) {
+    if (!messageElement) {
+        return;
+    }
+
+    if (!messageElement.classList.contains('mine')) {
+        return;
+    }
+
+    const messageId =
+        messageElement.dataset.messageId;
+
+    if (!messageId) {
+        return;
+    }
+
+    const contentElement =
+        messageElement.querySelector('.message-content');
+
+    const content =
+        contentElement
+            ? contentElement.textContent
+            : '';
+
+    if (!content.trim()) {
+        return;
+    }
+
+    editingMessageId = Number(messageId);
+
+    messageInput.value = content;
+
+    if (editPreview) {
+        editPreview.style.display = 'flex';
+    }
+
+    if (editPreviewText) {
+        editPreviewText.textContent = content;
+    }
+
+    cancelReply();
+
+    selectedAttachments.clear();
+    renderSelectedAttachments();
+    renderMyAttachments(
+        getCurrentMyAttachments()
+    );
+
+    messageInput.focus();
+
+    messageInput.setSelectionRange(
+        messageInput.value.length,
+        messageInput.value.length
+    );
+}
+
+
+function cancelEdit() {
+    editingMessageId = null;
+
+    messageInput.value = '';
+
+    if (editPreview) {
+        editPreview.style.display = 'none';
+    }
+
+    if (editPreviewText) {
+        editPreviewText.textContent = '';
+    }
+
+    messageInput.focus();
+}
+
 
 function cancelReply() {
 
@@ -3319,6 +3649,37 @@ if (replyMessageButton) {
             startReply(
                 messageElement
             );
+        }
+    );
+}
+
+if (cancelEditButton) {
+    cancelEditButton.addEventListener(
+        'click',
+        () => {
+            cancelEdit();
+        }
+    );
+}
+
+if (editMessageButton) {
+
+    editMessageButton.addEventListener(
+        'click',
+        () => {
+
+            if (!selectedMessage) {
+                return;
+            }
+
+            const messageElement =
+                selectedMessage;
+
+            startEdit(
+                messageElement
+            );
+
+            closeContextMenu();
         }
     );
 }
@@ -3779,18 +4140,13 @@ function openContextMenu(
     y
 ) {
 
-    if (
-        messageElement.classList.contains(
-            'deleted'
-        )
-    ) {
-        closeContextMenu();
-
-        return;
-    }
-
     selectedMessage =
         messageElement;
+
+    const editButton =
+        document.getElementById(
+            'edit-message-button'
+        );
 
     const deleteButton =
         document.getElementById(
@@ -3801,6 +4157,11 @@ function openContextMenu(
         messageElement.classList.contains(
             'mine'
         );
+
+    if (editButton) {
+        editButton.style.display =
+            isMine ? '' : 'none';
+    }
 
     if (deleteButton) {
         deleteButton.style.display =
@@ -4377,6 +4738,8 @@ if (deleteMessageButton) {
 
 async function initializeDialog() {
 
+    initializeEmojiPicker();
+
     await loadAvailableReactions();
 
     scrollToBottom();
@@ -4400,17 +4763,88 @@ sendForm.addEventListener(
         const content =
             messageInput.value.trim();
 
+        if (!content) {
+            return;
+        }
+
+        showSendError('');
+
+        /*
+         * =========================
+         * Редактирование сообщения
+         * =========================
+         */
+
+        if (editingMessageId !== null) {
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/api/dialogs/${dialogId}/messages/${editingMessageId}`,
+                        {
+                            method:
+                                'PATCH',
+
+                            headers: {
+                                'Content-Type':
+                                    'application/json'
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    content
+                                })
+                        }
+                    );
+
+                if (!response.ok) {
+
+                    let message =
+                        'Не удалось изменить сообщение';
+
+                    try {
+
+                        const body =
+                            await response.json();
+
+                        if (body.message) {
+                            message =
+                                body.message;
+                        }
+
+                    } catch (_) {
+                    }
+
+                    throw new Error(
+                        message
+                    );
+                }
+
+                await response.json();
+
+                cancelEdit();
+
+            } catch (error) {
+
+                showSendError(
+                    error.message
+                );
+            }
+
+            return;
+        }
+
+        /*
+         * =========================
+         * Обычная отправка
+         * =========================
+         */
+
         const attachmentIds =
             Array.from(
                 selectedAttachments.keys()
             );
-
-        if (
-            !content &&
-            attachmentIds.length === 0
-        ) {
-            return;
-        }
 
         showSendError('');
 
