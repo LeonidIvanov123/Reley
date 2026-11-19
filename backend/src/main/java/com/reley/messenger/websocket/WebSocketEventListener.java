@@ -49,7 +49,8 @@ public class WebSocketEventListener {
                                 event.senderEmail(),
                                 event.content(),
                                 event.createdAt(),
-                                event.attachments()
+                                event.attachments(),
+                                event.replyTo()
                         )
                 );
 

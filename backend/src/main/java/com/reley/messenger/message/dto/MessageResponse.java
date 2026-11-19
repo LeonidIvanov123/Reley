@@ -19,7 +19,9 @@ public record MessageResponse(
         OffsetDateTime deletedAt,
         boolean readByOther,
         List<MessageReactionResponse> reactions,
-        List<AttachmentResponse> attachments
+        List<AttachmentResponse> attachments,
+        Long replyToMessageId,
+        ReplyMessageResponse replyTo
 ) {
 
     public static MessageResponse fromEntity(Message message) {
@@ -35,69 +37,69 @@ public record MessageResponse(
                 message.getDeletedAt(),
                 false,
                 List.of(),
-                List.of()
-        );
-    }
-
-    public static MessageResponse fromEntity(Message message, boolean readByOther) {
-        return new MessageResponse(
-                message.getId(),
-                message.getDialogId(),
-                message.getSenderId(),
-                null,
-                null,
-                message.getContent(),
-                message.getCreatedAt(),
-                message.getEditedAt(),
-                message.getDeletedAt(),
-                readByOther,
                 List.of(),
-                List.of()
+                message.getReplyToMessageId(),
+                null
         );
     }
 
-    public static MessageResponse fromEntity(Message message,
-                                             boolean readByOther,
-                                             List<MessageReactionResponse> reactions,
-                                             SenderInfo sender) {
+    public static MessageResponse fromEntity(
+            Message message,
+            boolean readByOther,
+            List<MessageReactionResponse> reactions,
+            SenderInfo sender,
+            List<AttachmentResponse> attachments
+    ) {
         return new MessageResponse(
                 message.getId(),
                 message.getDialogId(),
                 message.getSenderId(),
-                sender.name,
-                sender.email,
+                sender.name(),
+                sender.email(),
                 message.getContent(),
                 message.getCreatedAt(),
                 message.getEditedAt(),
                 message.getDeletedAt(),
                 readByOther,
                 reactions,
-                List.of()
+                attachments,
+                message.getReplyToMessageId(),
+                null
         );
     }
 
-    public static MessageResponse fromEntity(Message message,
-                                             boolean readByOther,
-                                             List<MessageReactionResponse> reactions,
-                                             SenderInfo sender,
-                                             List<AttachmentResponse> attachments) {
+    public MessageResponse withReplyTo(ReplyMessageResponse replyTo) {
         return new MessageResponse(
-                message.getId(),
-                message.getDialogId(),
-                message.getSenderId(),
-                sender.name,
-                sender.email,
-                message.getContent(),
-                message.getCreatedAt(),
-                message.getEditedAt(),
-                message.getDeletedAt(),
+                id,
+                dialogId,
+                senderId,
+                senderName,
+                senderEmail,
+                content,
+                createdAt,
+                editedAt,
+                deletedAt,
                 readByOther,
                 reactions,
-                attachments
+                attachments,
+                replyToMessageId,
+                replyTo
         );
     }
 
-    public record SenderInfo(String name, String email) {
+    public record SenderInfo(
+            String name,
+            String email
+    ) {
     }
 
+    public record ReplyMessageResponse(
+            Long id,
+            Long senderId,
+            String senderName,
+            String content,
+            OffsetDateTime createdAt,
+            boolean deleted
+    ) {
+    }
 }

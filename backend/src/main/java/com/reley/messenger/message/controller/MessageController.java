@@ -26,11 +26,33 @@ public class MessageController {
     private final MessageService messageService;
 
     @GetMapping
+    @PreAuthorize("@dialogAccess.canAccess(#dialogId, authentication)")
     public Flux<MessageResponse> getMessages(
             @PathVariable Long dialogId,
             @RequestParam(required = false) Long beforeId
     ) {
         return messageService.getMessages(dialogId, beforeId);
+    }
+
+    @GetMapping("/after")
+    @PreAuthorize("@dialogAccess.canAccess(#dialogId, authentication)")
+    public Mono<List<MessageResponse>> getMessagesAfter(@PathVariable Long dialogId, @RequestParam Long afterId) {
+        return messageService
+                .getMessagesAfter(dialogId, afterId)
+                .collectList();
+    }
+
+    @GetMapping("/around/{messageId}")
+    @PreAuthorize("@dialogAccess.canAccess(#dialogId, authentication)")
+    public Mono<List<MessageResponse>> getMessageContext(
+            @PathVariable Long dialogId,
+            @PathVariable Long messageId,
+            @RequestParam(defaultValue = "10") int before,
+            @RequestParam(defaultValue = "10") int after
+    ) {
+        return messageService
+                .getMessageContext(dialogId, messageId, before, after)
+                .collectList();
     }
 
     @PostMapping

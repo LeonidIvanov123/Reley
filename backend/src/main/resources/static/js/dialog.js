@@ -19,6 +19,38 @@ const messageInput =
 const sendError =
     document.getElementById('send-error');
 
+/*
+ * =========================
+ * Reply
+ * =========================
+ */
+
+const replyMessageButton =
+    document.getElementById(
+        'reply-message-button'
+    );
+
+const replyPreview =
+    document.getElementById(
+        'reply-preview'
+    );
+
+const replyPreviewAuthor =
+    document.getElementById(
+        'reply-preview-author'
+    );
+
+const replyPreviewText =
+    document.getElementById(
+        'reply-preview-text'
+    );
+
+const cancelReplyButton =
+    document.getElementById(
+        'cancel-reply-button'
+    );
+
+let replyToMessageId = null;
 
 /*
  * =========================
@@ -584,59 +616,21 @@ function formatSearchMessageDate(
  * =========================
  */
 
-function focusMessage(
-    messageId
-) {
+async function focusMessage(messageId) {
 
-    const messageElement =
-        messagesContainer.querySelector(
-            `[data-message-id="${messageId}"]`
-        );
-
-    /*
-     * Если сообщение уже загружено
-     * в текущий DOM — прокручиваем к нему.
-     */
-
-    if (messageElement) {
-
-        messageElement.scrollIntoView(
-            {
-                behavior: 'smooth',
-                block: 'center'
-            }
-        );
-
-        messageElement.classList.add(
-            'message-search-highlight-active'
-        );
-
-        setTimeout(
-            () => {
-
-                messageElement.classList.remove(
-                    'message-search-highlight-active'
-                );
-
-            },
-            2000
-        );
-
+    if (!messageId) {
         return;
     }
 
     /*
-     * Пока сообщение не загружено в DOM.
-     *
-     * Это нормально для первого этапа.
-     * Позже здесь добавим загрузку истории
-     * до нужного messageId.
+     * scrollToMessage уже умеет:
+     * 1. Найти сообщение в текущем DOM.
+     * 2. Если его нет — загрузить контекст
+     *    через /messages/around/{id}.
+     * 3. Подсветить и прокрутить.
      */
 
-    console.log(
-        'Message is not currently loaded:',
-        messageId
-    );
+    await scrollToMessage(messageId);
 }
 
 
@@ -2094,8 +2088,14 @@ const pageSize =
 let loadingOlderMessages =
     false;
 
+let loadingNewerMessages =
+    false;
+
 let hasMoreMessages =
     true;
+
+let hasMoreNewerMessages =
+    false;
 
 let selectedMessage =
     null;
@@ -2450,6 +2450,185 @@ function getMessageAuthor(
     };
 }
 
+/*
+ * =========================
+ * Прокрутка к сообщению
+ * =========================
+ */
+
+async function scrollToMessage(
+    messageId
+) {
+
+    if (!messageId) {
+        return;
+    }
+
+    const messageElement =
+        messagesContainer.querySelector(
+            `[data-message-id="${messageId}"]`
+        );
+
+    /*
+     * Сообщение уже загружено.
+     */
+    if (messageElement) {
+
+        highlightMessage(
+            messageElement
+        );
+
+        return;
+    }
+
+    /*
+     * Сообщения нет в текущем окне.
+     * Загружаем его вместе с контекстом.
+     */
+    await loadMessageContext(
+        messageId
+    );
+}
+
+
+function highlightMessage(
+    messageElement
+) {
+
+    if (!messageElement) {
+        return;
+    }
+
+    messageElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    });
+
+    messageElement.classList.remove(
+        'reply-highlight'
+    );
+
+    void messageElement.offsetWidth;
+
+    messageElement.classList.add(
+        'reply-highlight'
+    );
+
+    setTimeout(
+        () => {
+
+            messageElement.classList.remove(
+                'reply-highlight'
+            );
+
+        },
+        1500
+    );
+}
+
+
+async function loadMessageContext(messageId) {
+
+    try {
+
+        showSendError('');
+
+        const response =
+            await fetch(
+                `/api/dialogs/${dialogId}/messages/around/${messageId}` +
+                `?before=10&after=10`
+            );
+
+        if (!response.ok) {
+            // ... обработка ошибки как есть ...
+        }
+
+        const messages =
+            await response.json();
+
+        if (!Array.isArray(messages) || messages.length === 0) {
+            throw new Error('Сообщение не найдено');
+        }
+
+        /*
+         * Сбрасываем состояние пагинации,
+         * чтобы после перехода можно было
+         * снова грузить историю в обе стороны.
+         */
+
+        loadingOlderMessages = false;
+        loadingNewerMessages = false;
+
+        messagesContainer.innerHTML = '';
+
+        /*
+         * Возвращаем индикатор загрузки,
+         * так как loadOlderMessages ищет его
+         * по id при каждой загрузке.
+         */
+
+        const indicator =
+            document.createElement('div');
+
+        indicator.id = 'loading-indicator';
+
+        indicator.className = 'loading-indicator';
+
+        indicator.style.display = 'none';
+
+        indicator.textContent = 'Загрузка сообщений...';
+
+        messagesContainer.appendChild(indicator);
+
+        const fragment =
+            document.createDocumentFragment();
+
+        messages.forEach(
+            message => {
+
+                const element =
+                    createMessageElement(message);
+
+                fragment.appendChild(element);
+            }
+        );
+
+        messagesContainer.appendChild(fragment);
+
+        hasMoreMessages = true;
+        hasMoreNewerMessages = true;
+
+        const target =
+            messagesContainer.querySelector(
+                `[data-message-id="${messageId}"]`
+            );
+
+        if (!target) {
+            return;
+        }
+
+        target.scrollIntoView({
+            behavior: 'instant',
+            block: 'center'
+        });
+
+        highlightMessage(target);
+
+    } catch (error) {
+
+        console.error(
+            'Failed to load message context:',
+            error
+        );
+
+        showSendError(
+            error.message ||
+            'Не удалось перейти к сообщению'
+        );
+    }
+}
+
+
 
 /*
  * =========================
@@ -2570,6 +2749,104 @@ function createMessageElement(
         reactionTrigger
     );
 
+        /*
+         * Reply
+         */
+
+        if (
+            message.replyTo
+        ) {
+
+            const replyElement =
+                document.createElement(
+                    'div'
+                );
+
+            replyElement.className =
+                'message-reply';
+
+            replyElement.dataset.replyMessageId =
+                message.replyTo.id;
+
+            const replyLine =
+                document.createElement(
+                    'div'
+                );
+
+            replyLine.className =
+                'message-reply-line';
+
+            const replyContent =
+                document.createElement(
+                    'div'
+                );
+
+            replyContent.className =
+                'message-reply-content';
+
+            const replyAuthor =
+                document.createElement(
+                    'div'
+                );
+
+            replyAuthor.className =
+                'message-reply-author';
+
+            replyAuthor.textContent =
+                message.replyTo.senderName ||
+                'Пользователь';
+
+            const replyText =
+                document.createElement(
+                    'div'
+                );
+
+            replyText.className =
+                'message-reply-text';
+
+            if (
+                message.replyTo.deleted
+            ) {
+
+                replyText.classList.add(
+                    'deleted'
+                );
+
+                replyText.textContent =
+                    'Сообщение удалено';
+
+            } else {
+
+                replyText.textContent =
+                    message.replyTo.content ||
+                    'Вложение';
+            }
+
+            replyContent.appendChild(
+                replyAuthor
+            );
+
+            replyContent.appendChild(
+                replyText
+            );
+
+            replyElement.appendChild(
+                replyLine
+            );
+
+            replyElement.appendChild(
+                replyContent
+            );
+
+            element.appendChild(
+                replyElement
+            );
+        }
+
+
+        /*
+         * Текст
+         */
 
     /*
      * Picker
@@ -2886,6 +3163,182 @@ function createMessageElement(
     return element;
 }
 
+/*
+ * =========================
+ * Reply
+ * =========================
+ */
+
+function startReply(
+    messageElement
+) {
+
+    if (!messageElement) {
+        return;
+    }
+
+    if (
+        messageElement.classList.contains(
+            'deleted'
+        )
+    ) {
+        return;
+    }
+
+    const messageId =
+        messageElement.dataset.messageId;
+
+    if (!messageId) {
+        return;
+    }
+
+    replyToMessageId =
+        Number(messageId);
+
+    let author =
+        'Пользователь';
+
+    const authorLink =
+        messageElement.querySelector(
+            '.message-author-link'
+        );
+
+    if (authorLink) {
+
+        author =
+            authorLink.textContent.trim();
+
+    } else if (
+        messageElement.classList.contains(
+            'mine'
+        )
+    ) {
+
+        author =
+            'Вы';
+    }
+
+    let text =
+        '';
+
+    const content =
+        messageElement.querySelector(
+            '.message-content'
+        );
+
+    if (content) {
+
+        text =
+            content.textContent.trim();
+    }
+
+    if (!text) {
+
+        const attachments =
+            messageElement.querySelector(
+                '.message-attachments'
+            );
+
+        if (attachments) {
+
+            text =
+                'Вложение';
+
+        } else {
+
+            text =
+                'Сообщение';
+        }
+    }
+
+    if (replyPreviewAuthor) {
+
+        replyPreviewAuthor.textContent =
+            author;
+    }
+
+    if (replyPreviewText) {
+
+        replyPreviewText.textContent =
+            text;
+    }
+
+    if (replyPreview) {
+
+        replyPreview.style.display =
+            'flex';
+    }
+
+    if (messageInput) {
+
+        messageInput.focus();
+    }
+
+    closeContextMenu();
+}
+
+
+function cancelReply() {
+
+    replyToMessageId =
+        null;
+
+    if (replyPreview) {
+
+        replyPreview.style.display =
+            'none';
+    }
+
+    if (replyPreviewAuthor) {
+
+        replyPreviewAuthor.textContent =
+            '';
+    }
+
+    if (replyPreviewText) {
+
+        replyPreviewText.textContent =
+            '';
+    }
+}
+
+
+if (replyMessageButton) {
+
+    replyMessageButton.addEventListener(
+        'click',
+        () => {
+
+            if (!selectedMessage) {
+                return;
+            }
+
+            const messageElement =
+                selectedMessage;
+
+            startReply(
+                messageElement
+            );
+        }
+    );
+}
+
+
+if (cancelReplyButton) {
+
+    cancelReplyButton.addEventListener(
+        'click',
+        () => {
+
+            cancelReply();
+
+            if (messageInput) {
+
+                messageInput.focus();
+            }
+        }
+    );
+}
 
 /*
  * =========================
@@ -3044,6 +3497,108 @@ function getOldestMessageId() {
         .messageId;
 }
 
+function getNewestMessageId() {
+
+    const messages =
+        messagesContainer.querySelectorAll(
+            '[data-message-id]'
+        );
+
+    if (messages.length === 0) {
+        return null;
+    }
+
+    return messages[messages.length - 1]
+        .dataset
+        .messageId;
+}
+
+async function loadNewerMessages() {
+
+    if (
+        loadingNewerMessages ||
+        !hasMoreNewerMessages
+    ) {
+        return;
+    }
+
+    const newestMessageId =
+        getNewestMessageId();
+
+    if (!newestMessageId) {
+        return;
+    }
+
+    loadingNewerMessages = true;
+
+    try {
+
+        const response =
+            await fetch(
+                `/api/dialogs/${dialogId}/messages/after?afterId=${newestMessageId}`
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                'Не удалось загрузить новые сообщения'
+            );
+        }
+
+        const messages =
+            await response.json();
+
+        if (
+            !messages ||
+            messages.length === 0
+        ) {
+
+            hasMoreNewerMessages =
+                false;
+
+            return;
+        }
+
+        const fragment =
+            document.createDocumentFragment();
+
+        messages.forEach(
+            message => {
+
+                const element =
+                    createMessageElement(
+                        message
+                    );
+
+                fragment.appendChild(
+                    element
+                );
+            }
+        );
+
+        messagesContainer.appendChild(
+            fragment
+        );
+
+        hasMoreNewerMessages =
+            messages.length >= pageSize;
+
+    } catch (error) {
+
+        console.error(
+            'Failed to load newer messages:',
+            error
+        );
+
+        showSendError(
+            error.message
+        );
+
+    } finally {
+
+        loadingNewerMessages = false;
+    }
+}
 
 async function loadOlderMessages() {
 
@@ -3132,6 +3687,9 @@ async function loadOlderMessages() {
                 previousScrollHeight
             );
 
+        hasMoreMessages =
+            messages.length >= pageSize;
+
     } catch (error) {
 
         console.error(
@@ -3163,11 +3721,33 @@ messagesContainer.addEventListener(
     'scroll',
     () => {
 
+        /*
+         * Дошли до верха —
+         * загружаем старые сообщения.
+         */
         if (
             messagesContainer.scrollTop <= 30
         ) {
 
             loadOlderMessages();
+
+            return;
+        }
+
+        /*
+         * Дошли до низа —
+         * загружаем более новые сообщения.
+         */
+        const distanceToBottom =
+            messagesContainer.scrollHeight -
+            messagesContainer.scrollTop -
+            messagesContainer.clientHeight;
+
+        if (
+            distanceToBottom <= 30
+        ) {
+
+            loadNewerMessages();
         }
     }
 );
@@ -3200,15 +3780,10 @@ function openContextMenu(
 ) {
 
     if (
-        !messageElement.classList.contains(
-            'mine'
-        )
-        ||
         messageElement.classList.contains(
             'deleted'
         )
     ) {
-
         closeContextMenu();
 
         return;
@@ -3216,6 +3791,21 @@ function openContextMenu(
 
     selectedMessage =
         messageElement;
+
+    const deleteButton =
+        document.getElementById(
+            'delete-message-button'
+        );
+
+    const isMine =
+        messageElement.classList.contains(
+            'mine'
+        );
+
+    if (deleteButton) {
+        deleteButton.style.display =
+            isMine ? '' : 'none';
+    }
 
     contextMenu.style.display =
         'block';
@@ -3297,12 +3887,7 @@ messagesContainer.addEventListener(
                 '[data-message-id]'
             );
 
-        if (
-            !messageElement ||
-            !messageElement.classList.contains(
-                'mine'
-            )
-        ) {
+        if (!messageElement) {
             return;
         }
 
@@ -3603,6 +4188,21 @@ document.addEventListener(
     }
 );
 
+document.addEventListener('click', event => {
+    const replyElement = event.target.closest('.message-reply');
+
+    if (!replyElement) {
+        return;
+    }
+
+    const messageId = replyElement.dataset.replyMessageId;
+
+    if (!messageId) {
+        return;
+    }
+
+    scrollToMessage(messageId);
+});
 
 /*
  * =========================
@@ -3831,7 +4431,8 @@ sendForm.addEventListener(
                         body:
                             JSON.stringify({
                                 content,
-                                attachmentIds
+                                attachmentIds,
+                                replyToMessageId
                             })
                     }
                 );
@@ -3890,6 +4491,10 @@ sendForm.addEventListener(
             renderMyAttachments(
                 getCurrentMyAttachments()
             );
+
+            cancelReply();
+
+            hasMoreNewerMessages = false;
 
             scrollToBottom();
 
