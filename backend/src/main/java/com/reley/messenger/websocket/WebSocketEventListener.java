@@ -3,11 +3,13 @@ package com.reley.messenger.websocket;
 import com.reley.messenger.dialog.entity.DialogParticipant;
 import com.reley.messenger.dialog.repository.DialogParticipantRepository;
 import com.reley.messenger.dialog.repository.DialogRepository;
+import com.reley.messenger.message.dto.MessageEditedDomainEvent;
 import com.reley.messenger.message.dto.MessageReadDomainEvent;
 import com.reley.messenger.message.dto.NewMessageDomainEvent;
 import com.reley.messenger.message.reaction.dto.MessageReactionChangedDomainEvent;
 import com.reley.messenger.message.service.MessageReaderService;
 import com.reley.messenger.websocket.event.DialogUpdatedEvent;
+import com.reley.messenger.websocket.event.MessageEditedEvent;
 import com.reley.messenger.websocket.event.MessageReactionChangedWebSocketEvent;
 import com.reley.messenger.websocket.event.MessageReadEvent;
 import com.reley.messenger.websocket.event.NewMessageEvent;
@@ -98,6 +100,44 @@ public class WebSocketEventListener {
                                         "dialogId={}, messageId={}, senderId={}",
                                 event.dialogId(),
                                 event.id(),
+                                event.senderId(),
+                                error
+                        )
+                )
+                .subscribe();
+    }
+
+    @Async
+    @EventListener
+    public void handleMessageEdited(MessageEditedDomainEvent event) {
+
+        WebSocketEvent webSocketEvent =
+                new WebSocketEvent(
+                        WebSocketEventType.MESSAGE_EDITED,
+                        event.dialogId(),
+                        new MessageEditedEvent(
+                                event.messageId(),
+                                event.senderId(),
+                                event.content(),
+                                event.editedAt()
+                        )
+                );
+
+        dialogParticipantRepository
+                .findByDialogId(event.dialogId())
+                .map(DialogParticipant::getUserId)
+                .filter(userId ->
+                        !Objects.equals(userId, event.senderId())
+                )
+                .flatMap(userId ->
+                        webSocketService.sendToUser(userId, webSocketEvent)
+                )
+                .doOnError(error ->
+                        log.error(
+                                "Failed to send MESSAGE_EDITED event: "
+                                        + "dialogId={}, messageId={}, senderId={}",
+                                event.dialogId(),
+                                event.messageId(),
                                 event.senderId(),
                                 error
                         )

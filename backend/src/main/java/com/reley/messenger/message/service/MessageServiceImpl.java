@@ -5,6 +5,7 @@ import com.reley.messenger.dialog.entity.DialogParticipant;
 import com.reley.messenger.dialog.repository.DialogParticipantRepository;
 import com.reley.messenger.dialog.service.DialogService;
 import com.reley.messenger.exception.UserNotFoundException;
+import com.reley.messenger.message.dto.MessageEditedDomainEvent;
 import com.reley.messenger.message.dto.MessageResponse;
 import com.reley.messenger.message.dto.NewMessageDomainEvent;
 import com.reley.messenger.message.dto.SendMessageRequest;
@@ -300,6 +301,69 @@ public class MessageServiceImpl implements MessageService {
                         messageRepository.markAsDeleteMessage(messageId, dialogId, user.userId(), OffsetDateTime.now()))
                 .flatMap(count -> messageRepository.findById(messageId))
                 .map(MessageResponse::fromEntity);
+    }
+
+    @Override
+    public Mono<MessageResponse> editMessage(Long dialogId, Long messageId, String content) {
+        String normalizedContent =
+                content == null
+                        ? ""
+                        : content.trim();
+
+        if (normalizedContent.isBlank()) {
+            return Mono.error(
+                    new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Сообщение не может быть пустым"
+                    )
+            );
+        }
+
+        return userServiceInfo.getCurrentUserId()
+                .flatMap(userId ->
+                        messageRepository
+                                .updateMessageContent(
+                                        messageId,
+                                        dialogId,
+                                        userId,
+                                        normalizedContent,
+                                        OffsetDateTime.now()
+                                )
+                                .flatMap(updatedCount -> {
+
+                                    if (updatedCount == 0) {
+                                        return Mono.error(
+                                                new ResponseStatusException(
+                                                        HttpStatus.NOT_FOUND,
+                                                        "Сообщение не найдено или недоступно для редактирования"
+                                                )
+                                        );
+                                    }
+
+                                    return messageRepository
+                                            .findByIdAndDialogId(messageId, dialogId);
+                                })
+                                .flatMap(message ->
+                                        enrichMessages(
+                                                dialogId,
+                                                userId,
+                                                List.of(message)
+                                        )
+                                                .next()
+                                ) .flatMap(response ->
+                                        Mono.fromRunnable(() ->
+                                                eventPublisher.publishEvent(
+                                                        MessageEditedDomainEvent.builder()
+                                                                .messageId(response.id())
+                                                                .dialogId(response.dialogId())
+                                                                .senderId(response.senderId())
+                                                                .content(response.content())
+                                                                .editedAt(response.editedAt())
+                                                                .build()
+                                                )
+                                        ).thenReturn(response)
+                                )
+                );
     }
 
     @Override

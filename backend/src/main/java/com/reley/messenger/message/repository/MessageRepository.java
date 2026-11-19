@@ -40,6 +40,17 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
             OffsetDateTime deletedAt
     );
 
+    @Modifying
+    @Query("""
+    UPDATE messages
+    SET content = :content, edited_at = :editedAt
+    WHERE id = :messageId
+      AND dialog_id = :dialogId
+      AND sender_id = :senderId
+    """)
+    Mono<Integer> updateMessageContent(Long messageId, Long dialogId, Long senderId,
+                                       String content, OffsetDateTime editedAt);
+
     @Query("SELECT MAX(created_at) FROM messages WHERE dialog_id = :dialogId")
     Mono<OffsetDateTime> findLastMessageDate(Long dialogId);
 

@@ -1,5 +1,6 @@
 package com.reley.messenger.message.controller;
 
+import com.reley.messenger.message.dto.EditMessageRequest;
 import com.reley.messenger.message.dto.MessageResponse;
 import com.reley.messenger.message.dto.SendMessageRequest;
 import com.reley.messenger.message.service.MessageService;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -69,6 +71,16 @@ public class MessageController {
             @PathVariable Long messageId
     ) {
         return messageService.deleteMessage(dialogId, messageId);
+    }
+
+    @PatchMapping("/{messageId}")
+    @PreAuthorize("@dialogAccess.canAccess(#dialogId, authentication)")
+    public Mono<MessageResponse> editMessage(
+            @PathVariable Long dialogId,
+            @PathVariable Long messageId,
+            @RequestBody EditMessageRequest request
+    ) {
+        return messageService.editMessage(dialogId, messageId, request.content());
     }
 
     @GetMapping("/search")
