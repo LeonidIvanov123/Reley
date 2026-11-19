@@ -64,6 +64,15 @@ const cancelReplyButton =
         'cancel-reply-button'
     );
 
+const emojiButton =
+    document.getElementById('emoji-button');
+
+const emojiPicker =
+    document.getElementById('emoji-picker');
+
+const emojiPickerContent =
+    document.getElementById('emoji-picker-content');
+
 let replyToMessageId = null;
 
 let editingMessageId = null;
@@ -649,6 +658,138 @@ async function focusMessage(messageId) {
     await scrollToMessage(messageId);
 }
 
+function initializeEmojiPicker() {
+
+    if (
+        !emojiButton
+        || !emojiPicker
+        || !emojiPickerContent
+    ) {
+        return;
+    }
+
+    const emojis = [
+        '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣',
+        '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰',
+        '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜',
+        '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏',
+        '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+        '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠',
+        '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨',
+        '😰', '😥', '😓', '🤗', '🤔', '🫡', '🤭', '🤫',
+        '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦',
+        '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵',
+        '🤐', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑',
+
+        '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙',
+        '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️',
+        '👏', '🙌', '👐', '🤝', '🙏', '💪', '❤️', '🧡',
+        '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
+        '🔥', '⭐', '✨', '💯', '🎉', '🎊', '💥', '💫'
+    ];
+
+    emojis.forEach(emoji => {
+
+        const button =
+            document.createElement('button');
+
+        button.type = 'button';
+
+        button.dataset.emoji = emoji;
+
+        button.textContent = emoji;
+
+        button.title = emoji;
+
+        emojiPickerContent.appendChild(button);
+
+    });
+
+
+    emojiButton.addEventListener(
+        'click',
+        event => {
+
+            event.stopPropagation();
+
+            emojiPicker.classList.toggle('open');
+
+        }
+    );
+
+
+    emojiPicker.addEventListener(
+        'click',
+        event => {
+
+            const button =
+                event.target.closest(
+                    '[data-emoji]'
+                );
+
+            if (!button) {
+                return;
+            }
+
+            insertEmoji(
+                button.dataset.emoji
+            );
+
+        }
+    );
+
+
+    document.addEventListener(
+        'click',
+        event => {
+
+            if (
+                !emojiPicker.contains(event.target)
+                && event.target !== emojiButton
+            ) {
+                emojiPicker.classList.remove('open');
+            }
+
+        }
+    );
+}
+
+function insertEmoji(emoji) {
+
+    if (!messageInput) {
+        return;
+    }
+
+    const start =
+        messageInput.selectionStart;
+
+    const end =
+        messageInput.selectionEnd;
+
+    const value =
+        messageInput.value;
+
+    messageInput.value =
+        value.slice(0, start)
+        + emoji
+        + value.slice(end);
+
+    const cursorPosition =
+        start + emoji.length;
+
+    messageInput.focus();
+
+    messageInput.setSelectionRange(
+        cursorPosition,
+        cursorPosition
+    );
+
+    messageInput.dispatchEvent(
+        new Event('input', {
+            bubbles: true
+        })
+    );
+}
 
 /*
  * =========================
@@ -4596,6 +4737,8 @@ if (deleteMessageButton) {
  */
 
 async function initializeDialog() {
+
+    initializeEmojiPicker();
 
     await loadAvailableReactions();
 
