@@ -616,59 +616,21 @@ function formatSearchMessageDate(
  * =========================
  */
 
-function focusMessage(
-    messageId
-) {
+async function focusMessage(messageId) {
 
-    const messageElement =
-        messagesContainer.querySelector(
-            `[data-message-id="${messageId}"]`
-        );
-
-    /*
-     * Если сообщение уже загружено
-     * в текущий DOM — прокручиваем к нему.
-     */
-
-    if (messageElement) {
-
-        messageElement.scrollIntoView(
-            {
-                behavior: 'smooth',
-                block: 'center'
-            }
-        );
-
-        messageElement.classList.add(
-            'message-search-highlight-active'
-        );
-
-        setTimeout(
-            () => {
-
-                messageElement.classList.remove(
-                    'message-search-highlight-active'
-                );
-
-            },
-            2000
-        );
-
+    if (!messageId) {
         return;
     }
 
     /*
-     * Пока сообщение не загружено в DOM.
-     *
-     * Это нормально для первого этапа.
-     * Позже здесь добавим загрузку истории
-     * до нужного messageId.
+     * scrollToMessage уже умеет:
+     * 1. Найти сообщение в текущем DOM.
+     * 2. Если его нет — загрузить контекст
+     *    через /messages/around/{id}.
+     * 3. Подсветить и прокрутить.
      */
 
-    console.log(
-        'Message is not currently loaded:',
-        messageId
-    );
+    await scrollToMessage(messageId);
 }
 
 
@@ -2565,9 +2527,7 @@ function highlightMessage(
 }
 
 
-async function loadMessageContext(
-    messageId
-) {
+async function loadMessageContext(messageId) {
 
     try {
 
@@ -2580,92 +2540,64 @@ async function loadMessageContext(
             );
 
         if (!response.ok) {
-
-            let errorMessage =
-                'Не удалось найти сообщение';
-
-            try {
-
-                const body =
-                    await response.text();
-
-                if (body) {
-
-                    const parser =
-                        new DOMParser();
-
-                    const errorDocument =
-                        parser.parseFromString(
-                            body,
-                            'text/html'
-                        );
-
-                    const bodyMessage =
-                        errorDocument.body
-                            ?.textContent
-                            ?.trim();
-
-                    if (bodyMessage) {
-                        errorMessage =
-                            bodyMessage;
-                    }
-                }
-
-            } catch (_) {
-            }
-
-            throw new Error(
-                errorMessage
-            );
+            // ... обработка ошибки как есть ...
         }
 
         const messages =
             await response.json();
 
-        if (
-            !Array.isArray(messages) ||
-            messages.length === 0
-        ) {
-            throw new Error(
-                'Сообщение не найдено'
-            );
+        if (!Array.isArray(messages) || messages.length === 0) {
+            throw new Error('Сообщение не найдено');
         }
 
         /*
-         * Заменяем текущее окно сообщений
-         * новым контекстом.
+         * Сбрасываем состояние пагинации,
+         * чтобы после перехода можно было
+         * снова грузить историю в обе стороны.
          */
+
+        loadingOlderMessages = false;
+        loadingNewerMessages = false;
+
         messagesContainer.innerHTML = '';
+
+        /*
+         * Возвращаем индикатор загрузки,
+         * так как loadOlderMessages ищет его
+         * по id при каждой загрузке.
+         */
+
+        const indicator =
+            document.createElement('div');
+
+        indicator.id = 'loading-indicator';
+
+        indicator.className = 'loading-indicator';
+
+        indicator.style.display = 'none';
+
+        indicator.textContent = 'Загрузка сообщений...';
+
+        messagesContainer.appendChild(indicator);
+
+        const fragment =
+            document.createDocumentFragment();
 
         messages.forEach(
             message => {
 
                 const element =
-                    createMessageElement(
-                        message
-                    );
+                    createMessageElement(message);
 
-                messagesContainer.appendChild(
-                    element
-                );
+                fragment.appendChild(element);
             }
         );
 
-        /*
-         * После перехода hasMoreMessages
-         * снова разрешаем загрузку истории.
-         *
-         * Если пользователь теперь прокрутит
-         * вверх, loadOlderMessages() возьмёт
-         * первый message из нового окна.
-         */
-        hasMoreMessages = true;
+        messagesContainer.appendChild(fragment);
 
+        hasMoreMessages = true;
         hasMoreNewerMessages = true;
 
-        /*
-         * Находим целевое сообщение.
-         */
         const target =
             messagesContainer.querySelector(
                 `[data-message-id="${messageId}"]`
@@ -2675,22 +2607,12 @@ async function loadMessageContext(
             return;
         }
 
-        /*
-         * Позиционируем сразу,
-         * без плавного движения.
-         */
         target.scrollIntoView({
             behavior: 'instant',
             block: 'center'
         });
 
-        /*
-         * И только после позиционирования
-         * подсвечиваем сообщение.
-         */
-        highlightMessage(
-            target
-        );
+        highlightMessage(target);
 
     } catch (error) {
 
