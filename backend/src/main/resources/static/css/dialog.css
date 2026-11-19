@@ -1097,6 +1097,106 @@ body {
     border-top: 1px solid #e5e9f0;
 }
 
+/* =========================
+   Edit preview
+   ========================= */
+
+.edit-preview {
+    display: flex;
+    align-items: stretch;
+
+    gap: 10px;
+
+    width: 100%;
+
+    margin: 0 0 10px 0;
+
+    padding: 8px 10px;
+
+    background: #f5f7fa;
+
+    border: 1px solid #e1e6ed;
+    border-left: 3px solid #3978d5;
+
+    border-radius: 9px;
+
+    min-height: 48px;
+}
+
+.edit-preview-content {
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+.edit-preview-title {
+    overflow: hidden;
+
+    color: #3978d5;
+
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.edit-preview-text {
+    margin-top: 2px;
+
+    overflow: hidden;
+
+    color: #596270;
+
+    font-size: 13px;
+    line-height: 18px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.edit-preview-cancel {
+    align-self: center;
+
+    width: 30px;
+    height: 30px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 50%;
+
+    background: transparent;
+
+    color: #777;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition:
+        background .15s,
+        color .15s;
+}
+
+.edit-preview-cancel:hover {
+    background: rgba(0, 0, 0, .07);
+
+    color: #222;
+}
 
 /* =========================
    Reply preview
@@ -1863,5 +1963,13 @@ body {
 
     .message-attachment {
         max-width: 100%;
+    }
+    .edit-preview {
+        margin-bottom: 8px;
+        padding: 7px 9px;
+    }
+
+    .edit-preview-text {
+        font-size: 12px;
     }
 }

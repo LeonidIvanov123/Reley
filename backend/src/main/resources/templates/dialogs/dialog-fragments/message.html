@@ -203,6 +203,14 @@
                 12:30
             </span>
 
+            <!-- Сообщение было отредактировано -->
+            <span
+                    class="message-edited"
+                    th:if="${message.editedAt != null}">
+                · изменено
+            </span>
+
+            <!-- Статус прочтения -->
             <span
                     th:if="${mine}"
                     class="message-status"

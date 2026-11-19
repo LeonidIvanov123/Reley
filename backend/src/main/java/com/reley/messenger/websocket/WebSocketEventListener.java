@@ -126,9 +126,6 @@ public class WebSocketEventListener {
         dialogParticipantRepository
                 .findByDialogId(event.dialogId())
                 .map(DialogParticipant::getUserId)
-                .filter(userId ->
-                        !Objects.equals(userId, event.senderId())
-                )
                 .flatMap(userId ->
                         webSocketService.sendToUser(userId, webSocketEvent)
                 )
