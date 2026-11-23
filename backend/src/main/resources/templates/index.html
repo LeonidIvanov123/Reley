@@ -215,8 +215,18 @@
             margin-left: 4px;
         }
 
+        .dialog-preview {
+            margin-top: 5px;
+            color: #858b98;
+            font-size: 13px;
+            line-height: 18px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .dialog-date {
-            margin-top: 6px;
+            margin-top: 4px;
             color: #9299a6;
             font-size: 12px;
         }
@@ -446,12 +456,9 @@
            th:attr="data-dialog-id=${dialog.id}"
            th:href="@{/dialogs/{id}(id=${dialog.id})}">
 
-
             <!-- ========================= -->
             <!-- Avatar                     -->
             <!-- ========================= -->
-
-            <!-- Группа -->
 
             <!-- Группа -->
 
@@ -466,10 +473,10 @@
 
                 <div
                         style="display: none;
-                   width: 100%;
-                   height: 100%;
-                   align-items: center;
-                   justify-content: center;">
+                               width: 100%;
+                               height: 100%;
+                               align-items: center;
+                               justify-content: center;">
                     👥
                 </div>
 
@@ -497,12 +504,12 @@
 
                 <div class="dialog-title">
 
-
                     <!-- Группа -->
 
                     <th:block th:if="${dialog.groupChat}">
 
-                        <span th:text="${dialog.dialogName}">
+                        <span class="dialog-name"
+                              th:text="${dialog.dialogName}">
                             Java Developers
                         </span>
 
@@ -514,7 +521,8 @@
                     <th:block th:if="${!dialog.groupChat
                                        and dialog.dialogName != null}">
 
-                        <span th:text="${dialog.dialogName}">
+                        <span class="dialog-name"
+                              th:text="${dialog.dialogName}">
                             Избранное
                         </span>
 
@@ -526,7 +534,8 @@
                     <th:block th:if="${!dialog.groupChat
                                        and dialog.dialogName == null}">
 
-                        <span th:if="${dialog.otherParty != null
+                        <span class="dialog-name"
+                              th:if="${dialog.otherParty != null
                                       and dialog.otherParty.name != null
                                       and !#strings.isEmpty(dialog.otherParty.name)}"
                               th:text="${dialog.otherParty.name}">
@@ -541,7 +550,8 @@
                             (user@example.com)
                         </span>
 
-                        <span th:if="${dialog.otherParty != null
+                        <span class="dialog-name"
+                              th:if="${dialog.otherParty != null
                                       and (dialog.otherParty.name == null
                                       or #strings.isEmpty(dialog.otherParty.name))}"
                               th:text="${dialog.otherParty.email}">
@@ -554,6 +564,16 @@
 
 
                 <!-- Последнее сообщение -->
+
+                <div class="dialog-preview"
+                     th:if="${dialog.lastMessagePreview != null
+                             and !#strings.isEmpty(dialog.lastMessagePreview)}"
+                     th:text="${dialog.lastMessagePreview}">
+                    Последнее сообщение
+                </div>
+
+
+                <!-- Дата -->
 
                 <div class="dialog-date"
                      th:if="${dialog.lastMessageAt != null}"
@@ -825,12 +845,27 @@
         /*
          * Диалог уже есть в списке.
          *
-         * Просто обновляем:
-         * - дату последнего сообщения
-         * - количество непрочитанных
+         * Обновляем:
+         * - название
+         * - preview последнего сообщения
+         * - дату
+         * - unread
+         * - порядок в списке
          */
 
         if (dialogElement) {
+
+            updateDialogName(
+                dialogElement,
+                payload.dialogName
+            );
+
+
+            updateDialogPreview(
+                dialogElement,
+                payload.lastMessagePreview
+            );
+
 
             updateDialogDate(
                 dialogElement,
@@ -844,6 +879,11 @@
             );
 
 
+            moveDialogToTop(
+                dialogElement
+            );
+
+
             return;
         }
 
@@ -854,14 +894,125 @@
          * Например, пользователь получил
          * первое сообщение от нового пользователя.
          *
-         * Перезагружаем страницу, чтобы:
-         * - появился новый диалог
-         * - подтянулся пользователь
-         * - посчитался unreadCount
-         * - диалог оказался в правильном порядке
+         * Здесь всё ещё нужна перезагрузка,
+         * потому что WebSocket event не содержит
+         * данных otherParty для создания полного
+         * элемента личного диалога.
          */
 
         window.location.reload();
+
+    }
+
+
+    /*
+     * Обновление названия диалога
+     */
+
+    function updateDialogName(
+        dialogElement,
+        dialogName
+    ) {
+
+        if (
+            dialogName === null
+            || dialogName === undefined
+        ) {
+            return;
+        }
+
+
+        const nameElement =
+            dialogElement.querySelector(
+                '.dialog-name'
+            );
+
+
+        if (!nameElement) {
+            return;
+        }
+
+
+        nameElement.textContent =
+            dialogName;
+
+    }
+
+
+    /*
+     * Обновление preview последнего сообщения
+     */
+
+    function updateDialogPreview(
+        dialogElement,
+        preview
+    ) {
+
+        let previewElement =
+            dialogElement.querySelector(
+                '.dialog-preview'
+            );
+
+
+        /*
+         * Если preview ещё нет в DOM,
+         * создаём его.
+         *
+         * Это важно для диалога,
+         * у которого раньше не было сообщений.
+         */
+
+        if (!previewElement && preview) {
+
+            const dialogContent =
+                dialogElement.querySelector(
+                    '.dialog-content'
+                );
+
+            const dialogDate =
+                dialogContent?.querySelector(
+                    '.dialog-date'
+                );
+
+            if (!dialogContent) {
+                return;
+            }
+
+
+            previewElement =
+                document.createElement(
+                    'div'
+                );
+
+            previewElement.className =
+                'dialog-preview';
+
+
+            if (dialogDate) {
+
+                dialogContent.insertBefore(
+                    previewElement,
+                    dialogDate
+                );
+
+            } else {
+
+                dialogContent.appendChild(
+                    previewElement
+                );
+
+            }
+
+        }
+
+
+        if (!previewElement) {
+            return;
+        }
+
+
+        previewElement.textContent =
+            preview || '';
 
     }
 
@@ -982,6 +1133,45 @@
 
         dialogElement.appendChild(
             badge
+        );
+
+    }
+
+
+    /*
+     * Перемещение диалога наверх списка
+     */
+
+    function moveDialogToTop(
+        dialogElement
+    ) {
+
+        const dialogList =
+            document.querySelector(
+                '.dialog-list'
+            );
+
+
+        if (!dialogList) {
+            return;
+        }
+
+
+        /*
+         * Если диалог уже первый —
+         * ничего делать не нужно.
+         */
+
+        if (
+            dialogList.firstElementChild ===
+            dialogElement
+        ) {
+            return;
+        }
+
+
+        dialogList.prepend(
+            dialogElement
         );
 
     }

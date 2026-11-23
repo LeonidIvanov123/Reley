@@ -1,5 +1,6 @@
 package com.reley.messenger.message.service;
 
+import com.reley.messenger.message.entity.Message;
 import com.reley.messenger.message.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,10 @@ public class MessageReaderService {
 
     public Mono<Long> findLastMessageId(Long dialogId) {
         return messageRepository.findLastMessageId(dialogId);
+    }
+
+    public Mono<Message> findLastMessageByDialogId(Long dialogId) {
+        return messageRepository.findLastMessageByDialogId(dialogId);
     }
 
 }
