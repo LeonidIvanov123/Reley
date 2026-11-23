@@ -14,9 +14,32 @@
     </a>
 
 
-    <div class="chat-avatar"
-         th:text="${dialog.groupChat ? '👥' : '👤'}">
-        👤
+    <!-- =========================
+         Аватар диалога
+         ========================= -->
+
+    <!-- =========================
+     Аватар диалога
+     ========================= -->
+
+    <div
+            id="dialog-avatar"
+            class="chat-avatar">
+
+        <img
+                th:src="@{/api/dialogs/{id}/avatar(id=${dialog.id})}"
+                alt="Аватар диалога"
+                class="chat-avatar-image"
+                onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+        <div
+                class="chat-avatar-fallback"
+                style="display: none;"
+                th:text="${dialog.groupChat ? '👥' : '👤'}">
+            👤
+        </div>
+
     </div>
 
 
@@ -63,7 +86,6 @@
                 </button>
 
             </div>
-
 
             <div
                     id="messageSearchResults"

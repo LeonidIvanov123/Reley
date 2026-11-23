@@ -3,7 +3,7 @@ package com.reley.messenger.dialog.controller;
 import com.reley.messenger.dialog.service.DialogAvatarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
@@ -22,14 +22,12 @@ public class DialogAvatarController {
     public Mono<ResponseEntity<DataBuffer>> getAvatar(
             @PathVariable Long dialogId
     ) {
-
         return dialogAvatarService
                 .getAvatar(dialogId)
                 .map(avatar -> {
 
                     DataBuffer buffer =
-                            org.springframework.core.io.buffer
-                                    .DefaultDataBufferFactory
+                            DefaultDataBufferFactory
                                     .sharedInstance
                                     .wrap(avatar.content());
 
@@ -44,7 +42,7 @@ public class DialogAvatarController {
                 })
                 .defaultIfEmpty(
                         ResponseEntity
-                                .status(HttpStatus.NOT_FOUND)
+                                .noContent()
                                 .build()
                 );
     }
@@ -53,13 +51,11 @@ public class DialogAvatarController {
             value = "/api/dialogs/{dialogId}/avatar",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    @PreAuthorize(
-            "@dialogAccess.canEditAvatar(#dialogId, authentication)"
-    )
-    public Mono<Void> updateAvatar(
+    public Mono<Void> setAvatar(
             @PathVariable Long dialogId,
             @RequestPart("file") FilePart file
     ) {
+
         return dialogAvatarService.updateAvatar(
                 dialogId,
                 file
@@ -67,12 +63,7 @@ public class DialogAvatarController {
     }
 
     @DeleteMapping("/api/dialogs/{dialogId}/avatar")
-    @PreAuthorize(
-            "@dialogAccess.canEditAvatar(#dialogId, authentication)"
-    )
-    public Mono<Void> deleteAvatar(
-            @PathVariable Long dialogId
-    ) {
+    public Mono<Void> deleteAvatar(@PathVariable Long dialogId) {
         return dialogAvatarService.deleteAvatar(dialogId);
     }
 }
