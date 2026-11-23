@@ -38,6 +38,12 @@ public class Dialog {
     @Column("group_chat")
     private boolean groupChat = false;
 
+    @Column("avatar")
+    private byte[] avatar;
+
+    @Column("avatar_content_type")
+    private String avatarContentType;
+
     @Column("created_at")
     private OffsetDateTime createdAt;
 

@@ -1,6 +1,8 @@
 package com.reley.messenger.dialog.repository;
 
+import com.reley.messenger.dialog.dto.DialogAvatarProjection;
 import com.reley.messenger.dialog.entity.Dialog;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
@@ -78,5 +80,40 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
           AND group_chat = true
         """)
     Mono<Void> deleteGroup(Long dialogId);
+
+    @Query("""
+        SELECT avatar, avatar_content_type
+        FROM dialogs
+        WHERE id = :dialogId
+        """)
+    Mono<DialogAvatarProjection> findAvatar(Long dialogId);
+
+    @Modifying
+    @Query("""
+        UPDATE dialogs
+        SET avatar = :avatar,
+            avatar_content_type = :contentType,
+            updated_at = :updatedAt
+        WHERE id = :dialogId
+        """)
+    Mono<Integer> updateAvatar(
+            Long dialogId,
+            byte[] avatar,
+            String contentType,
+            OffsetDateTime updatedAt
+    );
+
+    @Modifying
+    @Query("""
+        UPDATE dialogs
+        SET avatar = NULL,
+            avatar_content_type = NULL,
+            updated_at = :updatedAt
+        WHERE id = :dialogId
+        """)
+    Mono<Integer> deleteAvatar(
+            Long dialogId,
+            OffsetDateTime updatedAt
+    );
 
 }

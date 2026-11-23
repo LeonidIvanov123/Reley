@@ -85,7 +85,8 @@ public class DialogServiceImpl implements DialogService {
                                                                             otherUser.getEmail()
                                                                     ),
                                                             dialog.getCreatedAt(),
-                                                            dialog.isGroupChat()
+                                                            dialog.isGroupChat(),
+                                                            true
                                                     )
                                             )
                                             .switchIfEmpty(
@@ -130,7 +131,8 @@ public class DialogServiceImpl implements DialogService {
                                                             null,
                                                             null,
                                                             savedDialog.getCreatedAt(),
-                                                            savedDialog.isGroupChat()
+                                                            savedDialog.isGroupChat(),
+                                                            true
                                                     )
                                             )
                             );
@@ -339,12 +341,125 @@ public class DialogServiceImpl implements DialogService {
                                 userId,
                                 FAVORITE_DIALOG,
                                 dialog.getCreatedAt(),
-                                dialog.isGroupChat()
+                                dialog.isGroupChat(),
+                                true
                         )
                 )
                 .switchIfEmpty(
                         Mono.defer(() ->
                                 createNewFavoritesDialog(userId)
+                        )
+                );
+    }
+
+    @Override
+    public Mono<DialogResponse> getDialogResponse(Long dialogId) {
+
+        return userServiceInfo.getCurrentUserId()
+                .flatMap(currentUserId ->
+                        dialogRepository
+                                .findById(dialogId)
+                                .switchIfEmpty(
+                                        Mono.error(
+                                                new ChatHaveNoAccess(
+                                                        "Диалог с id %s не найден"
+                                                                .formatted(dialogId)
+                                                )
+                                        )
+                                )
+                                .flatMap(dialog ->
+                                        participantRepository
+                                                .findByDialogIdAndUserId(
+                                                        dialogId,
+                                                        currentUserId
+                                                )
+                                                .switchIfEmpty(
+                                                        Mono.error(
+                                                                new ChatHaveNoAccess(
+                                                                        "Нет доступа к диалогу"
+                                                                )
+                                                        )
+                                                )
+                                                .flatMap(participant -> {
+
+                                                    if (dialog.isGroupChat()) {
+
+                                                        return Mono.just(
+                                                                new DialogResponse(
+                                                                        dialog.getId(),
+                                                                        dialog.getDialogName(),
+                                                                        null,
+                                                                        null,
+                                                                        dialog.getCreatedAt(),
+                                                                        true,
+                                                                        participant.isAdmin()
+                                                                )
+                                                        );
+                                                    }
+
+                                                    return getPrivateDialogResponse(
+                                                            dialog,
+                                                            currentUserId
+                                                    );
+                                                })
+                                )
+                );
+
+    }
+
+    private Mono<DialogResponse> getPrivateDialogResponse(Dialog dialog, Long currentUserId) {
+
+        Long otherUserId;
+
+        if (Objects.equals(
+                FAVORITE_DIALOG,
+                dialog.getDialogName()
+        )) {
+            otherUserId = currentUserId;
+        } else if (Objects.equals(
+                dialog.getOwnerId(),
+                currentUserId
+        )) {
+            otherUserId = dialog.getParticipantId();
+        } else {
+            otherUserId = dialog.getOwnerId();
+        }
+
+        return userService
+                .findById(otherUserId)
+                .switchIfEmpty(
+                        Mono.error(
+                                new UserNotFoundException(
+                                        "Пользователь с id %s не найден"
+                                                .formatted(otherUserId)
+                                )
+                        )
+                )
+                .map(otherUser ->
+                        new DialogResponse(
+                                dialog.getId(),
+                                Objects.equals(
+                                        FAVORITE_DIALOG,
+                                        dialog.getDialogName()
+                                )
+                                        ? FAVORITE_DIALOG
+                                        : Optional.ofNullable(
+                                                otherUser.getName()
+                                        )
+                                        .filter(name -> !name.isBlank())
+                                        .map(name ->
+                                                name + " ("
+                                                        + otherUser.getEmail()
+                                                        + ")"
+                                        )
+                                        .orElse(
+                                                otherUser.getEmail()
+                                        ),
+                                otherUserId,
+                                otherUser.getEmail(),
+                                dialog.getCreatedAt(),
+                                false,
+                                true
                         )
                 );
     }
@@ -515,7 +630,8 @@ public class DialogServiceImpl implements DialogService {
                                                 userId,
                                                 FAVORITE_DIALOG,
                                                 savedDialog.getCreatedAt(),
-                                                dialog.isGroupChat()
+                                                dialog.isGroupChat(),
+                                                true
                                         )
                                 )
                 );
@@ -564,7 +680,8 @@ public class DialogServiceImpl implements DialogService {
                                                 otherUser.getId(),
                                                 otherUser.getEmail(),
                                                 savedDialog.getCreatedAt(),
-                                                savedDialog.isGroupChat()
+                                                savedDialog.isGroupChat(),
+                                                true
                                         )
                                 )
                 );

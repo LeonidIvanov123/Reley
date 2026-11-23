@@ -18,6 +18,8 @@ public interface DialogService {
 
     Mono<DialogResponse> createFavoritesDialog(Long userId);
 
+    Mono<DialogResponse> getDialogResponse(Long dialogId);
+
     Mono<Dialog> findById(Long id);
 
     Mono<Void> addParticipant(Long dialogId, Long userId);
