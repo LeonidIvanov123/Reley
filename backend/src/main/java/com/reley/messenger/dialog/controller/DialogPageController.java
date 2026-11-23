@@ -26,13 +26,11 @@ public class DialogPageController {
 
     @PreAuthorize("@dialogAccess.canAccess(#dialogId, authentication)")
     @GetMapping("/dialogs/{dialogId}")
-    public Mono<String> openDialog(
-            @PathVariable Long dialogId,
-            Model model
-    ) {
+    public Mono<String> openDialog(@PathVariable Long dialogId, Model model) {
         return userServiceInfo.getCurrentUserId()
                 .flatMap(userId ->
-                        dialogService.findById(dialogId)
+                        dialogService
+                                .getDialogResponse(dialogId)
                                 .flatMap(dialog -> {
 
                                     model.addAttribute("dialog", dialog);
@@ -42,9 +40,17 @@ public class DialogPageController {
                                             .getMessages(dialogId, null)
                                             .collectList()
                                             .doOnNext(messages ->
-                                                    model.addAttribute("messages", messages)
+                                                    model.addAttribute(
+                                                            "messages",
+                                                            messages
+                                                    )
                                             )
-                                            .then(dialogService.markAsRead(dialogId, userId))
+                                            .then(
+                                                    dialogService.markAsRead(
+                                                            dialogId,
+                                                            userId
+                                                    )
+                                            )
                                             .thenReturn("dialogs/dialog");
                                 })
                 );

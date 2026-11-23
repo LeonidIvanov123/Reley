@@ -8,5 +8,6 @@ public record DialogResponse(
         Long otherUserId,
         String otherUserEmail,
         OffsetDateTime createdAt,
-        boolean isGroupChat
+        boolean isGroupChat,
+        boolean canEditAvatar
 ) { }
