@@ -456,7 +456,6 @@
            th:attr="data-dialog-id=${dialog.id}"
            th:href="@{/dialogs/{id}(id=${dialog.id})}">
 
-
             <!-- ========================= -->
             <!-- Avatar                     -->
             <!-- ========================= -->
@@ -567,7 +566,10 @@
                 <!-- Последнее сообщение -->
 
                 <div class="dialog-preview"
-                     th:if="${dialog.lastMessageAt != null}">
+                     th:if="${dialog.lastMessagePreview != null
+                             and !#strings.isEmpty(dialog.lastMessagePreview)}"
+                     th:text="${dialog.lastMessagePreview}">
+                    Последнее сообщение
                 </div>
 
 
@@ -946,10 +948,62 @@
         preview
     ) {
 
-        const previewElement =
+        let previewElement =
             dialogElement.querySelector(
                 '.dialog-preview'
             );
+
+
+        /*
+         * Если preview ещё нет в DOM,
+         * создаём его.
+         *
+         * Это важно для диалога,
+         * у которого раньше не было сообщений.
+         */
+
+        if (!previewElement && preview) {
+
+            const dialogContent =
+                dialogElement.querySelector(
+                    '.dialog-content'
+                );
+
+            const dialogDate =
+                dialogContent?.querySelector(
+                    '.dialog-date'
+                );
+
+            if (!dialogContent) {
+                return;
+            }
+
+
+            previewElement =
+                document.createElement(
+                    'div'
+                );
+
+            previewElement.className =
+                'dialog-preview';
+
+
+            if (dialogDate) {
+
+                dialogContent.insertBefore(
+                    previewElement,
+                    dialogDate
+                );
+
+            } else {
+
+                dialogContent.appendChild(
+                    previewElement
+                );
+
+            }
+
+        }
 
 
         if (!previewElement) {
