@@ -13,6 +13,7 @@ import com.reley.messenger.exception.ChatHaveNoAccess;
 import com.reley.messenger.exception.CreateDialogException;
 import com.reley.messenger.exception.GlobalException;
 import com.reley.messenger.exception.UserNotFoundException;
+import com.reley.messenger.message.entity.Message;
 import com.reley.messenger.message.service.MessageReaderService;
 import com.reley.messenger.user.entity.User;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
@@ -226,9 +227,9 @@ public class DialogServiceImpl implements DialogService {
                                 .findAllByUserId(user.userId())
                                 .flatMap(dialog -> {
 
-                                    Mono<OffsetDateTime> lastMessage =
+                                    Mono<Message> lastMessage =
                                             messageReaderService
-                                                    .findLastMessageDateByDialogId(
+                                                    .findLastMessageByDialogId(
                                                             dialog.getId()
                                                     );
 
@@ -240,36 +241,59 @@ public class DialogServiceImpl implements DialogService {
 
                                     /*
                                      * Групповой чат.
-                                     *
-                                     * У группы нет otherParty,
-                                     * поэтому User искать не нужно.
                                      */
                                     if (dialog.isGroupChat()) {
 
-                                        return Mono.zip(
-                                                        lastMessage,
-                                                        unreadCount
+                                        return lastMessage
+                                                .flatMap(message ->
+                                                        userService
+                                                                .findById(
+                                                                        message.getSenderId()
+                                                                )
+                                                                .map(sender ->
+                                                                        new DialogListItem(
+                                                                                dialog.getId(),
+                                                                                dialog.getDialogName(),
+                                                                                true,
+                                                                                null,
+                                                                                createMessagePreview(
+                                                                                        message,
+                                                                                        sender,
+                                                                                        true
+                                                                                ),
+                                                                                message.getCreatedAt(),
+                                                                                0
+                                                                        )
+                                                                )
                                                 )
-                                                .map(tuple ->
+                                                .defaultIfEmpty(
                                                         new DialogListItem(
                                                                 dialog.getId(),
                                                                 dialog.getDialogName(),
                                                                 true,
                                                                 null,
-                                                                tuple.getT1().equals(
-                                                                        OffsetDateTime.MIN
-                                                                )
-                                                                        ? null
-                                                                        : tuple.getT1(),
-                                                                tuple.getT2()
+                                                                "",
+                                                                null,
+                                                                0
                                                         )
+                                                )
+                                                .zipWith(
+                                                        unreadCount,
+                                                        (item, unread) ->
+                                                                new DialogListItem(
+                                                                        item.id(),
+                                                                        item.dialogName(),
+                                                                        item.groupChat(),
+                                                                        item.otherParty(),
+                                                                        item.lastMessagePreview(),
+                                                                        item.lastMessageAt(),
+                                                                        unread
+                                                                )
                                                 );
                                     }
 
                                     /*
                                      * Обычный личный диалог.
-                                     *
-                                     * Определяем второго пользователя.
                                      */
                                     Long otherUserId;
 
@@ -277,45 +301,64 @@ public class DialogServiceImpl implements DialogService {
                                             FAVORITE_DIALOG,
                                             dialog.getDialogName()
                                     )) {
-                                        otherUserId = user.userId();
+
+                                        otherUserId =
+                                                user.userId();
 
                                     } else if (Objects.equals(
                                             dialog.getOwnerId(),
                                             user.userId()
                                     )) {
-                                        otherUserId = dialog.getParticipantId();
+
+                                        otherUserId =
+                                                dialog.getParticipantId();
 
                                     } else {
-                                        otherUserId = dialog.getOwnerId();
+
+                                        otherUserId =
+                                                dialog.getOwnerId();
                                     }
 
                                     return Mono.zip(
                                                     userService.findById(
                                                             otherUserId
                                                     ),
-                                                    lastMessage,
+                                                    lastMessage
+                                                            .flatMap(message ->
+                                                                    userService
+                                                                            .findById(
+                                                                                    message.getSenderId()
+                                                                            )
+                                                                            .map(sender ->
+                                                                                    new LastMessagePreview(
+                                                                                            createMessagePreview(
+                                                                                                    message,
+                                                                                                    sender,
+                                                                                                    false
+                                                                                            ),
+                                                                                            message.getCreatedAt()
+                                                                                    )
+                                                                            )
+                                                            )
+                                                            .defaultIfEmpty(
+                                                                    new LastMessagePreview(
+                                                                            "",
+                                                                            null
+                                                                    )
+                                                            ),
                                                     unreadCount
                                             )
-                                            .map(tuple -> {
-
-                                                User otherUser = tuple.getT1();
-
-                                                OffsetDateTime lastMessageAt =
-                                                        tuple.getT2();
-
-                                                return new DialogListItem(
-                                                        dialog.getId(),
-                                                        dialog.getDialogName(),
-                                                        false,
-                                                        otherUser,
-                                                        lastMessageAt.equals(
-                                                                OffsetDateTime.MIN
-                                                        )
-                                                                ? null
-                                                                : lastMessageAt,
-                                                        tuple.getT3()
-                                                );
-                                            });
+                                            .map(tuple ->
+                                                    new DialogListItem(
+                                                            dialog.getId(),
+                                                            dialog.getDialogName(),
+                                                            false,
+                                                            tuple.getT1(),
+                                                            tuple.getT2().preview(),
+                                                            tuple.getT2().createdAt(),
+                                                            tuple.getT3()
+                                                    )
+                                            );
                                 })
                                 .sort(
                                         Comparator.comparing(
@@ -326,6 +369,48 @@ public class DialogServiceImpl implements DialogService {
                                         )
                                 )
                 );
+    }
+
+    private String createMessagePreview(
+            Message message,
+            User sender,
+            boolean groupChat
+    ) {
+        String preview =
+                message.getContent();
+
+        if (preview == null
+                || preview.isBlank()) {
+
+            preview = "📎 Вложение";
+        } else {
+            preview = preview
+                    .replaceAll("\\s+", " ")
+                    .trim();
+        }
+
+        if (groupChat) {
+
+            String senderName =
+                    sender.getName() != null
+                            && !sender.getName().isBlank()
+                            ? sender.getName()
+                            : sender.getEmail();
+
+            if (senderName != null
+                    && !senderName.isBlank()) {
+
+                preview =
+                        senderName + ": " + preview;
+            }
+        }
+
+        if (preview.length() > 50) {
+            preview =
+                    preview.substring(0, 50) + "…";
+        }
+
+        return preview;
     }
 
     @Override
@@ -1230,6 +1315,12 @@ public class DialogServiceImpl implements DialogService {
                                             });
                                 })
                 );
+    }
+
+    private record LastMessagePreview(
+            String preview,
+            OffsetDateTime createdAt
+    ) {
     }
 
 }

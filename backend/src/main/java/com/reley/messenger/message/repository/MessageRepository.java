@@ -79,6 +79,15 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
     );
 
     @Query("""
+        SELECT *
+        FROM messages
+        WHERE dialog_id = :dialogId
+        ORDER BY created_at DESC
+        LIMIT 1
+        """)
+    Mono<Message> findLastMessageByDialogId(Long dialogId);
+
+    @Query("""
         SELECT COUNT(*)
         FROM messages
         WHERE dialog_id = :dialogId

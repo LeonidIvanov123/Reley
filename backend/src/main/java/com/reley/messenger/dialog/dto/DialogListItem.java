@@ -9,6 +9,7 @@ public record DialogListItem(
         String dialogName,
         boolean groupChat,
         User otherParty,
+        String lastMessagePreview,
         OffsetDateTime lastMessageAt,
         long unreadCount
 ) {
