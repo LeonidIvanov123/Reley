@@ -39,7 +39,7 @@ public class WebSocketEventListener {
     @EventListener
     public void handle(NewMessageDomainEvent event) {
 
-        WebSocketEvent webSocketEvent =
+        WebSocketEvent newMessageEvent =
                 new WebSocketEvent(
                         WebSocketEventType.NEW_MESSAGE,
                         event.dialogId(),
@@ -56,47 +56,68 @@ public class WebSocketEventListener {
                         )
                 );
 
-        dialogParticipantRepository
-                .findByDialogId(event.dialogId())
-                .map(DialogParticipant::getUserId)
-                .filter(userId -> !Objects.equals(userId, event.senderId()))
-                .flatMap(userId -> {
+        dialogRepository
+                .findById(event.dialogId())
+                .flatMapMany(dialog -> {
 
-                    log.debug(
-                            "Sending NEW_MESSAGE: dialogId={}, messageId={}, senderId={}, recipientId={}",
-                            event.dialogId(),
-                            event.id(),
-                            event.senderId(),
-                            userId
-                    );
-
-                    return webSocketService
-                            .sendToUser(userId, webSocketEvent)
-                            .doOnSuccess(v ->
-                                    log.debug(
-                                            "NEW_MESSAGE sent: recipientId={}",
-                                            userId
-                                    )
-                            )
-                            .then(
-                                    sendDialogUpdated(
-                                            event.dialogId(),
-                                            userId,
-                                            event.createdAt()
-                                    )
-                            )
-                            .doOnError(error ->
-                                    log.error(
-                                            "Failed for recipientId={}: {}",
-                                            userId,
-                                            error.getMessage(),
-                                            error
-                                    )
+                    String messagePreview =
+                            createMessagePreview(
+                                    event,
+                                    dialog.isGroupChat()
                             );
+
+                    return dialogParticipantRepository
+                            .findByDialogId(event.dialogId())
+                            .flatMap(participant -> {
+
+                                Long userId =
+                                        participant.getUserId();
+
+                                Mono<Void> dialogUpdated =
+                                        sendDialogUpdated(
+                                                event.dialogId(),
+                                                userId,
+                                                dialog.getDialogName(),
+                                                dialog.isGroupChat(),
+                                                messagePreview,
+                                                event.createdAt()
+                                        );
+
+                                if (Objects.equals(
+                                        userId,
+                                        event.senderId()
+                                )) {
+                                    return dialogUpdated;
+                                }
+
+                                log.debug(
+                                        "Sending NEW_MESSAGE: " +
+                                                "dialogId={}, messageId={}, " +
+                                                "senderId={}, recipientId={}",
+                                        event.dialogId(),
+                                        event.id(),
+                                        event.senderId(),
+                                        userId
+                                );
+
+                                return webSocketService
+                                        .sendToUser(
+                                                userId,
+                                                newMessageEvent
+                                        )
+                                        .doOnSuccess(v ->
+                                                log.debug(
+                                                        "NEW_MESSAGE sent: " +
+                                                                "recipientId={}",
+                                                        userId
+                                                )
+                                        )
+                                        .then(dialogUpdated);
+                            });
                 })
                 .doOnError(error ->
                         log.error(
-                                "Failed to send NEW_MESSAGE event: " +
+                                "Failed to handle NewMessageDomainEvent: " +
                                         "dialogId={}, messageId={}, senderId={}",
                                 event.dialogId(),
                                 event.id(),
@@ -184,6 +205,9 @@ public class WebSocketEventListener {
     private Mono<Void> sendDialogUpdated(
             Long dialogId,
             Long userId,
+            String dialogName,
+            boolean groupChat,
+            String lastMessagePreview,
             OffsetDateTime lastMessageAt
     ) {
         return dialogParticipantRepository
@@ -210,6 +234,9 @@ public class WebSocketEventListener {
                                 dialogId,
                                 new DialogUpdatedEvent(
                                         dialogId,
+                                        dialogName,
+                                        groupChat,
+                                        lastMessagePreview,
                                         unreadCount,
                                         lastMessageAt
                                 )
@@ -265,6 +292,56 @@ public class WebSocketEventListener {
                         )
                 )
                 .subscribe();
+    }
+
+    private String createMessagePreview(
+            NewMessageDomainEvent event,
+            boolean groupChat
+    ) {
+        String preview;
+
+        if (event.content() == null
+                || event.content().isBlank()) {
+
+            if (event.attachments() != null
+                    && !event.attachments().isEmpty()) {
+
+                preview = "📎 Вложение";
+
+            } else {
+
+                preview = "";
+            }
+
+        } else {
+
+            preview = event.content()
+                    .replaceAll("\\s+", " ")
+                    .trim();
+        }
+
+        if (groupChat) {
+
+            String senderName =
+                    event.senderName() != null
+                            && !event.senderName().isBlank()
+                            ? event.senderName()
+                            : event.senderEmail();
+
+            if (senderName != null
+                    && !senderName.isBlank()) {
+
+                preview =
+                        senderName + ": " + preview;
+            }
+        }
+
+        if (preview.length() > 50) {
+            preview =
+                    preview.substring(0, 50) + "…";
+        }
+
+        return preview;
     }
 
 }
