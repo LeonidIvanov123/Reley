@@ -84,15 +84,215 @@
 
         .section-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 10px;
             margin-bottom: 18px;
-            gap: 12px;
         }
 
         .section-title {
             font-size: 20px;
             margin: 0;
+            white-space: nowrap;
+        }
+
+        /*
+         * Dialog search
+         */
+
+        .dialog-search {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dialog-search input {
+            width: 100%;
+            height: 38px;
+            padding: 0 34px 0 12px;
+            border: 1px solid #e1e5ec;
+            border-radius: 10px;
+            outline: none;
+            background: #f8f9fc;
+            color: #292e38;
+            font-size: 13px;
+            transition: border-color 0.2s,
+                        background 0.2s;
+        }
+
+        .dialog-search input::placeholder {
+            color: #9aa1ad;
+        }
+
+        .dialog-search input:focus {
+            border-color: #9bb5e8;
+            background: #ffffff;
+        }
+
+        .dialog-search-clear {
+            position: absolute;
+            top: 50%;
+            right: 7px;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: #9299a6;
+            font-size: 18px;
+            line-height: 20px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .dialog-search-clear:hover {
+            background: #edf0f5;
+            color: #555d6b;
+        }
+
+        .dialog-search {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dialog-search input {
+            width: 100%;
+            height: 38px;
+            padding: 0 34px 0 12px;
+            border: 1px solid #e1e5ec;
+            border-radius: 10px;
+            outline: none;
+            background: #f8f9fc;
+            color: #292e38;
+            font-size: 13px;
+            transition: border-color 0.2s,
+                        background 0.2s;
+        }
+
+        .dialog-search input::placeholder {
+            color: #9aa1ad;
+        }
+
+        .dialog-search input:focus {
+            border-color: #9bb5e8;
+            background: #ffffff;
+        }
+
+        .dialog-search-clear {
+            position: absolute;
+            top: 50%;
+            right: 7px;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: #9299a6;
+            font-size: 18px;
+            line-height: 20px;
+            cursor: pointer;
+            display: none;
+            z-index: 3;
+        }
+
+        .dialog-search-clear:hover {
+            background: #edf0f5;
+            color: #555d6b;
+        }
+
+        .search-results {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #edf0f5;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.10);
+            z-index: 200;
+            display: none;
+            overflow: hidden;
+            max-height: 430px;
+            overflow-y: auto;
+        }
+
+        .search-results.visible {
+            display: block;
+        }
+
+        .search-section {
+            padding: 8px 0;
+        }
+
+        .search-section + .search-section {
+            border-top: 1px solid #f0f2f6;
+        }
+
+        .search-section-title {
+            padding: 5px 12px 6px;
+            color: #9299a6;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .search-result {
+            display: block;
+            padding: 9px 12px;
+            color: inherit;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .search-result:hover {
+            background: #f5f7fb;
+        }
+
+        .search-result-title {
+            color: #292e38;
+            font-size: 13px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .search-result-subtitle {
+            margin-top: 2px;
+            color: #858b98;
+            font-size: 12px;
+            line-height: 17px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-result-message {
+            color: #858b98;
+            font-size: 12px;
+            line-height: 17px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-empty,
+        .search-loading {
+            padding: 16px 12px;
+            text-align: center;
+            color: #9299a6;
+            font-size: 13px;
+        }
+
+        .dialog-search-empty {
+            display: none;
+            text-align: center;
+            padding: 35px 20px;
+            color: #9299a6;
+            font-size: 14px;
         }
 
         /*
@@ -101,6 +301,7 @@
 
         .create-menu {
             position: relative;
+            flex-shrink: 0;
         }
 
         .create-menu summary {
@@ -342,6 +543,19 @@
             .brand {
                 font-size: 23px;
             }
+
+            .section-title {
+                font-size: 18px;
+            }
+
+            .dialog-search input {
+                height: 36px;
+            }
+
+            .create-button {
+                width: 38px;
+                height: 38px;
+            }
         }
 
     </style>
@@ -402,6 +616,33 @@
             Диалоги
         </h2>
 
+        <!-- Поиск -->
+
+        <div class="dialog-search">
+
+            <input
+                    id="dialog-search-input"
+                    type="search"
+                    placeholder="Поиск..."
+                    autocomplete="off">
+
+            <button
+                    id="dialog-search-clear"
+                    class="dialog-search-clear"
+                    type="button"
+                    title="Очистить">
+                ×
+            </button>
+
+            <div id="search-results"
+                 class="search-results">
+            </div>
+
+        </div>
+
+
+        <!-- Create menu -->
+
         <details class="create-menu">
 
             <summary class="create-button"
@@ -455,6 +696,7 @@
            th:each="dialog : ${dialogs}"
            th:attr="data-dialog-id=${dialog.id}"
            th:href="@{/dialogs/{id}(id=${dialog.id})}">
+
 
             <!-- ========================= -->
             <!-- Avatar                     -->
@@ -602,6 +844,13 @@
 
         </a>
 
+        <!-- Поиск ничего не нашёл -->
+
+        <div id="dialog-search-empty"
+             class="dialog-search-empty">
+            Ничего не найдено
+        </div>
+
     </div>
 
 </div>
@@ -642,6 +891,407 @@
 
         }
     );
+
+
+    /*
+     * Поиск
+     *
+     * По пустому полю показываем обычный список диалогов.
+     * При вводе отправляем запрос на backend:
+     *
+     * GET /api/search?q=...
+     *
+     * Backend возвращает:
+     * - users
+     * - dialogs
+     * - messages
+     */
+
+    const dialogSearchInput =
+        document.getElementById(
+            'dialog-search-input'
+        );
+
+    const dialogSearchClear =
+        document.getElementById(
+            'dialog-search-clear'
+        );
+
+    const searchResults =
+        document.getElementById(
+            'search-results'
+        );
+
+    let searchTimer = null;
+
+    let searchRequestId = 0;
+
+
+    if (dialogSearchInput) {
+
+        dialogSearchInput.addEventListener(
+            'input',
+            () => {
+
+                const query =
+                    dialogSearchInput.value.trim();
+
+                updateSearchClearButton(
+                    query
+                );
+
+                clearTimeout(searchTimer);
+
+                if (!query) {
+
+                    hideSearchResults();
+
+                    return;
+                }
+
+                searchTimer =
+                    setTimeout(
+                        () => searchBackend(query),
+                        250
+                    );
+
+            }
+        );
+
+        dialogSearchInput.addEventListener(
+            'focus',
+            () => {
+
+                const query =
+                    dialogSearchInput.value.trim();
+
+                if (query) {
+                    searchBackend(query);
+                }
+
+            }
+        );
+
+    }
+
+
+    if (dialogSearchClear) {
+
+        dialogSearchClear.addEventListener(
+            'click',
+            () => {
+
+                dialogSearchInput.value = '';
+
+                updateSearchClearButton('');
+
+                hideSearchResults();
+
+                dialogSearchInput.focus();
+
+            }
+        );
+
+    }
+
+
+    document.addEventListener(
+        'click',
+        event => {
+
+            const search =
+                document.querySelector(
+                    '.dialog-search'
+                );
+
+            if (
+                search
+                && !search.contains(event.target)
+            ) {
+                hideSearchResults();
+            }
+
+        }
+    );
+
+
+    function updateSearchClearButton(query) {
+
+        if (!dialogSearchClear) {
+            return;
+        }
+
+        dialogSearchClear.style.display =
+            query
+                ? 'block'
+                : 'none';
+
+    }
+
+
+    async function searchBackend(query) {
+
+        if (!searchResults) {
+            return;
+        }
+
+        const requestId =
+            ++searchRequestId;
+
+        showSearchLoading();
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/search?q=${encodeURIComponent(query)}`
+                );
+
+            if (
+                requestId !== searchRequestId
+            ) {
+                return;
+            }
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Search failed: ${response.status}`
+                );
+
+            }
+
+            const result =
+                await response.json();
+
+            renderSearchResults(result);
+
+        } catch (error) {
+
+            if (
+                requestId !== searchRequestId
+            ) {
+                return;
+            }
+
+            console.error(
+                'Search error:',
+                error
+            );
+
+            searchResults.innerHTML =
+                '<div class="search-empty">Не удалось выполнить поиск</div>';
+
+            searchResults.classList.add(
+                'visible'
+            );
+
+        }
+
+    }
+
+
+    function showSearchLoading() {
+
+        searchResults.innerHTML =
+            '<div class="search-loading">Поиск...</div>';
+
+        searchResults.classList.add(
+            'visible'
+        );
+
+    }
+
+
+    function hideSearchResults() {
+
+        if (!searchResults) {
+            return;
+        }
+
+        searchResults.classList.remove(
+            'visible'
+        );
+
+        searchResults.innerHTML = '';
+
+    }
+
+
+    function renderSearchResults(result) {
+
+        if (!searchResults) {
+            return;
+        }
+
+        const users =
+            Array.isArray(result.users)
+                ? result.users
+                : [];
+
+        const dialogs =
+            Array.isArray(result.dialogs)
+                ? result.dialogs
+                : [];
+
+        const messages =
+            Array.isArray(result.messages)
+                ? result.messages
+                : [];
+
+        const hasResults =
+            users.length > 0
+            || dialogs.length > 0
+            || messages.length > 0;
+
+
+        if (!hasResults) {
+
+            searchResults.innerHTML =
+                '<div class="search-empty">Ничего не найдено</div>';
+
+            searchResults.classList.add(
+                'visible'
+            );
+
+            return;
+        }
+
+
+        let html = '';
+
+
+        if (users.length > 0) {
+
+            html +=
+                '<div class="search-section">' +
+                    '<div class="search-section-title">Пользователи</div>';
+
+            users.forEach(user => {
+                const title =
+                    user.name
+                    && user.name.trim()
+                        ? user.name
+                        : user.email;
+
+                html +=
+                    `<a class="search-result"
+                        href="/dialogs/open/${encodeURIComponent(user.userId)}">` +
+                        `<div class="search-result-title">${escapeHtml(title)}</div>` +
+                        `<div class="search-result-subtitle">${escapeHtml(user.email || '')}</div>` +
+                    `</a>`;
+            });
+
+            html += '</div>';
+
+        }
+
+
+        if (dialogs.length > 0) {
+
+            html +=
+                '<div class="search-section">' +
+                    '<div class="search-section-title">Диалоги</div>';
+
+            dialogs.forEach(dialog => {
+
+                html +=
+                    `<a class="search-result"
+                        href="/dialogs/${encodeURIComponent(dialog.dialogId)}">` +
+                        `<div class="search-result-title">` +
+                            `${dialog.groupChat ? '👥 ' : '💬 '}` +
+                            `${escapeHtml(dialog.dialogName || 'Диалог')}` +
+                        `</div>` +
+                    `</a>`;
+
+            });
+
+            html += '</div>';
+
+        }
+
+
+        if (messages.length > 0) {
+
+            html +=
+                '<div class="search-section">' +
+                    '<div class="search-section-title">Сообщения</div>';
+
+            messages.forEach(message => {
+
+                const sender =
+                    message.senderName
+                    && message.senderName.trim()
+                        ? message.senderName
+                        : message.senderEmail;
+
+                html +=
+                    `<a class="search-result"
+                        href="/dialogs/${encodeURIComponent(message.dialogId)}">` +
+                        `<div class="search-result-title">` +
+                            `${escapeHtml(sender || 'Участник')}` +
+                            ` · ${escapeHtml(message.dialogName || 'Диалог')}` +
+                        `</div>` +
+                        `<div class="search-result-message">` +
+                            `${escapeHtml(message.content || '')}` +
+                        `</div>` +
+                    `</a>`;
+
+            });
+
+            html += '</div>';
+
+        }
+
+
+        searchResults.innerHTML = html;
+
+        searchResults.classList.add(
+            'visible'
+        );
+
+    }
+
+
+    function escapeHtml(value) {
+
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+    }
+
+    function escapeJs(value) {
+        return String(value ?? '')
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'");
+    }
+
+    function openUserChat(event, email) {
+        event.preventDefault();
+
+        const form =
+            document.createElement('form');
+
+        form.method = 'POST';
+        form.action = '/dialogs/new';
+
+        const input =
+            document.createElement('input');
+
+        input.type = 'hidden';
+        input.name = 'email';
+        input.value = email;
+
+        form.appendChild(input);
+
+        document.body.appendChild(form);
+
+        form.submit();
+    }
 
 
     /*
@@ -873,7 +1523,7 @@
             );
 
 
-            updateUnreadCount(
+            updateDialogUnreadCount(
                 dialogElement,
                 payload.unreadCount
             );
@@ -882,6 +1532,14 @@
             moveDialogToTop(
                 dialogElement
             );
+
+
+            /*
+             * Если пользователь сейчас ищет —
+             * повторяем фильтрацию после обновления
+             * preview.
+             */
+
 
 
             return;
@@ -957,9 +1615,6 @@
         /*
          * Если preview ещё нет в DOM,
          * создаём его.
-         *
-         * Это важно для диалога,
-         * у которого раньше не было сообщений.
          */
 
         if (!previewElement && preview) {
@@ -974,6 +1629,7 @@
                     '.dialog-date'
                 );
 
+
             if (!dialogContent) {
                 return;
             }
@@ -983,6 +1639,7 @@
                 document.createElement(
                     'div'
                 );
+
 
             previewElement.className =
                 'dialog-preview';
@@ -1065,7 +1722,7 @@
      * Обновление unread badge
      */
 
-    function updateUnreadCount(
+    function updateDialogUnreadCount(
         dialogElement,
         unreadCount
     ) {
@@ -1082,8 +1739,6 @@
 
         /*
          * unread = 0
-         *
-         * Удаляем badge.
          */
 
         if (count === 0) {
@@ -1098,8 +1753,6 @@
 
         /*
          * Badge уже существует.
-         *
-         * Просто меняем число.
          */
 
         if (badge) {
@@ -1113,8 +1766,6 @@
 
         /*
          * Badge отсутствует.
-         *
-         * Создаём его.
          */
 
         badge =

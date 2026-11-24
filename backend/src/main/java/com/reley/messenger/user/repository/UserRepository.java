@@ -66,4 +66,23 @@ public interface UserRepository extends ReactiveCrudRepository<User, Long> {
         """)
     Mono<Integer> updateLastSeenAt(Long userId, OffsetDateTime lastSeenAt);
 
+    @Query("""
+    SELECT *
+    FROM users
+    WHERE hidden_from_directory = false
+      AND id <> :currentUserId
+      AND (
+          name ILIKE '%' || :query || '%'
+          OR email ILIKE '%' || :query || '%'
+          OR username ILIKE '%' || :query || '%'
+      )
+    ORDER BY name, email
+    LIMIT :limit
+    """)
+    Flux<User> searchUsers(
+            Long currentUserId,
+            String query,
+            int limit
+    );
+
 }

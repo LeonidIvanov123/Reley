@@ -175,6 +175,13 @@ public class DialogController {
                 );
     }
 
+    @GetMapping("/open/{userId}")
+    public Mono<String> openDialog(@PathVariable Long userId) {
+        return dialogService
+                .createDialog(userId)
+                .map(dialog -> "redirect:/dialogs/" + dialog.id());
+    }
+
     private Mono<Void> prepareNewDialogModel(Model model) {
 
         return userInfo.getCurrentUser()

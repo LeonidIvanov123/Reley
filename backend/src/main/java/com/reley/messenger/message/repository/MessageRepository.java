@@ -156,4 +156,21 @@ public interface MessageRepository extends ReactiveCrudRepository<Message, Long>
             int limit
     );
 
+    @Query("""
+    SELECT m.*
+    FROM messages m
+    JOIN dialog_participants dp
+      ON dp.dialog_id = m.dialog_id
+    WHERE dp.user_id = :userId
+      AND m.content IS NOT NULL
+      AND m.content ILIKE '%' || :query || '%'
+    ORDER BY m.id DESC
+    LIMIT :limit
+    """)
+    Flux<Message> searchForUser(
+            Long userId,
+            String query,
+            int limit
+    );
+
 }
