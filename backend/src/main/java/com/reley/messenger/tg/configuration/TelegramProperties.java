@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "telegram")
 public class TelegramProperties {
 
-    private int apiId;
+    private boolean apiEnabled;
+
+    private Integer apiId;
 
     private String apiHash;
 

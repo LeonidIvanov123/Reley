@@ -7,9 +7,9 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 
 import java.io.ByteArrayOutputStream;
 
-public final class TgQrCodeService {
+public final class TgQrCodeUtil {
 
-    private TgQrCodeService() {
+    private TgQrCodeUtil() {
     }
 
     public static byte[] generate(String value) throws Exception {

@@ -15,6 +15,7 @@ import it.tdlight.client.TDLibSettings;
 import it.tdlight.jni.TdApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -25,6 +26,11 @@ import java.time.OffsetDateTime;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+        prefix = "telegram",
+        name = "api-enabled",
+        havingValue = "true"
+)
 public class TgAuthServiceImpl implements TgAuthService {
 
     private final TelegramProperties properties;
@@ -594,7 +600,7 @@ public class TgAuthServiceImpl implements TgAuthService {
                     }
 
                     return Mono.fromCallable(
-                            () -> TgQrCodeService.generate(qr)
+                            () -> TgQrCodeUtil.generate(qr)
                     );
                 });
     }

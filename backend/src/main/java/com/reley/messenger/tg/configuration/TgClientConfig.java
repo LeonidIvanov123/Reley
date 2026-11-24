@@ -7,11 +7,17 @@ import it.tdlight.client.SimpleTelegramClientFactory;
 import it.tdlight.util.UnsupportedNativeLibraryException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Slf4j
 @Configuration
+@ConditionalOnProperty(
+        prefix = "telegram",
+        name = "api-enabled",
+        havingValue = "true"
+)
 public class TgClientConfig {
 
     @PostConstruct

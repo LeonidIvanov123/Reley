@@ -37,6 +37,10 @@
             font-size: 14px;
         }
 
+        .back:hover {
+            text-decoration: underline;
+        }
+
         .card {
             background: white;
             border-radius: 14px;
@@ -153,6 +157,22 @@
             display: none;
         }
 
+        .disabled-message {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f5f7fa;
+            color: #777;
+            line-height: 1.5;
+        }
+
+        .disabled-message-title {
+            margin-bottom: 8px;
+            color: #424b5a;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
     </style>
 </head>
 
@@ -160,7 +180,8 @@
 
 <div class="page">
 
-    <a href="/" class="back">
+    <a href="/"
+       class="back">
         ← Вернуться к чатам
     </a>
 
@@ -178,62 +199,88 @@
         </div>
 
 
-        <!-- NOT CONNECTED -->
+        <!-- ================================= -->
+        <!-- TELEGRAM DISABLED -->
+        <!-- ================================= -->
 
-        <div id="not-connected">
+        <div th:if="${!telegramEnabled}"
+             class="disabled-message">
 
-            <button id="connect-button">
-                Подключить Telegram
-            </button>
+            <div class="disabled-message-title">
+                Интеграция с Telegram отключена
+            </div>
 
-            <div id="qr-container"
-                 class="qr-container">
-
-                <div class="qr-title">
-                    Отсканируйте QR-код в Telegram
-                </div>
-
-                <div class="qr-description">
-                    Откройте Telegram на телефоне →
-                    Настройки → Устройства →
-                    Подключить устройство.
-                </div>
-
-                <img id="qr-image"
-                     alt="Telegram QR Code">
-
+            <div>
+                Подключение Telegram сейчас недоступно.
             </div>
 
         </div>
 
 
-        <!-- CONNECTED -->
+        <!-- ================================= -->
+        <!-- TELEGRAM ENABLED -->
+        <!-- ================================= -->
 
-        <div id="connected"
-             class="account">
+        <div th:if="${telegramEnabled}">
 
-            <div class="status">
+            <!-- NOT CONNECTED -->
 
-                <div class="status-title connected">
-                    ✓ Telegram подключён
+            <div id="not-connected">
+
+                <button id="connect-button">
+                    Подключить Telegram
+                </button>
+
+                <div id="qr-container"
+                     class="qr-container">
+
+                    <div class="qr-title">
+                        Отсканируйте QR-код в Telegram
+                    </div>
+
+                    <div class="qr-description">
+                        Откройте Telegram на телефоне →
+                        Настройки → Устройства →
+                        Подключить устройство.
+                    </div>
+
+                    <img id="qr-image"
+                         alt="Telegram QR Code">
+
                 </div>
-
-                <div id="account-name"></div>
-
-                <div id="account-username"></div>
 
             </div>
 
-            <button id="disconnect-button"
-                    class="disconnect-button">
-                Отвязать Telegram
-            </button>
 
-        </div>
+            <!-- CONNECTED -->
+
+            <div id="connected"
+                 class="account">
+
+                <div class="status">
+
+                    <div class="status-title connected">
+                        ✓ Telegram подключён
+                    </div>
+
+                    <div id="account-name"></div>
+
+                    <div id="account-username"></div>
+
+                </div>
+
+                <button id="disconnect-button"
+                        class="disconnect-button">
+                    Отвязать Telegram
+                </button>
+
+            </div>
 
 
-        <div id="error"
-             class="error">
+            <div id="error"
+                 class="error">
+            </div>
+
         </div>
 
     </div>
@@ -241,282 +288,300 @@
 </div>
 
 
-<script>
+<script th:inline="javascript">
 
-    const connectButton =
-        document.getElementById('connect-button');
-
-    const disconnectButton =
-        document.getElementById('disconnect-button');
-
-    const qrContainer =
-        document.getElementById('qr-container');
-
-    const qrImage =
-        document.getElementById('qr-image');
-
-    const notConnected =
-        document.getElementById('not-connected');
-
-    const connected =
-        document.getElementById('connected');
-
-    const accountName =
-        document.getElementById('account-name');
-
-    const accountUsername =
-        document.getElementById('account-username');
-
-    const errorElement =
-        document.getElementById('error');
+    const telegramEnabled =
+        /*[[${telegramEnabled}]]*/ false;
 
 
-    async function loadStatus() {
+    if (telegramEnabled) {
 
-        try {
+        const connectButton =
+            document.getElementById('connect-button');
 
-            const response =
-                await fetch('/api/tg/auth/status');
+        const disconnectButton =
+            document.getElementById('disconnect-button');
 
-            if (!response.ok) {
+        const qrContainer =
+            document.getElementById('qr-container');
 
-                throw new Error(
-                    'Не удалось получить статус Telegram'
-                );
+        const qrImage =
+            document.getElementById('qr-image');
+
+        const notConnected =
+            document.getElementById('not-connected');
+
+        const connected =
+            document.getElementById('connected');
+
+        const accountName =
+            document.getElementById('account-name');
+
+        const accountUsername =
+            document.getElementById('account-username');
+
+        const errorElement =
+            document.getElementById('error');
+
+
+        async function loadStatus() {
+
+            try {
+
+                const response =
+                    await fetch('/api/tg/auth/status');
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        'Не удалось получить статус Telegram'
+                    );
+                }
+
+                const status =
+                    await response.json();
+
+
+                if (status.connected) {
+
+                    notConnected.style.display = 'none';
+
+                    connected.style.display = 'block';
+
+                    const name =
+                        [
+                            status.firstName,
+                            status.lastName
+                        ]
+                        .filter(Boolean)
+                        .join(' ');
+
+                    accountName.textContent =
+                        name || 'Telegram аккаунт';
+
+                    accountUsername.textContent =
+                        status.username
+                            ? '@' + status.username
+                            : '';
+
+                    stopQrRefresh();
+
+                    return;
+                }
+
+
+                notConnected.style.display = 'block';
+
+                connected.style.display = 'none';
+
+            } catch (error) {
+
+                showError(error.message);
+
             }
-
-            const status =
-                await response.json();
+        }
 
 
-            if (status.connected) {
+        async function startAuth() {
 
-                notConnected.style.display = 'none';
+            connectButton.disabled = true;
 
-                connected.style.display = 'block';
+            hideError();
 
-                const name =
-                    [
-                        status.firstName,
-                        status.lastName
-                    ]
-                    .filter(Boolean)
-                    .join(' ');
+            try {
 
-                accountName.textContent =
-                    name || 'Telegram аккаунт';
+                const response =
+                    await fetch(
+                        '/api/tg/auth/start',
+                        {
+                            method: 'POST'
+                        }
+                    );
 
-                accountUsername.textContent =
-                    status.username
-                        ? '@' + status.username
-                        : '';
+                if (!response.ok) {
 
-                stopQrRefresh();
+                    throw new Error(
+                        'Не удалось начать подключение Telegram'
+                    );
+                }
 
+                qrContainer.style.display = 'block';
+
+                await refreshQr();
+
+                startQrRefresh();
+
+            } catch (error) {
+
+                showError(error.message);
+
+            } finally {
+
+                connectButton.disabled = false;
+
+            }
+        }
+
+
+        async function disconnectTelegram() {
+
+            const confirmed =
+                confirm(
+                    'Вы действительно хотите отвязать Telegram-аккаунт?'
+                );
+
+            if (!confirmed) {
                 return;
             }
 
+            disconnectButton.disabled = true;
 
-            notConnected.style.display = 'block';
+            hideError();
 
-            connected.style.display = 'none';
+            try {
 
-        } catch (error) {
+                const response =
+                    await fetch(
+                        '/api/tg/auth',
+                        {
+                            method: 'DELETE'
+                        }
+                    );
 
-            showError(error.message);
+                if (!response.ok) {
 
-        }
-    }
+                    throw new Error(
+                        'Не удалось отвязать Telegram-аккаунт'
+                    );
+                }
 
+                stopQrRefresh();
 
-    async function startAuth() {
+                qrContainer.style.display = 'none';
 
-        connectButton.disabled = true;
+                await loadStatus();
 
-        hideError();
+            } catch (error) {
 
-        try {
+                showError(error.message);
 
-            const response =
-                await fetch(
-                    '/api/tg/auth/start',
-                    {
-                        method: 'POST'
-                    }
-                );
+            } finally {
 
-            if (!response.ok) {
+                disconnectButton.disabled = false;
 
-                throw new Error(
-                    'Не удалось начать подключение Telegram'
-                );
             }
-
-            qrContainer.style.display = 'block';
-
-            await refreshQr();
-
-            startQrRefresh();
-
-        } catch (error) {
-
-            showError(error.message);
-
-        } finally {
-
-            connectButton.disabled = false;
-
-        }
-    }
-
-
-    async function disconnectTelegram() {
-
-        const confirmed =
-            confirm(
-                'Вы действительно хотите отвязать Telegram-аккаунт?'
-            );
-
-        if (!confirmed) {
-            return;
         }
 
-        disconnectButton.disabled = true;
 
-        hideError();
+        async function refreshQr() {
 
-        try {
+            qrImage.src =
+                '/api/tg/auth/qr?t=' +
+                Date.now();
+        }
 
-            const response =
-                await fetch(
-                    '/api/tg/auth',
-                    {
-                        method: 'DELETE'
-                    }
-                );
 
-            if (!response.ok) {
+        let qrRefreshTimer = null;
 
-                throw new Error(
-                    'Не удалось отвязать Telegram-аккаунт'
-                );
-            }
+
+        function startQrRefresh() {
 
             stopQrRefresh();
 
-            qrContainer.style.display = 'none';
+            qrRefreshTimer =
+                setInterval(
+                    async () => {
 
-            await loadStatus();
+                        const statusResponse =
+                            await fetch(
+                                '/api/tg/auth/status'
+                            );
 
-        } catch (error) {
+                        if (!statusResponse.ok) {
+                            return;
+                        }
 
-            showError(error.message);
+                        const status =
+                            await statusResponse.json();
 
-        } finally {
+                        if (status.connected) {
 
-            disconnectButton.disabled = false;
+                            stopQrRefresh();
 
+                            await loadStatus();
+
+                            return;
+                        }
+
+                        await refreshQr();
+
+                    },
+                    5000
+                );
         }
-    }
 
 
-    async function refreshQr() {
+        function stopQrRefresh() {
 
-        qrImage.src =
-            '/api/tg/auth/qr?t=' +
-            Date.now();
-    }
+            if (qrRefreshTimer !== null) {
 
+                clearInterval(qrRefreshTimer);
 
-    let qrRefreshTimer = null;
-
-
-    function startQrRefresh() {
-
-        stopQrRefresh();
-
-        qrRefreshTimer =
-            setInterval(
-                async () => {
-
-                    const statusResponse =
-                        await fetch(
-                            '/api/tg/auth/status'
-                        );
-
-                    if (!statusResponse.ok) {
-                        return;
-                    }
-
-                    const status =
-                        await statusResponse.json();
-
-                    if (status.connected) {
-
-                        stopQrRefresh();
-
-                        await loadStatus();
-
-                        return;
-                    }
-
-                    await refreshQr();
-
-                },
-                5000
-            );
-    }
-
-
-    function stopQrRefresh() {
-
-        if (qrRefreshTimer !== null) {
-
-            clearInterval(qrRefreshTimer);
-
-            qrRefreshTimer = null;
+                qrRefreshTimer = null;
+            }
         }
+
+
+        function showError(message) {
+
+            errorElement.textContent =
+                message;
+
+            errorElement.style.display =
+                'block';
+        }
+
+
+        function hideError() {
+
+            errorElement.textContent =
+                '';
+
+            errorElement.style.display =
+                'none';
+        }
+
+
+        connectButton.addEventListener(
+            'click',
+            startAuth
+        );
+
+
+        disconnectButton.addEventListener(
+            'click',
+            disconnectTelegram
+        );
+
+
+        window.addEventListener(
+            'pagehide',
+            () => {
+
+                fetch(
+                    '/api/tg/auth/pending',
+                    {
+                        method: 'DELETE',
+                        keepalive: true
+                    }
+                ).catch(() => {});
+
+            }
+        );
+
+
+        loadStatus();
     }
-
-
-    function showError(message) {
-
-        errorElement.textContent = message;
-
-        errorElement.style.display = 'block';
-
-    }
-
-
-    function hideError() {
-
-        errorElement.textContent = '';
-
-        errorElement.style.display = 'none';
-
-    }
-
-
-    connectButton.addEventListener(
-        'click',
-        startAuth
-    );
-
-
-    disconnectButton.addEventListener(
-        'click',
-        disconnectTelegram
-    );
-
-    window.addEventListener('pagehide', () => {
-        fetch('/api/tg/auth/pending', {
-            method: 'DELETE',
-            keepalive: true
-        }).catch(() => {});
-    });
-
-
-    loadStatus();
 
 </script>
 

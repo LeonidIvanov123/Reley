@@ -1,12 +1,18 @@
 package com.reley.messenger.tg.service;
 
 import it.tdlight.client.SimpleTelegramClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@ConditionalOnProperty(
+        prefix = "telegram",
+        name = "api-enabled",
+        havingValue = "true"
+)
 public class TgClientManager {
 
     private final Map<Long, SimpleTelegramClient> clients =
