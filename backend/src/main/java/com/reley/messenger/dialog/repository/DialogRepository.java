@@ -116,4 +116,20 @@ public interface DialogRepository extends ReactiveCrudRepository<Dialog, Long> {
             OffsetDateTime updatedAt
     );
 
+    @Query("""
+    SELECT d.*
+    FROM dialogs d
+    JOIN dialog_participants dp
+      ON dp.dialog_id = d.id
+    WHERE dp.user_id = :userId
+      AND d.dialog_name ILIKE '%' || :query || '%'
+    ORDER BY d.updated_at DESC
+    LIMIT :limit
+    """)
+    Flux<Dialog> searchDialogs(
+            Long userId,
+            String query,
+            int limit
+    );
+
 }
