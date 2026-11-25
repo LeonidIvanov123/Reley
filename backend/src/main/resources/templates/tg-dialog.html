@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Telegram — Reley Messenger</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        body {
+            font-family:
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    Arial,
+                    sans-serif;
+
+            background: #f4f6fa;
+            color: #222;
+
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1100px;
+
+            height: calc(100vh - 60px);
+            max-height: 850px;
+            min-height: 400px;
+
+            margin: 0 auto;
+
+            display: flex;
+            flex-direction: column;
+
+            background: #fff;
+
+            border-radius: 16px;
+            overflow: hidden;
+
+            box-shadow:
+                    0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        /* HEADER */
+
+        .header {
+            height: 64px;
+            flex-shrink: 0;
+
+            background: #fff;
+
+            border-bottom: 1px solid #e5e7eb;
+
+            display: flex;
+            align-items: center;
+
+            padding: 0 20px;
+
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+            z-index: 10;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+
+            border: none;
+            background: transparent;
+
+            border-radius: 8px;
+
+            font-size: 24px;
+            line-height: 40px;
+
+            cursor: pointer;
+            color: #3978d5;
+        }
+
+        .back-button:hover {
+            background: #f1f5f9;
+        }
+
+        .chat-info {
+            margin-left: 10px;
+            min-width: 0;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-title {
+            font-size: 17px;
+            font-weight: 600;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-subtitle {
+            margin-top: 2px;
+
+            font-size: 12px;
+            color: #8a8f98;
+        }
+
+        /* MESSAGES */
+
+        .messages-container {
+            flex: 1;
+            min-height: 0;
+
+            overflow-y: auto;
+
+            padding: 20px;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            width: 100%;
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            display: flex;
+            flex-direction: column;
+
+            gap: 8px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+
+            max-width: 75%;
+
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            background: #fff;
+
+            border-radius: 12px;
+
+            padding: 9px 12px;
+
+            box-shadow:
+                    0 1px 2px rgba(0, 0, 0, 0.05);
+
+            word-break: break-word;
+        }
+
+        .message-sender {
+            font-size: 12px;
+            font-weight: 600;
+
+            color: #3978d5;
+
+            margin-bottom: 4px;
+        }
+
+        .message-text {
+            font-size: 15px;
+            line-height: 1.45;
+
+            white-space: pre-wrap;
+        }
+
+        .message-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+
+            gap: 6px;
+            margin-top: 5px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .attachment-indicator {
+            font-size: 12px;
+            color: #777;
+        }
+
+        /* LOADING */
+
+        .loading {
+            text-align: center;
+
+            padding: 15px;
+
+            color: #8a8f98;
+            font-size: 13px;
+
+            flex-shrink: 0;
+        }
+
+        .empty {
+            margin: auto;
+
+            text-align: center;
+
+            color: #8a8f98;
+            font-size: 14px;
+
+            padding: 40px 20px;
+        }
+
+        .error {
+            margin: auto;
+
+            text-align: center;
+
+            color: #d64545;
+            font-size: 14px;
+
+            padding: 40px 20px;
+        }
+
+        /* FOOTER */
+
+        .footer {
+            flex-shrink: 0;
+
+            min-height: 58px;
+
+            background: #fff;
+
+            border-top: 1px solid #e5e7eb;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 12px 20px;
+
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 600px) {
+
+            body {
+                padding: 0;
+            }
+
+            .page {
+                width: 100%;
+                height: 100vh;
+                height: 100dvh;
+
+                max-height: none;
+                min-height: 0;
+
+                margin: 0;
+
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .header {
+                padding: 0 10px;
+            }
+
+            .messages-container {
+                padding: 12px 8px;
+            }
+
+            .messages {
+                max-width: 100%;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+
+            .message-bubble {
+                padding: 8px 10px;
+            }
+
+            .message-text {
+                font-size: 14px;
+            }
+
+            .footer {
+                min-height: 50px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+        <button
+                type="button"
+                class="back-button"
+                onclick="goBack()"
+                title="Назад">
+            ←
+        </button>
+
+        <div class="chat-info">
+
+            <div
+                    class="chat-title"
+                    id="chat-title">
+                Telegram
+            </div>
+
+            <div class="chat-subtitle">
+                Telegram чат
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- MESSAGES -->
+
+    <main
+            class="messages-container"
+            id="messages-container">
+
+        <div
+                class="loading"
+                id="loading">
+            Загрузка сообщений...
+        </div>
+
+        <div
+                class="messages"
+                id="messages">
+        </div>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer class="footer">
+        Просмотр Telegram-чата
+    </footer>
+
+</div>
+
+
+<script th:inline="javascript">
+
+    /*
+     * =========================
+     * CONFIGURATION
+     * =========================
+     */
+
+    const chatId =
+        /*[[${chatId}]]*/ null;
+
+    const PAGE_SIZE = 15;
+
+    const SCROLL_THRESHOLD = 100;
+
+
+    /*
+     * =========================
+     * ELEMENTS
+     * =========================
+     */
+
+    const messagesContainer =
+        document.getElementById('messages-container');
+
+    const messagesElement =
+        document.getElementById('messages');
+
+    const loadingElement =
+        document.getElementById('loading');
+
+
+    /*
+     * =========================
+     * STATE
+     * =========================
+     */
+
+    let oldestMessageId = null;
+
+    const loadedMessageIds = new Set();
+
+    let loadingMessages = false;
+
+    let hasMoreMessages = true;
+
+    let initialLoading = true;
+
+    // Нужно ли восстанавливать позицию прокрутки
+    // после добавления старых сообщений.
+    let restoreScroll = false;
+
+    let previousScrollHeight = 0;
+    let previousScrollTop = 0;
+
+
+    /*
+     * =========================
+     * INITIAL LOAD
+     * =========================
+     */
+
+    async function loadMessages() {
+
+        if (!chatId) {
+
+            console.error(
+                '[TG DIALOG] chatId is empty'
+            );
+
+            loadingElement.style.display = 'none';
+
+            showError(
+                'Не указан Telegram chatId'
+            );
+
+            return;
+        }
+
+        console.log(
+            '[TG DIALOG] Loading initial messages:',
+            chatId
+        );
+
+        await fetchMessages(null, true);
+    }
+
+
+    /*
+     * =========================
+     * FETCH MESSAGES
+     * =========================
+     *
+     * fromMessageId:
+     * null - последние сообщения
+     * ID   - сообщения старше указанного ID
+     */
+
+    async function fetchMessages(fromMessageId, initial) {
+
+        if (loadingMessages) {
+            return;
+        }
+
+        if (!initial && !hasMoreMessages) {
+            return;
+        }
+
+        loadingMessages = true;
+
+        /*
+         * Запоминаем позицию прокрутки
+         * перед загрузкой старых сообщений.
+         */
+
+        if (!initial) {
+
+            previousScrollHeight =
+                messagesContainer.scrollHeight;
+
+            previousScrollTop =
+                messagesContainer.scrollTop;
+
+            restoreScroll = true;
+        }
+
+
+        loadingElement.style.display = 'block';
+
+        loadingElement.textContent =
+            initial
+                ? 'Загрузка сообщений...'
+                : 'Загрузка предыдущих сообщений...';
+
+
+        try {
+
+            const params = new URLSearchParams();
+
+            params.set('limit', PAGE_SIZE);
+
+            if (fromMessageId !== null) {
+
+                params.set(
+                    'fromMessageId',
+                    fromMessageId
+                );
+            }
+
+
+            const url =
+                `/api/tg/dialogs/${encodeURIComponent(chatId)}/messages?${params.toString()}`;
+
+
+            console.log(
+                '[TG DIALOG] Request:',
+                url
+            );
+
+
+            const response = await fetch(url);
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+            }
+
+
+            const messages = await response.json();
+
+
+            console.log(
+                '[TG DIALOG] Received:',
+                messages.length,
+                'messages'
+            );
+
+
+            if (!Array.isArray(messages)) {
+
+                throw new Error(
+                    'Invalid messages response'
+                );
+            }
+
+
+            /*
+             * История закончилась.
+             */
+
+            if (messages.length === 0) {
+
+                hasMoreMessages = false;
+
+                if (initial) {
+                    showEmpty();
+                }
+
+                return;
+            }
+
+
+            /*
+             * Находим минимальный ID
+             * непосредственно во всём ответе.
+             */
+
+            const newOldestMessageId =
+                getOldestMessageId(messages);
+
+
+            if (newOldestMessageId === null) {
+
+                console.warn(
+                    '[TG DIALOG] Cannot determine oldest message ID'
+                );
+
+                hasMoreMessages = false;
+
+                if (initial) {
+                    showEmpty();
+                }
+
+                return;
+            }
+
+
+            /*
+             * Проверяем, что курсор движется назад.
+             */
+
+            if (!initial &&
+                oldestMessageId !== null &&
+                compareMessageIds(
+                    newOldestMessageId,
+                    oldestMessageId
+                ) >= 0) {
+
+                console.warn(
+                    '[TG DIALOG] Pagination cursor did not move:',
+                    newOldestMessageId,
+                    oldestMessageId
+                );
+
+                hasMoreMessages = false;
+
+                return;
+            }
+
+
+            oldestMessageId =
+                newOldestMessageId;
+
+
+            /*
+             * TDLib возвращает:
+             * новые -> старые
+             *
+             * Интерфейс:
+             * старые -> новые
+             */
+
+            const sortedMessages =
+                [...messages].reverse();
+
+
+            /*
+             * Исключаем уже отображённые сообщения.
+             */
+
+            const uniqueMessages =
+                sortedMessages.filter(message => {
+
+                    const id = String(message.id);
+
+                    if (loadedMessageIds.has(id)) {
+                        return false;
+                    }
+
+                    loadedMessageIds.add(id);
+
+                    return true;
+                });
+
+
+            /*
+             * ПЕРВАЯ ЗАГРУЗКА
+             */
+
+            if (initial) {
+
+                if (uniqueMessages.length === 0) {
+
+                    showEmpty();
+
+                    return;
+                }
+
+                appendMessages(uniqueMessages);
+
+                scrollToBottom();
+
+                return;
+            }
+
+
+            /*
+             * ЗАГРУЗКА СТАРЫХ СООБЩЕНИЙ
+             */
+
+            if (uniqueMessages.length > 0) {
+
+                prependMessages(uniqueMessages);
+
+            } else {
+
+                console.log(
+                    '[TG DIALOG] Received only duplicate messages'
+                );
+            }
+
+        } catch (error) {
+
+            console.error(
+                '[TG DIALOG] Failed to load messages:',
+                error
+            );
+
+            if (initial) {
+
+                showError(
+                    'Не удалось загрузить сообщения.'
+                );
+            }
+
+        } finally {
+
+            loadingMessages = false;
+
+            loadingElement.style.display = 'none';
+
+            initialLoading = false;
+
+
+            /*
+             * Восстанавливаем прокрутку после того,
+             * как индикатор загрузки уже скрыт.
+             */
+
+            if (restoreScroll) {
+
+                requestAnimationFrame(() => {
+
+                    const newScrollHeight =
+                        messagesContainer.scrollHeight;
+
+                    const heightDifference =
+                        newScrollHeight - previousScrollHeight;
+
+                    messagesContainer.scrollTop =
+                        previousScrollTop + heightDifference;
+
+                    restoreScroll = false;
+
+                    /*
+                     * Если контента всё ещё недостаточно,
+                     * загружаем следующую страницу.
+                     */
+
+                    fillMessagesContainer();
+
+                });
+
+            } else if (initial) {
+
+                /*
+                 * После первой загрузки проверяем,
+                 * достаточно ли сообщений для прокрутки.
+                 */
+
+                requestAnimationFrame(() => {
+
+                    scrollToBottom();
+
+                    fillMessagesContainer();
+
+                });
+
+            }
+        }
+    }
+
+
+    /*
+     * =========================
+     * GET OLDEST MESSAGE ID
+     * =========================
+     */
+
+    function getOldestMessageId(messages) {
+
+        let oldestId = null;
+
+        for (const message of messages) {
+
+            if (message.id === null ||
+                message.id === undefined) {
+                continue;
+            }
+
+            const currentId =
+                String(message.id);
+
+            if (oldestId === null ||
+                compareMessageIds(
+                    currentId,
+                    oldestId
+                ) < 0) {
+
+                oldestId = currentId;
+            }
+        }
+
+        return oldestId;
+    }
+
+
+    /*
+     * =========================
+     * COMPARE MESSAGE IDS
+     * =========================
+     */
+
+    function compareMessageIds(first, second) {
+
+        try {
+
+            const firstId = BigInt(String(first));
+            const secondId = BigInt(String(second));
+
+            if (firstId < secondId) return -1;
+            if (firstId > secondId) return 1;
+
+            return 0;
+
+        } catch (error) {
+
+            console.error(
+                '[TG DIALOG] Invalid message ID:',
+                first,
+                second
+            );
+
+            return 0;
+        }
+    }
+
+
+    /*
+     * =========================
+     * APPEND MESSAGES
+     * =========================
+     */
+
+    function appendMessages(messages) {
+
+        const fragment =
+            document.createDocumentFragment();
+
+        messages.forEach(message => {
+
+            fragment.appendChild(
+                createMessageElement(message)
+            );
+
+        });
+
+        messagesElement.appendChild(fragment);
+    }
+
+
+    /*
+     * =========================
+     * PREPEND MESSAGES
+     * =========================
+     */
+
+    function prependMessages(messages) {
+
+        const fragment =
+            document.createDocumentFragment();
+
+        messages.forEach(message => {
+
+            fragment.appendChild(
+                createMessageElement(message)
+            );
+
+        });
+
+        messagesElement.insertBefore(
+            fragment,
+            messagesElement.firstChild
+        );
+    }
+
+
+    /*
+     * =========================
+     * AUTO FILL CONTAINER
+     * =========================
+     *
+     * Если сообщений недостаточно,
+     * чтобы появилась прокрутка,
+     * автоматически загружаем ещё.
+     */
+
+    function fillMessagesContainer() {
+
+        if (loadingMessages ||
+            !hasMoreMessages ||
+            initialLoading) {
+            return;
+        }
+
+        const hasScroll =
+            messagesContainer.scrollHeight >
+            messagesContainer.clientHeight + 50;
+
+        if (hasScroll) {
+            return;
+        }
+
+        if (oldestMessageId === null) {
+            return;
+        }
+
+        console.log(
+            '[TG DIALOG] Container is not filled. Loading more from:',
+            oldestMessageId
+        );
+
+        fetchMessages(
+            oldestMessageId,
+            false
+        );
+    }
+
+
+    /*
+     * =========================
+     * SCROLL LISTENER
+     * =========================
+     */
+
+    messagesContainer.addEventListener(
+        'scroll',
+        function () {
+
+            if (initialLoading ||
+                loadingMessages ||
+                !hasMoreMessages) {
+                return;
+            }
+
+            if (messagesContainer.scrollTop <= SCROLL_THRESHOLD) {
+
+                if (oldestMessageId === null) {
+                    return;
+                }
+
+                console.log(
+                    '[TG DIALOG] Loading older messages from:',
+                    oldestMessageId
+                );
+
+                fetchMessages(
+                    oldestMessageId,
+                    false
+                );
+            }
+        }
+    );
+
+
+    /*
+     * =========================
+     * WINDOW RESIZE
+     * =========================
+     */
+
+    window.addEventListener(
+        'resize',
+        function () {
+
+            setTimeout(
+                fillMessagesContainer,
+                100
+            );
+        }
+    );
+
+
+    /*
+     * =========================
+     * CREATE MESSAGE ELEMENT
+     * =========================
+     */
+
+    function createMessageElement(message) {
+
+        const wrapper =
+            document.createElement('div');
+
+        wrapper.className =
+            'message';
+
+        wrapper.dataset.messageId =
+            String(message.id);
+
+
+        const bubble =
+            document.createElement('div');
+
+        bubble.className =
+            'message-bubble';
+
+
+        /*
+         * Отправитель
+         */
+
+        if (message.senderName) {
+
+            const sender =
+                document.createElement('div');
+
+            sender.className =
+                'message-sender';
+
+            sender.textContent =
+                message.senderName;
+
+            bubble.appendChild(sender);
+        }
+
+
+        /*
+         * Текст сообщения
+         */
+
+        if (message.text) {
+
+            const text =
+                document.createElement('div');
+
+            text.className =
+                'message-text';
+
+            text.textContent =
+                message.text;
+
+            bubble.appendChild(text);
+
+        } else if (message.hasAttachments) {
+
+            const text =
+                document.createElement('div');
+
+            text.className =
+                'message-text';
+
+            text.textContent =
+                'Сообщение с вложением';
+
+            bubble.appendChild(text);
+
+        } else {
+
+            const text =
+                document.createElement('div');
+
+            text.className =
+                'message-text';
+
+            text.textContent =
+                'Сообщение без текста';
+
+            bubble.appendChild(text);
+        }
+
+
+        /*
+         * Нижняя строка
+         */
+
+        const footer =
+            document.createElement('div');
+
+        footer.className =
+            'message-footer';
+
+
+        /*
+         * Вложение
+         */
+
+        if (message.hasAttachments) {
+
+            const attachment =
+                document.createElement('span');
+
+            attachment.className =
+                'attachment-indicator';
+
+            attachment.textContent =
+                '📎 Вложение';
+
+            footer.appendChild(attachment);
+        }
+
+
+        /*
+         * Дата
+         */
+
+        if (message.date) {
+
+            const time =
+                document.createElement('span');
+
+            time.className =
+                'message-time';
+
+            time.textContent =
+                formatDate(message.date);
+
+            footer.appendChild(time);
+        }
+
+
+        bubble.appendChild(footer);
+
+        wrapper.appendChild(bubble);
+
+        return wrapper;
+    }
+
+
+    /*
+     * =========================
+     * FORMAT DATE
+     * =========================
+     */
+
+    function formatDate(value) {
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+
+        return date.toLocaleString(
+            'ru-RU',
+            {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }
+        );
+    }
+
+
+    /*
+     * =========================
+     * EMPTY STATE
+     * =========================
+     */
+
+    function showEmpty() {
+
+        messagesElement.innerHTML = '';
+
+        const empty =
+            document.createElement('div');
+
+        empty.className =
+            'empty';
+
+        empty.textContent =
+            'В этом чате пока нет сообщений.';
+
+        messagesElement.appendChild(empty);
+    }
+
+
+    /*
+     * =========================
+     * ERROR
+     * =========================
+     */
+
+    function showError(message) {
+
+        messagesElement.innerHTML = '';
+
+        const error =
+            document.createElement('div');
+
+        error.className =
+            'error';
+
+        error.textContent =
+            message;
+
+        messagesElement.appendChild(error);
+    }
+
+
+    /*
+     * =========================
+     * SCROLL TO BOTTOM
+     * =========================
+     */
+
+    function scrollToBottom() {
+
+        requestAnimationFrame(() => {
+
+            messagesContainer.scrollTop =
+                messagesContainer.scrollHeight;
+
+        });
+    }
+
+
+    /*
+     * =========================
+     * BACK
+     * =========================
+     */
+
+    function goBack() {
+
+        window.location.href = '/';
+    }
+
+
+    /*
+     * =========================
+     * START
+     * =========================
+     */
+
+    loadMessages();
+
+</script>
+
+</body>
+</html>

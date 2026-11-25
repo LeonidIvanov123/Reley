@@ -1,15 +1,18 @@
 package com.reley.messenger.tg.controller;
 
 import com.reley.messenger.tg.dto.TgDialogResponse;
+import com.reley.messenger.tg.dto.TgMessageResponse;
 import com.reley.messenger.tg.dto.TgSelectedDialogsRequest;
 import com.reley.messenger.tg.dto.TgSelectedDialogsResponse;
 import com.reley.messenger.tg.service.TgChatService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -96,5 +99,31 @@ public class TgChatController {
                                 .saveSelectedDialogs(userId, chatIds)
                 );
     }
+
+    @GetMapping("/dialogs/{chatId}/messages")
+    public Mono<List<TgMessageResponse>> getMessages(
+            @PathVariable Long chatId,
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(required = false) Long fromMessageId
+    ) {
+        if (tgChatService.isEmpty()) {
+            return Mono.just(List.of());
+        }
+
+        int actualLimit = Math.min(Math.max(limit, 1), 100);
+
+        return userServiceInfo
+                .getCurrentUserId()
+                .flatMap(userId ->
+                        tgChatService.get()
+                                .getMessages(
+                                        userId,
+                                        chatId,
+                                        actualLimit,
+                                        fromMessageId
+                                )
+                );
+    }
+
 
 }

@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
@@ -35,6 +37,13 @@ public class TgController {
         );
 
         return "tg-chats";
+    }
+
+    @GetMapping("/tg/dialogs/{chatId}")
+    public Mono<String> tgDialog(@PathVariable Long chatId, Model model) {
+
+        model.addAttribute("chatId", chatId);
+        return Mono.just("tg-dialog");
     }
 
 }

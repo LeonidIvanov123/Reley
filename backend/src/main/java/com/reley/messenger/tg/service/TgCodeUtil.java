@@ -5,6 +5,7 @@ import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.reley.messenger.tg.dto.TgDialogResponse;
+import com.reley.messenger.tg.dto.TgMessageResponse;
 import it.tdlight.jni.TdApi;
 
 import java.io.ByteArrayOutputStream;
@@ -119,6 +120,84 @@ public final class TgCodeUtil {
         }
 
         return null;
+    }
+
+    public static TgMessageResponse toMessageResponse(TdApi.Message message) {
+
+        String text = extractText(message);
+
+        boolean hasAttachments = hasAttachments(message);
+
+        Long senderId = null;
+        String senderName = null;
+
+        if (message.senderId instanceof TdApi.MessageSenderUser userSender) {
+            senderId = userSender.userId;
+        }
+
+        return new TgMessageResponse(
+                message.id,
+                message.chatId,
+                senderId,
+                senderName,
+                text,
+                OffsetDateTime.ofInstant(
+                        Instant.ofEpochSecond(message.date),
+                        ZoneOffset.UTC
+                ),
+                hasAttachments
+        );
+    }
+
+    private static String extractText(TdApi.Message message) {
+
+        if (message.content instanceof TdApi.MessageText text) {
+            return text.text.text;
+        }
+
+        if (message.content instanceof TdApi.MessagePhoto photo) {
+            return photo.caption.text;
+        }
+
+        if (message.content instanceof TdApi.MessageVideo video) {
+            return video.caption.text;
+        }
+
+        if (message.content instanceof TdApi.MessageAnimation animation) {
+            return animation.caption.text;
+        }
+
+        if (message.content instanceof TdApi.MessageDocument document) {
+            return document.caption.text;
+        }
+
+        if (message.content instanceof TdApi.MessageAudio audio) {
+            return audio.caption.text;
+        }
+
+        if (message.content instanceof TdApi.MessageVoiceNote voice) {
+            return voice.caption.text;
+        }
+
+        return null;
+    }
+
+    private static boolean hasAttachments(TdApi.Message message) {
+
+        return switch (message.content) {
+            case TdApi.MessagePhoto ignored -> true;
+            case TdApi.MessageVideo ignored -> true;
+            case TdApi.MessageDocument ignored -> true;
+            case TdApi.MessageAudio ignored -> true;
+            case TdApi.MessageVoiceNote ignored -> true;
+            case TdApi.MessageVideoNote ignored -> true;
+            case TdApi.MessageAnimation ignored -> true;
+            case TdApi.MessageSticker ignored -> true;
+            case TdApi.MessageLocation ignored -> true;
+            case TdApi.MessageContact ignored -> true;
+            case TdApi.MessagePoll ignored -> true;
+            default -> false;
+        };
     }
 
 }

@@ -3,7 +3,6 @@ package com.reley.messenger.tg.service;
 import com.reley.messenger.tg.configuration.TelegramProperties;
 import com.reley.messenger.tg.dto.TgAuthQrResponse;
 import com.reley.messenger.tg.dto.TgAuthStatusResponse;
-import com.reley.messenger.tg.dto.TgDialogResponse;
 import com.reley.messenger.tg.entity.TgAccount;
 import com.reley.messenger.tg.repository.TgAccountRepository;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
@@ -19,15 +18,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -204,22 +200,11 @@ public class TgAuthServiceImpl implements TgAuthService {
                     new TgClientInteraction(
                             qr -> {
 
-                                log.debug(
-                                        "[TG AUTH] QR code received. userId={}, length={}",
-                                        userId,
-                                        qr == null ? null : qr.length()
-                                );
-
                                 if (qr != null && !qr.isBlank()) {
 
                                     qrCodeManager.put(
                                             userId,
                                             qr
-                                    );
-
-                                    log.debug(
-                                            "[TG AUTH] QR saved to TgQrCodeManager. userId={}",
-                                            userId
                                     );
 
                                 } else {
@@ -233,32 +218,15 @@ public class TgAuthServiceImpl implements TgAuthService {
                     )
             );
 
-            /*
-             * Для первичной авторизации и для восстановления
-             * можно использовать qrCode().
-             *
-             * Если существующая TDLib session авторизована,
-             * QR authentication supplier фактически не потребуется.
-             */
             SimpleAuthenticationSupplier<?> auth =
                     AuthenticationSupplier.qrCode();
 
-            /*
-             * Если создаём клиент для восстановления,
-             * будем ждать AuthorizationStateReady.
-             */
             CompletableFuture<SimpleTelegramClient> readyFuture =
                     new CompletableFuture<>();
 
-            /*
-             * Позволяет безопасно получить client из callback.
-             */
             AtomicReference<SimpleTelegramClient> clientReference =
                     new AtomicReference<>();
 
-            /*
-             * Handler регистрируем ДО builder.build().
-             */
             builder.addUpdateHandler(
                     TdApi.UpdateAuthorizationState.class,
                     update -> {
@@ -268,31 +236,13 @@ public class TgAuthServiceImpl implements TgAuthService {
                             TdApi.AuthorizationState state =
                                     update.authorizationState;
 
-                            log.debug(
-                                    "[TG AUTH STATE] userId={}, state={}",
-                                    userId,
-                                    state
-                            );
-
                             /*
                              * Авторизация полностью завершена.
                              */
-                            if (state
-                                    instanceof TdApi.AuthorizationStateReady) {
+                            if (state instanceof TdApi.AuthorizationStateReady) {
 
-                                log.debug(
-                                        "[TG AUTH] Telegram authorization ready. userId={}",
-                                        userId
-                                );
-
-                                /*
-                                 * QR больше не нужен.
-                                 */
                                 qrCodeManager.remove(userId);
 
-                                /*
-                                 * Получаем client.
-                                 */
                                 SimpleTelegramClient client =
                                         clientReference.get();
 
@@ -318,37 +268,12 @@ public class TgAuthServiceImpl implements TgAuthService {
                                     return;
                                 }
 
-                                /*
-                                 * На всякий случай сохраняем его
-                                 * в manager.
-                                 */
                                 clientManager.put(
                                         userId,
                                         client
                                 );
 
-                                log.debug(
-                                        "[TG AUTH] Telegram client stored in TgClientManager. userId={}",
-                                        userId
-                                );
-
-                                /*
-                                 * Если это восстановление —
-                                 * сообщаем вызывающему коду,
-                                 * что клиент готов.
-                                 */
                                 readyFuture.complete(client);
-
-                                /*
-                                 * Получаем текущего Telegram пользователя.
-                                 *
-                                 * Это используется и при первичной
-                                 * авторизации, и при восстановлении.
-                                 */
-                                log.debug(
-                                        "[TG AUTH] Calling Telegram getMe(). userId={}",
-                                        userId
-                                );
 
                                 client.getMeAsync()
                                         .whenComplete(
@@ -404,16 +329,6 @@ public class TgAuthServiceImpl implements TgAuthService {
                                                             username = null;
                                                         }
 
-                                                        log.debug(
-                                                                "[TG AUTH] Telegram username. userId={}, username={}",
-                                                                userId,
-                                                                username
-                                                        );
-
-                                                        /*
-                                                         * Сохраняем информацию
-                                                         * о Telegram аккаунте.
-                                                         */
                                                         saveTelegramAccount(
                                                                 userId,
                                                                 telegramUser,
@@ -445,40 +360,14 @@ public class TgAuthServiceImpl implements TgAuthService {
                     }
             );
 
-            log.debug(
-                    "[TG AUTH] Authorization state handler registered. userId={}",
-                    userId
-            );
-
-            /*
-             * Создаём Telegram client.
-             */
-            log.debug(
-                    "[TG AUTH] Building Telegram client. userId={}",
-                    userId
-            );
-
             SimpleTelegramClient client =
                     builder.build(auth);
 
             clientReference.set(client);
 
-            log.debug(
-                    "[TG AUTH] Telegram client created. userId={}",
-                    userId
-            );
-
-            /*
-             * Сохраняем client в manager.
-             */
             clientManager.put(
                     userId,
                     client
-            );
-
-            log.debug(
-                    "[TG AUTH] Telegram client stored in TgClientManager. userId={}",
-                    userId
             );
 
             return client;
@@ -539,10 +428,6 @@ public class TgAuthServiceImpl implements TgAuthService {
                 userId
         );
 
-        /*
-         * 2. Проверяем, действительно ли Telegram
-         * аккаунт был подключён.
-         */
         return tgAccountRepository
                 .findByUserId(userId)
 

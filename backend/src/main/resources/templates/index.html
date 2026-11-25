@@ -1359,10 +1359,15 @@
             );
 
 
+        const chatUrl =
+            `/tg/dialogs/${encodeURIComponent(dialog.chatId)}`;
+
+
         return `
 
-            <div class="dialog telegram-dialog"
-                 data-tg-chat-id="${escapeHtml(dialog.chatId)}">
+            <a class="dialog telegram-dialog"
+               data-tg-chat-id="${escapeHtml(dialog.chatId)}"
+               href="${chatUrl}">
 
                 <div class="telegram-avatar">
                     ${getTelegramAvatar(dialog.type)}
@@ -1396,7 +1401,7 @@
 
                 </div>
 
-            </div>
+            </a>
 
         `;
 

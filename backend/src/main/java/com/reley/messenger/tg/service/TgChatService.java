@@ -1,6 +1,7 @@
 package com.reley.messenger.tg.service;
 
 import com.reley.messenger.tg.dto.TgDialogResponse;
+import com.reley.messenger.tg.dto.TgMessageResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -18,6 +19,11 @@ public interface TgChatService {
 
     Mono<List<Long>> getSelectedDialogIds(Long userId);
 
-    Mono<List<TgDialogResponse>> getDialogs(Long userId);
+    Mono<List<TgMessageResponse>> getMessages(
+            Long userId,
+            Long chatId,
+            int limit,
+            Long fromMessageId
+    );
 
 }
