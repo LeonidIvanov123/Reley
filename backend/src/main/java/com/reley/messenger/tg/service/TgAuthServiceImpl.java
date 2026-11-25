@@ -3,6 +3,7 @@ package com.reley.messenger.tg.service;
 import com.reley.messenger.tg.configuration.TelegramProperties;
 import com.reley.messenger.tg.dto.TgAuthQrResponse;
 import com.reley.messenger.tg.dto.TgAuthStatusResponse;
+import com.reley.messenger.tg.dto.TgDialogResponse;
 import com.reley.messenger.tg.entity.TgAccount;
 import com.reley.messenger.tg.repository.TgAccountRepository;
 import it.tdlight.client.APIToken;
@@ -17,11 +18,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -600,7 +606,7 @@ public class TgAuthServiceImpl implements TgAuthService {
                     }
 
                     return Mono.fromCallable(
-                            () -> TgQrCodeUtil.generate(qr)
+                            () -> TgCodeUtil.generate(qr)
                     );
                 });
     }
@@ -687,6 +693,35 @@ public class TgAuthServiceImpl implements TgAuthService {
                         })
                 )
                 .then();
+    }
+
+    @Override
+    public Mono<List<TgDialogResponse>> getDialogs(Long userId) {
+
+        SimpleTelegramClient client =
+                clientManager.get(userId);
+
+        if (client == null) {
+            return Mono.error(new IllegalStateException("Telegram client is not connected"));
+        }
+
+        return Mono.fromFuture(
+                        client.send(
+                                new TdApi.GetChats(new TdApi.ChatListMain(), 100)
+                        )
+                )
+                .flatMapMany(chats ->
+                        Flux.fromStream(Arrays.stream(chats.chatIds).boxed())
+                                .concatMap(chatId ->
+                                        Mono.fromFuture(
+                                                client.send(
+                                                        new TdApi.GetChat(chatId)
+                                                )
+                                        )
+                                )
+                )
+                .map(TgCodeUtil::toDialogResponse)
+                .collectList();
     }
 
 }

@@ -2,7 +2,10 @@ package com.reley.messenger.tg.service;
 
 import com.reley.messenger.tg.dto.TgAuthQrResponse;
 import com.reley.messenger.tg.dto.TgAuthStatusResponse;
+import com.reley.messenger.tg.dto.TgDialogResponse;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public interface TgAuthService {
 
@@ -15,5 +18,7 @@ public interface TgAuthService {
     Mono<byte[]> getQr(Long userId);
 
     Mono<TgAuthStatusResponse> getStatus(Long userId);
+
+    Mono<List<TgDialogResponse>> getDialogs(Long userId);
 
 }
