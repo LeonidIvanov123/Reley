@@ -138,6 +138,56 @@
         }
 
         /*
+         * Telegram tab
+         */
+
+        .telegram-tab-wrapper {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: stretch;
+            border-radius: 8px;
+        }
+
+        .telegram-tab-wrapper .dialog-tab {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .telegram-settings-link {
+            width: 38px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: #858b98;
+            text-decoration: none;
+            font-size: 17px;
+            transition: background 0.2s,
+                        color 0.2s;
+        }
+
+        .telegram-settings-link:hover {
+            background: #e9edf5;
+            color: #3978d5;
+        }
+
+        .telegram-tab-wrapper:has(.dialog-tab.active) {
+            background: #ffffff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .telegram-tab-wrapper:has(.dialog-tab.active) .dialog-tab {
+            box-shadow: none;
+        }
+
+        .telegram-tab-wrapper:has(.dialog-tab.active)
+        .telegram-settings-link {
+            color: #3978d5;
+        }
+
+        /*
          * Dialog search
          */
 
@@ -491,6 +541,16 @@
             font-size: 14px;
         }
 
+        .telegram-settings-inline-link {
+            color: #3978d5;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .telegram-settings-inline-link:hover {
+            text-decoration: underline;
+        }
+
         /*
          * Group avatar
          */
@@ -603,6 +663,11 @@
             .dialog-tab {
                 font-size: 12px;
                 padding: 9px 6px;
+            }
+
+            .telegram-settings-link {
+                width: 34px;
+                font-size: 16px;
             }
         }
 
@@ -734,14 +799,27 @@
         </button>
 
 
-        <button th:if="${telegramConnected}"
-                id="telegram-dialogs-tab"
-                class="dialog-tab"
-                type="button">
+        <div th:if="${telegramConnected}"
+             class="telegram-tab-wrapper">
 
-            Telegram чаты
+            <button id="telegram-dialogs-tab"
+                    class="dialog-tab"
+                    type="button">
 
-        </button>
+                Telegram чаты
+
+            </button>
+
+            <a href="/profile/tg/chats"
+               class="telegram-settings-link"
+               title="Настройки Telegram-чатов"
+               aria-label="Настройки Telegram-чатов">
+
+                ⚙️
+
+            </a>
+
+        </div>
 
     </div>
 
@@ -1224,11 +1302,15 @@
                     '</div>' +
 
                     '<div class="empty-title">' +
-                        'Telegram-чатов пока нет' +
+                        'Пока нет выбранных чатов' +
                     '</div>' +
 
                     '<div class="empty-description">' +
-                        'В Telegram не найдено диалогов.' +
+                        'Выберите чаты, которые хотите видеть здесь, в ' +
+                        '<a href="/profile/tg/chats" ' +
+                           'class="telegram-settings-inline-link">' +
+                            'настройках' +
+                        '</a>.' +
                     '</div>' +
 
                 '</div>';

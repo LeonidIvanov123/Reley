@@ -27,4 +27,14 @@ public class TgController {
         return "tg";
     }
 
+    @GetMapping("/profile/tg/chats")
+    public String chatsPage(Model model) {
+        model.addAttribute(
+                "telegramEnabled",
+                tgChatService.isPresent()
+        );
+
+        return "tg-chats";
+    }
+
 }
