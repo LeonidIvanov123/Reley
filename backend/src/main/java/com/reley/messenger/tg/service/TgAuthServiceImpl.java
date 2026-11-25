@@ -6,6 +6,7 @@ import com.reley.messenger.tg.dto.TgAuthStatusResponse;
 import com.reley.messenger.tg.dto.TgDialogResponse;
 import com.reley.messenger.tg.entity.TgAccount;
 import com.reley.messenger.tg.repository.TgAccountRepository;
+import com.reley.messenger.user.service.HydrateUserInfoApi;
 import it.tdlight.client.APIToken;
 import it.tdlight.client.AuthenticationSupplier;
 import it.tdlight.client.SimpleAuthenticationSupplier;
@@ -23,9 +24,7 @@ import reactor.core.publisher.Mono;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -44,6 +43,7 @@ public class TgAuthServiceImpl implements TgAuthService {
     private final TgClientManager clientManager;
     private final TgQrCodeManager qrCodeManager;
     private final TgAccountRepository tgAccountRepository;
+    private final HydrateUserInfoApi userInfoApi;
 
     @Override
     public Mono<TgAuthQrResponse> start(Long userId) {
@@ -722,6 +722,12 @@ public class TgAuthServiceImpl implements TgAuthService {
                 )
                 .map(TgCodeUtil::toDialogResponse)
                 .collectList();
+    }
+
+    @Override
+    public Mono<Boolean> isAuthCurrentUser() {
+        return userInfoApi.getCurrentUserId()
+                .flatMap(tgAccountRepository::existsByUserId);
     }
 
 }

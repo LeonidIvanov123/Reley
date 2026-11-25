@@ -21,4 +21,6 @@ public interface TgAuthService {
 
     Mono<List<TgDialogResponse>> getDialogs(Long userId);
 
+    Mono<Boolean> isAuthCurrentUser();
+
 }
