@@ -24,9 +24,12 @@ import reactor.core.publisher.Mono;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
@@ -45,6 +48,11 @@ public class TgAuthServiceImpl implements TgAuthService {
     private final TgAccountRepository tgAccountRepository;
     private final HydrateUserInfoApi userInfoApi;
 
+
+    // =========================================================
+    // AUTHORIZATION
+    // =========================================================
+
     @Override
     public Mono<TgAuthQrResponse> start(Long userId) {
 
@@ -56,7 +64,8 @@ public class TgAuthServiceImpl implements TgAuthService {
             );
 
             /*
-             * Проверяем, нет ли уже запущенного клиента.
+             * Если клиент уже существует в памяти —
+             * повторно его не создаём.
              */
             SimpleTelegramClient existing =
                     clientManager.get(userId);
@@ -72,40 +81,67 @@ public class TgAuthServiceImpl implements TgAuthService {
             }
 
             /*
-             * Путь к TDLib session.
+             * Создаём новый Telegram client.
+             *
+             * Для первичной авторизации используем QR.
              */
-            Path sessionPath =
-                    Path.of(
-                            properties.getDataDirectory(),
-                            "user-" + userId
-                    );
-
-            log.debug(
-                    "[TG AUTH] Session path: {}",
-                    sessionPath.toAbsolutePath()
+            createClient(
+                    userId,
+                    true
             );
 
-            Files.createDirectories(sessionPath);
-
-            /*
-             * Telegram API credentials.
-             */
-            APIToken apiToken =
-                    new APIToken(
-                            properties.getApiId(),
-                            properties.getApiHash()
-                    );
-
             log.debug(
-                    "[TG AUTH] Telegram API token created. userId={}",
+                    "[TG AUTH] Telegram authorization started successfully. userId={}",
                     userId
             );
 
-            /*
-             * TDLib settings.
-             */
-            TDLibSettings settings =
-                    TDLibSettings.create(apiToken);
+            return new TgAuthQrResponse(null);
+        });
+    }
+
+
+    // =========================================================
+    // CREATE TELEGRAM CLIENT
+    // =========================================================
+
+    /**
+     * Создаёт TDLight client.
+     *
+     * @param userId пользователь Reley
+     * @param qrAuthentication true — первичная авторизация через QR
+     */
+    private SimpleTelegramClient createClient(
+            Long userId,
+            boolean qrAuthentication
+    ) {
+
+        log.debug(
+                "[TG AUTH] Creating Telegram client. userId={}, qrAuthentication={}",
+                userId,
+                qrAuthentication
+        );
+
+        /*
+         * Путь к существующей TDLib session.
+         *
+         * ВАЖНО:
+         * после рестарта приложения используется тот же путь,
+         * поэтому TDLib сможет восстановить существующую авторизацию.
+         */
+        Path sessionPath =
+                Path.of(
+                        properties.getDataDirectory(),
+                        "user-" + userId
+                );
+
+        log.debug(
+                "[TG AUTH] Session path: {}",
+                sessionPath.toAbsolutePath()
+        );
+
+        try {
+
+            Files.createDirectories(sessionPath);
 
             Path databasePath =
                     sessionPath.resolve("data");
@@ -113,13 +149,8 @@ public class TgAuthServiceImpl implements TgAuthService {
             Path downloadsPath =
                     sessionPath.resolve("downloads");
 
-            settings.setDatabaseDirectoryPath(
-                    databasePath
-            );
-
-            settings.setDownloadedFilesDirectoryPath(
-                    downloadsPath
-            );
+            Files.createDirectories(databasePath);
+            Files.createDirectories(downloadsPath);
 
             log.debug(
                     "[TG AUTH] TDLib database path: {}",
@@ -132,20 +163,42 @@ public class TgAuthServiceImpl implements TgAuthService {
             );
 
             /*
-             * Создаём builder.
+             * Telegram API credentials.
+             */
+            APIToken apiToken =
+                    new APIToken(
+                            properties.getApiId(),
+                            properties.getApiHash()
+                    );
+
+            /*
+             * TDLib settings.
+             */
+            TDLibSettings settings =
+                    TDLibSettings.create(apiToken);
+
+            settings.setDatabaseDirectoryPath(
+                    databasePath
+            );
+
+            settings.setDownloadedFilesDirectoryPath(
+                    downloadsPath
+            );
+
+            /*
+             * Builder.
              */
             SimpleTelegramClientBuilder builder =
                     clientFactory.builder(settings);
 
-            log.debug(
-                    "[TG AUTH] SimpleTelegramClientBuilder created. userId={}",
-                    userId
-            );
-
             /*
              * QR callback.
              *
-             * TDLight передаст сюда tg://login?token=...
+             * При восстановлении уже существующей сессии
+             * этот callback обычно не вызывается.
+             *
+             * Но если TDLib всё-таки потребует повторную авторизацию,
+             * мы сможем получить новый QR.
              */
             builder.setClientInteraction(
                     new TgClientInteraction(
@@ -181,20 +234,30 @@ public class TgAuthServiceImpl implements TgAuthService {
             );
 
             /*
-             * Authentication supplier.
+             * Для первичной авторизации и для восстановления
+             * можно использовать qrCode().
+             *
+             * Если существующая TDLib session авторизована,
+             * QR authentication supplier фактически не потребуется.
              */
             SimpleAuthenticationSupplier<?> auth =
                     AuthenticationSupplier.qrCode();
 
-            log.debug(
-                    "[TG AUTH] QR authentication supplier created. userId={}",
-                    userId
-            );
+            /*
+             * Если создаём клиент для восстановления,
+             * будем ждать AuthorizationStateReady.
+             */
+            CompletableFuture<SimpleTelegramClient> readyFuture =
+                    new CompletableFuture<>();
 
             /*
-             * ВАЖНО:
-             *
-             * Handler регистрируем ДО builder.build(auth).
+             * Позволяет безопасно получить client из callback.
+             */
+            AtomicReference<SimpleTelegramClient> clientReference =
+                    new AtomicReference<>();
+
+            /*
+             * Handler регистрируем ДО builder.build().
              */
             builder.addUpdateHandler(
                     TdApi.UpdateAuthorizationState.class,
@@ -227,35 +290,60 @@ public class TgAuthServiceImpl implements TgAuthService {
                                  */
                                 qrCodeManager.remove(userId);
 
-                                log.debug(
-                                        "[TG AUTH] QR removed from TgQrCodeManager. userId={}",
-                                        userId
-                                );
-
                                 /*
-                                 * Получаем уже созданный Telegram client
-                                 * из manager.
+                                 * Получаем client.
                                  */
                                 SimpleTelegramClient client =
-                                        clientManager.get(userId);
+                                        clientReference.get();
+
+                                if (client == null) {
+
+                                    client =
+                                            clientManager.get(userId);
+                                }
 
                                 if (client == null) {
 
                                     log.error(
-                                            "[TG AUTH] Telegram client not found in TgClientManager. userId={}",
+                                            "[TG AUTH] Telegram client not found after AuthorizationStateReady. userId={}",
                                             userId
+                                    );
+
+                                    readyFuture.completeExceptionally(
+                                            new IllegalStateException(
+                                                    "Telegram client not found after AuthorizationStateReady"
+                                            )
                                     );
 
                                     return;
                                 }
 
+                                /*
+                                 * На всякий случай сохраняем его
+                                 * в manager.
+                                 */
+                                clientManager.put(
+                                        userId,
+                                        client
+                                );
+
                                 log.debug(
-                                        "[TG AUTH] Telegram client found. userId={}",
+                                        "[TG AUTH] Telegram client stored in TgClientManager. userId={}",
                                         userId
                                 );
 
                                 /*
+                                 * Если это восстановление —
+                                 * сообщаем вызывающему коду,
+                                 * что клиент готов.
+                                 */
+                                readyFuture.complete(client);
+
+                                /*
                                  * Получаем текущего Telegram пользователя.
+                                 *
+                                 * Это используется и при первичной
+                                 * авторизации, и при восстановлении.
                                  */
                                 log.debug(
                                         "[TG AUTH] Calling Telegram getMe(). userId={}",
@@ -290,7 +378,8 @@ public class TgAuthServiceImpl implements TgAuthService {
                                                         }
 
                                                         log.debug(
-                                                                "[TG AUTH] Telegram user received. userId={}, telegramUserId={}, firstName={}, lastName={}",
+                                                                "[TG AUTH] Telegram user received. " +
+                                                                        "userId={}, telegramUserId={}, firstName={}, lastName={}",
                                                                 userId,
                                                                 telegramUser.id,
                                                                 telegramUser.firstName,
@@ -298,7 +387,7 @@ public class TgAuthServiceImpl implements TgAuthService {
                                                         );
 
                                                         /*
-                                                         * Получаем username.
+                                                         * Username.
                                                          */
                                                         String username;
 
@@ -322,138 +411,14 @@ public class TgAuthServiceImpl implements TgAuthService {
                                                         );
 
                                                         /*
-                                                         * Ищем существующую связь.
+                                                         * Сохраняем информацию
+                                                         * о Telegram аккаунте.
                                                          */
-                                                        log.debug(
-                                                                "[TG AUTH] Searching tg_accounts. userId={}",
-                                                                userId
+                                                        saveTelegramAccount(
+                                                                userId,
+                                                                telegramUser,
+                                                                username
                                                         );
-
-                                                        tgAccountRepository
-                                                                .findByUserId(userId)
-
-                                                                /*
-                                                                 * Если аккаунт уже есть —
-                                                                 * обновляем его.
-                                                                 */
-                                                                .flatMap(
-                                                                        existingAccount -> {
-
-                                                                            log.debug(
-                                                                                    "[TG AUTH] Existing tg_account found. userId={}, accountId={}",
-                                                                                    userId,
-                                                                                    existingAccount.getId()
-                                                                            );
-
-                                                                            existingAccount
-                                                                                    .setTelegramUserId(
-                                                                                            telegramUser.id
-                                                                                    );
-
-                                                                            existingAccount
-                                                                                    .setUsername(
-                                                                                            username
-                                                                                    );
-
-                                                                            existingAccount
-                                                                                    .setFirstName(
-                                                                                            telegramUser.firstName
-                                                                                    );
-
-                                                                            existingAccount
-                                                                                    .setLastName(
-                                                                                            telegramUser.lastName
-                                                                                    );
-
-                                                                            existingAccount
-                                                                                    .setUpdatedAt(
-                                                                                            OffsetDateTime.now()
-                                                                                    );
-
-                                                                            log.debug(
-                                                                                    "[TG AUTH] Updating tg_account. userId={}, accountId={}",
-                                                                                    userId,
-                                                                                    existingAccount.getId()
-                                                                            );
-
-                                                                            return tgAccountRepository.save(
-                                                                                    existingAccount
-                                                                            );
-                                                                        }
-                                                                )
-
-                                                                /*
-                                                                 * Если аккаунта ещё нет —
-                                                                 * создаём.
-                                                                 */
-                                                                .switchIfEmpty(
-                                                                        Mono.defer(() -> {
-
-                                                                            log.debug(
-                                                                                    "[TG AUTH] No existing tg_account found. userId={}",
-                                                                                    userId
-                                                                            );
-
-                                                                            TgAccount account =
-                                                                                    TgAccount.builder()
-                                                                                            .userId(userId)
-                                                                                            .telegramUserId(
-                                                                                                    telegramUser.id
-                                                                                            )
-                                                                                            .username(
-                                                                                                    username
-                                                                                            )
-                                                                                            .firstName(
-                                                                                                    telegramUser.firstName
-                                                                                            )
-                                                                                            .lastName(
-                                                                                                    telegramUser.lastName
-                                                                                            )
-                                                                                            .createdAt(
-                                                                                                    OffsetDateTime.now()
-                                                                                            )
-                                                                                            .updatedAt(
-                                                                                                    OffsetDateTime.now()
-                                                                                            )
-                                                                                            .build();
-
-                                                                            log.debug(
-                                                                                    "[TG AUTH] Creating new tg_account. userId={}",
-                                                                                    userId
-                                                                            );
-
-                                                                            return tgAccountRepository.save(
-                                                                                    account
-                                                                            );
-                                                                        })
-                                                                )
-
-                                                                /*
-                                                                 * ВАЖНО: подписываемся
-                                                                 * и логируем результат.
-                                                                 */
-                                                                .subscribe(
-                                                                        saved -> {
-
-                                                                            log.debug(
-                                                                                    "[TG AUTH] Telegram account saved. userId={}, accountId={}, telegramUserId={}, username={}",
-                                                                                    saved.getUserId(),
-                                                                                    saved.getId(),
-                                                                                    saved.getTelegramUserId(),
-                                                                                    saved.getUsername()
-                                                                            );
-
-                                                                        },
-
-                                                                        saveError -> {
-
-                                                                            log.error(
-                                                                                    "[TG AUTH] Telegram account save failed. userId={}",
-                                                                                    userId,
-                                                                                    saveError
-                                                                            );
-                                                                        }
-                                                                );
 
                                                     } catch (Throwable e) {
 
@@ -474,6 +439,8 @@ public class TgAuthServiceImpl implements TgAuthService {
                                     userId,
                                     e
                             );
+
+                            readyFuture.completeExceptionally(e);
                         }
                     }
             );
@@ -484,9 +451,7 @@ public class TgAuthServiceImpl implements TgAuthService {
             );
 
             /*
-             * Теперь создаём Telegram client.
-             *
-             * Handler уже зарегистрирован выше.
+             * Создаём Telegram client.
              */
             log.debug(
                     "[TG AUTH] Building Telegram client. userId={}",
@@ -495,6 +460,8 @@ public class TgAuthServiceImpl implements TgAuthService {
 
             SimpleTelegramClient client =
                     builder.build(auth);
+
+            clientReference.set(client);
 
             log.debug(
                     "[TG AUTH] Telegram client created. userId={}",
@@ -514,14 +481,297 @@ public class TgAuthServiceImpl implements TgAuthService {
                     userId
             );
 
+            return client;
+
+        } catch (Exception e) {
+
+            log.error(
+                    "[TG AUTH] Failed to create Telegram client. userId={}",
+                    userId,
+                    e
+            );
+
+            throw new IllegalStateException(
+                    "Failed to create Telegram client",
+                    e
+            );
+        }
+    }
+
+
+    // =========================================================
+    // RESTORE CLIENT
+    // =========================================================
+
+    /**
+     * Возвращает Telegram client из памяти.
+     *
+     * Если приложение было перезапущено,
+     * clientManager будет пустым.
+     *
+     * В этом случае проверяем tg_accounts и
+     * восстанавливаем TDLib client из существующей session.
+     */
+    @Override
+    public Mono<SimpleTelegramClient> getOrRestoreClient(
+            Long userId
+    ) {
+
+        /*
+         * 1. Сначала проверяем память.
+         */
+        SimpleTelegramClient existing =
+                clientManager.get(userId);
+
+        if (existing != null) {
+
             log.debug(
-                    "[TG AUTH] Telegram authorization started successfully. userId={}",
+                    "[TG AUTH] Telegram client already exists in manager. userId={}",
                     userId
             );
 
-            return new TgAuthQrResponse(null);
-        });
+            return Mono.just(existing);
+        }
+
+        log.info(
+                "[TG AUTH] Telegram client not found in manager. " +
+                        "Checking tg_accounts for restore. userId={}",
+                userId
+        );
+
+        /*
+         * 2. Проверяем, действительно ли Telegram
+         * аккаунт был подключён.
+         */
+        return tgAccountRepository
+                .findByUserId(userId)
+
+                .switchIfEmpty(
+                        Mono.error(
+                                new IllegalStateException(
+                                        "Telegram account is not connected"
+                                )
+                        )
+                )
+
+                .flatMap(account -> {
+
+                    log.info(
+                            "[TG AUTH] Telegram account found in DB. " +
+                                    "Restoring client. userId={}, telegramUserId={}",
+                            userId,
+                            account.getTelegramUserId()
+                    );
+
+                    /*
+                     * 3. Создаём client с той же TDLib session.
+                     */
+                    SimpleTelegramClient client =
+                            createClient(
+                                    userId,
+                                    false
+                            );
+
+                    /*
+                     * 4. Ждём AuthorizationStateReady.
+                     *
+                     * Здесь TDLib должна восстановить
+                     * существующую авторизацию из data/telegram/user-{id}.
+                     */
+                    return waitForClientReady(
+                            userId,
+                            client
+                    );
+                });
     }
+
+
+    /**
+     * Ждём, пока TDLib переведёт клиент
+     * в AuthorizationStateReady.
+     *
+     * Обычно при восстановлении существующей
+     * session это происходит практически сразу.
+     */
+    private Mono<SimpleTelegramClient> waitForClientReady(
+            Long userId,
+            SimpleTelegramClient client
+    ) {
+
+        /*
+         * В данном случае createClient уже зарегистрировал
+         * AuthorizationStateReady handler.
+         *
+         * Поэтому проверяем состояние через getMe().
+         *
+         * Если getMe() успешно выполняется — client уже готов.
+         */
+        return Mono.fromFuture(
+                        client.getMeAsync()
+                )
+                .timeout(
+                        Duration.ofSeconds(30)
+                )
+                .doOnNext(user ->
+                        log.info(
+                                "[TG AUTH] Telegram client restored successfully. " +
+                                        "userId={}, telegramUserId={}",
+                                userId,
+                                user.id
+                        )
+                )
+                .thenReturn(client)
+                .doOnError(error ->
+                        log.error(
+                                "[TG AUTH] Failed to restore Telegram client. " +
+                                        "userId={}",
+                                userId,
+                                error
+                        )
+                );
+    }
+
+
+    // =========================================================
+    // SAVE TG ACCOUNT
+    // =========================================================
+
+    private void saveTelegramAccount(
+            Long userId,
+            TdApi.User telegramUser,
+            String username
+    ) {
+
+        log.debug(
+                "[TG AUTH] Searching tg_accounts. userId={}",
+                userId
+        );
+
+        tgAccountRepository
+                .findByUserId(userId)
+
+                /*
+                 * Если аккаунт уже есть —
+                 * обновляем его.
+                 */
+                .flatMap(existingAccount -> {
+
+                    log.debug(
+                            "[TG AUTH] Existing tg_account found. " +
+                                    "userId={}, accountId={}",
+                            userId,
+                            existingAccount.getId()
+                    );
+
+                    existingAccount.setTelegramUserId(
+                            telegramUser.id
+                    );
+
+                    existingAccount.setUsername(
+                            username
+                    );
+
+                    existingAccount.setFirstName(
+                            telegramUser.firstName
+                    );
+
+                    existingAccount.setLastName(
+                            telegramUser.lastName
+                    );
+
+                    existingAccount.setUpdatedAt(
+                            OffsetDateTime.now()
+                    );
+
+                    log.debug(
+                            "[TG AUTH] Updating tg_account. " +
+                                    "userId={}, accountId={}",
+                            userId,
+                            existingAccount.getId()
+                    );
+
+                    return tgAccountRepository.save(
+                            existingAccount
+                    );
+                })
+
+                /*
+                 * Если аккаунта ещё нет —
+                 * создаём.
+                 */
+                .switchIfEmpty(
+                        Mono.defer(() -> {
+
+                            log.debug(
+                                    "[TG AUTH] No existing tg_account found. userId={}",
+                                    userId
+                            );
+
+                            TgAccount account =
+                                    TgAccount.builder()
+                                            .userId(userId)
+                                            .telegramUserId(
+                                                    telegramUser.id
+                                            )
+                                            .username(
+                                                    username
+                                            )
+                                            .firstName(
+                                                    telegramUser.firstName
+                                            )
+                                            .lastName(
+                                                    telegramUser.lastName
+                                            )
+                                            .createdAt(
+                                                    OffsetDateTime.now()
+                                            )
+                                            .updatedAt(
+                                                    OffsetDateTime.now()
+                                            )
+                                            .build();
+
+                            log.debug(
+                                    "[TG AUTH] Creating new tg_account. userId={}",
+                                    userId
+                            );
+
+                            return tgAccountRepository.save(
+                                    account
+                            );
+                        })
+                )
+
+                .subscribe(
+                        saved -> {
+
+                            log.debug(
+                                    "[TG AUTH] Telegram account saved. " +
+                                            "userId={}, accountId={}, " +
+                                            "telegramUserId={}, username={}",
+                                    saved.getUserId(),
+                                    saved.getId(),
+                                    saved.getTelegramUserId(),
+                                    saved.getUsername()
+                            );
+
+                        },
+
+                        saveError -> {
+
+                            log.error(
+                                    "[TG AUTH] Telegram account save failed. " +
+                                            "userId={}",
+                                    userId,
+                                    saveError
+                            );
+                        }
+                );
+    }
+
+
+    // =========================================================
+    // DISCONNECT
+    // =========================================================
 
     @Override
     public Mono<Void> disconnect(Long userId) {
@@ -563,6 +813,7 @@ public class TgAuthServiceImpl implements TgAuthService {
         }
 
         return logout
+
                 .doFinally(signal -> {
 
                     clientManager.remove(userId);
@@ -572,18 +823,23 @@ public class TgAuthServiceImpl implements TgAuthService {
                             userId
                     );
                 })
+
                 .then(
                         tgAccountRepository
                                 .findByUserId(userId)
-                                .flatMap(tgAccountRepository::delete)
+                                .flatMap(
+                                        tgAccountRepository::delete
+                                )
                                 .then()
                 )
+
                 .doOnSuccess(unused ->
                         log.debug(
                                 "[TG AUTH] Telegram account disconnected successfully. userId={}",
                                 userId
                         )
                 )
+
                 .doOnError(error ->
                         log.error(
                                 "[TG AUTH] Telegram account disconnect failed. userId={}",
@@ -592,6 +848,11 @@ public class TgAuthServiceImpl implements TgAuthService {
                         )
                 );
     }
+
+
+    // =========================================================
+    // QR
+    // =========================================================
 
     @Override
     public Mono<byte[]> getQr(Long userId) {
@@ -611,8 +872,15 @@ public class TgAuthServiceImpl implements TgAuthService {
                 });
     }
 
+
+    // =========================================================
+    // STATUS
+    // =========================================================
+
     @Override
-    public Mono<TgAuthStatusResponse> getStatus(Long userId) {
+    public Mono<TgAuthStatusResponse> getStatus(
+            Long userId
+    ) {
 
         return tgAccountRepository
                 .findByUserId(userId)
@@ -634,6 +902,11 @@ public class TgAuthServiceImpl implements TgAuthService {
                 );
     }
 
+
+    // =========================================================
+    // CANCEL PENDING AUTH
+    // =========================================================
+
     @Override
     public Mono<Void> cancelPendingAuth(Long userId) {
 
@@ -644,6 +917,7 @@ public class TgAuthServiceImpl implements TgAuthService {
 
         return tgAccountRepository
                 .findByUserId(userId)
+
                 .flatMap(account -> {
 
                     log.debug(
@@ -654,6 +928,7 @@ public class TgAuthServiceImpl implements TgAuthService {
 
                     return Mono.empty();
                 })
+
                 .switchIfEmpty(
                         Mono.defer(() -> {
 
@@ -680,9 +955,13 @@ public class TgAuthServiceImpl implements TgAuthService {
                             clientManager.remove(userId);
 
                             return Mono.fromRunnable(() -> {
+
                                 try {
+
                                     client.close();
+
                                 } catch (Exception e) {
+
                                     log.warn(
                                             "[TG AUTH] Failed to close pending Telegram client. userId={}",
                                             userId,
@@ -692,42 +971,21 @@ public class TgAuthServiceImpl implements TgAuthService {
                             });
                         })
                 )
+
                 .then();
     }
 
-    @Override
-    public Mono<List<TgDialogResponse>> getDialogs(Long userId) {
-
-        SimpleTelegramClient client =
-                clientManager.get(userId);
-
-        if (client == null) {
-            return Mono.error(new IllegalStateException("Telegram client is not connected"));
-        }
-
-        return Mono.fromFuture(
-                        client.send(
-                                new TdApi.GetChats(new TdApi.ChatListMain(), 100)
-                        )
-                )
-                .flatMapMany(chats ->
-                        Flux.fromStream(Arrays.stream(chats.chatIds).boxed())
-                                .concatMap(chatId ->
-                                        Mono.fromFuture(
-                                                client.send(
-                                                        new TdApi.GetChat(chatId)
-                                                )
-                                        )
-                                )
-                )
-                .map(TgCodeUtil::toDialogResponse)
-                .collectList();
-    }
+    // =========================================================
+    // CURRENT USER AUTH
+    // =========================================================
 
     @Override
     public Mono<Boolean> isAuthCurrentUser() {
-        return userInfoApi.getCurrentUserId()
-                .flatMap(tgAccountRepository::existsByUserId);
-    }
 
+        return userInfoApi
+                .getCurrentUserId()
+                .flatMap(
+                        tgAccountRepository::existsByUserId
+                );
+    }
 }

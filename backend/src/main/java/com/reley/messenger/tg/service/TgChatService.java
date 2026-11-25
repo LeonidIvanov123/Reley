@@ -1,0 +1,23 @@
+package com.reley.messenger.tg.service;
+
+import com.reley.messenger.tg.dto.TgDialogResponse;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+
+public interface TgChatService {
+
+    Mono<List<TgDialogResponse>> getAvailableDialogs(Long userId);
+
+    Mono<List<TgDialogResponse>> getSelectedDialogs(Long userId);
+
+    Mono<Void> saveSelectedDialogs(
+            Long userId,
+            List<Long> chatIds
+    );
+
+    Mono<List<Long>> getSelectedDialogIds(Long userId);
+
+    Mono<List<TgDialogResponse>> getDialogs(Long userId);
+
+}

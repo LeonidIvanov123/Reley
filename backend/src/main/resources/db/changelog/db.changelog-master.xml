@@ -24,5 +24,6 @@
     <include file="db/changelog/changes/015-add-reply-to-message.xml"/>
     <include file="db/changelog/changes/016-add-dialog-avatar.xml"/>
     <include file="db/changelog/changes/017-create-tg-accounts.xml"/>
+    <include file="db/changelog/changes/018-tg-dialogs.xml"/>
 
 </databaseChangeLog>

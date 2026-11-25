@@ -1,6 +1,6 @@
 package com.reley.messenger.tg.controller;
 
-import com.reley.messenger.tg.service.TgAuthService;
+import com.reley.messenger.tg.service.TgChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,14 +14,14 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class TgController {
 
-    private final Optional<TgAuthService> tgAuthService;
+    private final Optional<TgChatService> tgChatService;
 
     @GetMapping("/profile/tg")
     public String page(Model model) {
 
         model.addAttribute(
                 "telegramEnabled",
-                tgAuthService.isPresent()
+                tgChatService.isPresent()
         );
 
         return "tg";
