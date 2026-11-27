@@ -62,15 +62,32 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // QR-code generator
+    implementation 'com.google.zxing:core:3.5.4'
+    implementation 'com.google.zxing:javase:3.5.4'
+
     // TG integration
     implementation platform('it.tdlight:tdlight-java-bom:3.5.9+td.1.8.68')
     implementation 'it.tdlight:tdlight-java'
+
+    def os = System.getProperty("os.name").toLowerCase()
+
+    def tdlightNativeClassifier = os.contains("win")
+            ? "windows_amd64"
+            : os.contains("linux")
+            ? "linux_amd64_gnu_ssl3"
+            : null
+
+    if (tdlightNativeClassifier == null) {
+        throw new GradleException(
+                "Unsupported OS for TDLight: ${os}"
+        )
+    }
+
     implementation group: 'it.tdlight',
             name: 'tdlight-natives',
-            classifier: 'windows_amd64'
+            classifier: tdlightNativeClassifier
 
-    implementation 'com.google.zxing:core:3.5.4'
-    implementation 'com.google.zxing:javase:3.5.4'
 }
 
 tasks.named('test') {
