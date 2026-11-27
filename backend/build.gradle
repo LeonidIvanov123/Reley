@@ -15,6 +15,10 @@ java {
 
 repositories {
     mavenCentral()
+
+    maven {
+        url = "https://mvn.mchv.eu/repository/mchv/"
+    }
 }
 
 dependencies {
@@ -57,6 +61,16 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // TG integration
+    implementation platform('it.tdlight:tdlight-java-bom:3.5.9+td.1.8.68')
+    implementation 'it.tdlight:tdlight-java'
+    implementation group: 'it.tdlight',
+            name: 'tdlight-natives',
+            classifier: 'windows_amd64'
+
+    implementation 'com.google.zxing:core:3.5.4'
+    implementation 'com.google.zxing:javase:3.5.4'
 }
 
 tasks.named('test') {

@@ -51,6 +51,12 @@ logging:
     #org.springframework.data.r2dbc: DEBUG
     #org.springframework.security: TRACE
 
+telegram:
+  api-enabled: ${TELEGRAM_API_ENABLED:false}
+  api-id: ${TELEGRAM_API_ID:0}
+  api-hash: ${TELEGRAM_API_HASH}
+  data-directory: ${TELEGRAM_DATA_DIRECTORY:./data/telegram}
+
 reley:
   file-storage:
     type: local

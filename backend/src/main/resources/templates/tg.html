@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Telegram — Reley Messenger</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #222;
+        }
+
+        .page {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #3978d5;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .back:hover {
+            text-decoration: underline;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 30px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+            text-align: center;
+        }
+
+        .telegram-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px;
+
+            border-radius: 50%;
+
+            background: #229ed9;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: white;
+            font-size: 36px;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 24px;
+        }
+
+        .description {
+            color: #777;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 8px;
+            padding: 11px 20px;
+
+            background: #3978d5;
+            color: white;
+
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .disconnect-button {
+            margin-top: 18px;
+            background: #d92d20;
+        }
+
+        .disconnect-button:hover {
+            background: #b42318;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f5f7fa;
+            text-align: left;
+        }
+
+        .status-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .connected {
+            color: #248a4b;
+        }
+
+        .qr-container {
+            display: none;
+            margin-top: 25px;
+        }
+
+        .qr-container img {
+            width: 320px;
+            height: 320px;
+            max-width: 100%;
+        }
+
+        .qr-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .qr-description {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .error {
+            display: none;
+            margin-top: 15px;
+            color: #b42318;
+        }
+
+        .account {
+            display: none;
+        }
+
+        .disabled-message {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f5f7fa;
+            color: #777;
+            line-height: 1.5;
+        }
+
+        .disabled-message-title {
+            margin-bottom: 8px;
+            color: #424b5a;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <a href="/"
+       class="back">
+        ← Вернуться к чатам
+    </a>
+
+    <div class="card">
+
+        <div class="telegram-icon">
+            ✈
+        </div>
+
+        <h1>Telegram</h1>
+
+        <div class="description">
+            Подключите свой Telegram-аккаунт к Reley,
+            чтобы просматривать Telegram-чаты прямо в мессенджере.
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- TELEGRAM DISABLED -->
+        <!-- ================================= -->
+
+        <div th:if="${!telegramEnabled}"
+             class="disabled-message">
+
+            <div class="disabled-message-title">
+                Интеграция с Telegram отключена
+            </div>
+
+            <div>
+                Подключение Telegram сейчас недоступно.
+            </div>
+
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- TELEGRAM ENABLED -->
+        <!-- ================================= -->
+
+        <div th:if="${telegramEnabled}">
+
+            <!-- NOT CONNECTED -->
+
+            <div id="not-connected">
+
+                <button id="connect-button">
+                    Подключить Telegram
+                </button>
+
+                <div id="qr-container"
+                     class="qr-container">
+
+                    <div class="qr-title">
+                        Отсканируйте QR-код в Telegram
+                    </div>
+
+                    <div class="qr-description">
+                        Откройте Telegram на телефоне →
+                        Настройки → Устройства →
+                        Подключить устройство.
+                    </div>
+
+                    <img id="qr-image"
+                         alt="Telegram QR Code">
+
+                </div>
+
+            </div>
+
+
+            <!-- CONNECTED -->
+
+            <div id="connected"
+                 class="account">
+
+                <div class="status">
+
+                    <div class="status-title connected">
+                        ✓ Telegram подключён
+                    </div>
+
+                    <div id="account-name"></div>
+
+                    <div id="account-username"></div>
+
+                </div>
+
+                <button id="disconnect-button"
+                        class="disconnect-button">
+                    Отвязать Telegram
+                </button>
+
+            </div>
+
+
+            <div id="error"
+                 class="error">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script th:inline="javascript">
+
+    const telegramEnabled =
+        /*[[${telegramEnabled}]]*/ false;
+
+
+    if (telegramEnabled) {
+
+        const connectButton =
+            document.getElementById('connect-button');
+
+        const disconnectButton =
+            document.getElementById('disconnect-button');
+
+        const qrContainer =
+            document.getElementById('qr-container');
+
+        const qrImage =
+            document.getElementById('qr-image');
+
+        const notConnected =
+            document.getElementById('not-connected');
+
+        const connected =
+            document.getElementById('connected');
+
+        const accountName =
+            document.getElementById('account-name');
+
+        const accountUsername =
+            document.getElementById('account-username');
+
+        const errorElement =
+            document.getElementById('error');
+
+
+        async function loadStatus() {
+
+            try {
+
+                const response =
+                    await fetch('/api/tg/auth/status');
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        'Не удалось получить статус Telegram'
+                    );
+                }
+
+                const status =
+                    await response.json();
+
+
+                if (status.connected) {
+
+                    notConnected.style.display = 'none';
+
+                    connected.style.display = 'block';
+
+                    const name =
+                        [
+                            status.firstName,
+                            status.lastName
+                        ]
+                        .filter(Boolean)
+                        .join(' ');
+
+                    accountName.textContent =
+                        name || 'Telegram аккаунт';
+
+                    accountUsername.textContent =
+                        status.username
+                            ? '@' + status.username
+                            : '';
+
+                    stopQrRefresh();
+
+                    return;
+                }
+
+
+                notConnected.style.display = 'block';
+
+                connected.style.display = 'none';
+
+            } catch (error) {
+
+                showError(error.message);
+
+            }
+        }
+
+
+        async function startAuth() {
+
+            connectButton.disabled = true;
+
+            hideError();
+
+            try {
+
+                const response =
+                    await fetch(
+                        '/api/tg/auth/start',
+                        {
+                            method: 'POST'
+                        }
+                    );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        'Не удалось начать подключение Telegram'
+                    );
+                }
+
+                qrContainer.style.display = 'block';
+
+                await refreshQr();
+
+                startQrRefresh();
+
+            } catch (error) {
+
+                showError(error.message);
+
+            } finally {
+
+                connectButton.disabled = false;
+
+            }
+        }
+
+
+        async function disconnectTelegram() {
+
+            const confirmed =
+                confirm(
+                    'Вы действительно хотите отвязать Telegram-аккаунт?'
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            disconnectButton.disabled = true;
+
+            hideError();
+
+            try {
+
+                const response =
+                    await fetch(
+                        '/api/tg/auth',
+                        {
+                            method: 'DELETE'
+                        }
+                    );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        'Не удалось отвязать Telegram-аккаунт'
+                    );
+                }
+
+                stopQrRefresh();
+
+                qrContainer.style.display = 'none';
+
+                await loadStatus();
+
+            } catch (error) {
+
+                showError(error.message);
+
+            } finally {
+
+                disconnectButton.disabled = false;
+
+            }
+        }
+
+
+        async function refreshQr() {
+
+            qrImage.src =
+                '/api/tg/auth/qr?t=' +
+                Date.now();
+        }
+
+
+        let qrRefreshTimer = null;
+
+
+        function startQrRefresh() {
+
+            stopQrRefresh();
+
+            qrRefreshTimer =
+                setInterval(
+                    async () => {
+
+                        const statusResponse =
+                            await fetch(
+                                '/api/tg/auth/status'
+                            );
+
+                        if (!statusResponse.ok) {
+                            return;
+                        }
+
+                        const status =
+                            await statusResponse.json();
+
+                        if (status.connected) {
+
+                            stopQrRefresh();
+
+                            await loadStatus();
+
+                            return;
+                        }
+
+                        await refreshQr();
+
+                    },
+                    5000
+                );
+        }
+
+
+        function stopQrRefresh() {
+
+            if (qrRefreshTimer !== null) {
+
+                clearInterval(qrRefreshTimer);
+
+                qrRefreshTimer = null;
+            }
+        }
+
+
+        function showError(message) {
+
+            errorElement.textContent =
+                message;
+
+            errorElement.style.display =
+                'block';
+        }
+
+
+        function hideError() {
+
+            errorElement.textContent =
+                '';
+
+            errorElement.style.display =
+                'none';
+        }
+
+
+        connectButton.addEventListener(
+            'click',
+            startAuth
+        );
+
+
+        disconnectButton.addEventListener(
+            'click',
+            disconnectTelegram
+        );
+
+
+        window.addEventListener(
+            'pagehide',
+            () => {
+
+                fetch(
+                    '/api/tg/auth/pending',
+                    {
+                        method: 'DELETE',
+                        keepalive: true
+                    }
+                ).catch(() => {});
+
+            }
+        );
+
+
+        loadStatus();
+    }
+
+</script>
+
+</body>
+</html>

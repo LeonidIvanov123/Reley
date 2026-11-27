@@ -4,7 +4,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Reley Messenger</title>
 
     <style>
@@ -96,60 +99,97 @@
         }
 
         /*
-         * Dialog search
+         * Tabs
          */
 
-        .dialog-search {
-            position: relative;
+        .dialog-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 18px;
+            padding: 4px;
+            background: #f3f5f9;
+            border-radius: 10px;
+        }
+
+        .dialog-tab {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 12px;
+            background: transparent;
+            color: #858b98;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s,
+                        color 0.2s,
+                        box-shadow 0.2s;
+        }
+
+        .dialog-tab:hover {
+            color: #3978d5;
+        }
+
+        .dialog-tab.active {
+            background: #ffffff;
+            color: #3978d5;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        /*
+         * Telegram tab
+         */
+
+        .telegram-tab-wrapper {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: stretch;
+            border-radius: 8px;
+        }
+
+        .telegram-tab-wrapper .dialog-tab {
             flex: 1;
             min-width: 0;
         }
 
-        .dialog-search input {
-            width: 100%;
-            height: 38px;
-            padding: 0 34px 0 12px;
-            border: 1px solid #e1e5ec;
-            border-radius: 10px;
-            outline: none;
-            background: #f8f9fc;
-            color: #292e38;
-            font-size: 13px;
-            transition: border-color 0.2s,
-                        background 0.2s;
+        .telegram-settings-link {
+            width: 38px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: #858b98;
+            text-decoration: none;
+            font-size: 17px;
+            transition: background 0.2s,
+                        color 0.2s;
         }
 
-        .dialog-search input::placeholder {
-            color: #9aa1ad;
+        .telegram-settings-link:hover {
+            background: #e9edf5;
+            color: #3978d5;
         }
 
-        .dialog-search input:focus {
-            border-color: #9bb5e8;
+        .telegram-tab-wrapper:has(.dialog-tab.active) {
             background: #ffffff;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
         }
 
-        .dialog-search-clear {
-            position: absolute;
-            top: 50%;
-            right: 7px;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 24px;
-            padding: 0;
-            border: none;
-            border-radius: 50%;
-            background: transparent;
-            color: #9299a6;
-            font-size: 18px;
-            line-height: 20px;
-            cursor: pointer;
-            display: none;
+        .telegram-tab-wrapper:has(.dialog-tab.active) .dialog-tab {
+            box-shadow: none;
         }
 
-        .dialog-search-clear:hover {
-            background: #edf0f5;
-            color: #555d6b;
+        .telegram-tab-wrapper:has(.dialog-tab.active)
+        .telegram-settings-link {
+            color: #3978d5;
         }
+
+        /*
+         * Dialog search
+         */
 
         .dialog-search {
             position: relative;
@@ -327,7 +367,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s, transform 0.2s;
+            transition: background 0.2s,
+                        transform 0.2s;
         }
 
         .create-button:hover {
@@ -449,6 +490,68 @@
         }
 
         /*
+         * Telegram dialogs
+         */
+
+        .telegram-dialog {
+            cursor: default;
+        }
+
+        .telegram-dialog:hover {
+            cursor: pointer;
+        }
+
+        .telegram-avatar {
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #e8f5fc;
+            color: #229ed9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            overflow: hidden;
+        }
+
+        .telegram-type {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 6px;
+            border-radius: 5px;
+            background: #eef1f6;
+            color: #858b98;
+            font-size: 10px;
+            font-weight: 500;
+            vertical-align: middle;
+        }
+
+        .telegram-loading {
+            text-align: center;
+            padding: 35px 20px;
+            color: #9299a6;
+            font-size: 14px;
+        }
+
+        .telegram-error {
+            text-align: center;
+            padding: 35px 20px;
+            color: #b00020;
+            font-size: 14px;
+        }
+
+        .telegram-settings-inline-link {
+            color: #3978d5;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .telegram-settings-inline-link:hover {
+            text-decoration: underline;
+        }
+
+        /*
          * Group avatar
          */
 
@@ -556,6 +659,16 @@
                 width: 38px;
                 height: 38px;
             }
+
+            .dialog-tab {
+                font-size: 12px;
+                padding: 9px 6px;
+            }
+
+            .telegram-settings-link {
+                width: 34px;
+                font-size: 16px;
+            }
         }
 
     </style>
@@ -608,7 +721,9 @@
     <div th:replace="~{fragments/show_error :: show-error}"></div>
 
 
-    <!-- Dialogs header -->
+    <!-- ====================================== -->
+    <!-- Dialogs header                         -->
+    <!-- ====================================== -->
 
     <div class="section-header">
 
@@ -616,9 +731,10 @@
             Диалоги
         </h2>
 
-        <!-- Поиск -->
+        <!-- Поиск только для Reley -->
 
-        <div class="dialog-search">
+        <div class="dialog-search"
+             id="dialog-search-container">
 
             <input
                     id="dialog-search-input"
@@ -643,7 +759,8 @@
 
         <!-- Create menu -->
 
-        <details class="create-menu">
+        <details class="create-menu"
+                 id="create-menu">
 
             <summary class="create-button"
                      title="Создать">
@@ -667,196 +784,245 @@
     </div>
 
 
-    <!-- Нет диалогов -->
+    <!-- ====================================== -->
+    <!-- Tabs                                   -->
+    <!-- ====================================== -->
 
-    <div th:if="${#lists.isEmpty(dialogs)}"
-         class="empty-state">
+    <div class="dialog-tabs">
 
-        <div class="empty-icon">
-            💬
-        </div>
+        <button id="my-dialogs-tab"
+                class="dialog-tab active"
+                type="button">
 
-        <div class="empty-title">
-            Пока здесь пусто
-        </div>
+            Мои чаты
 
-        <div class="empty-description">
-            Создайте новый диалог, чтобы начать общение.
+        </button>
+
+
+        <div th:if="${telegramConnected}"
+             class="telegram-tab-wrapper">
+
+            <button id="telegram-dialogs-tab"
+                    class="dialog-tab"
+                    type="button">
+
+                Telegram чаты
+
+            </button>
+
+            <a href="/profile/tg/chats"
+               class="telegram-settings-link"
+               title="Настройки Telegram-чатов"
+               aria-label="Настройки Telegram-чатов">
+
+                ⚙️
+
+            </a>
+
         </div>
 
     </div>
 
 
-    <!-- Список диалогов -->
+    <!-- ====================================== -->
+    <!-- MY DIALOGS                             -->
+    <!-- ====================================== -->
 
-    <div th:unless="${#lists.isEmpty(dialogs)}"
-         class="dialog-list">
+    <div id="my-dialogs-content">
 
-        <a class="dialog"
-           th:each="dialog : ${dialogs}"
-           th:attr="data-dialog-id=${dialog.id}"
-           th:href="@{/dialogs/{id}(id=${dialog.id})}">
+        <div th:if="${#lists.isEmpty(dialogs)}"
+             class="empty-state">
 
-
-            <!-- ========================= -->
-            <!-- Avatar                     -->
-            <!-- ========================= -->
-
-            <!-- Группа -->
-
-            <div th:if="${dialog.groupChat}"
-                 class="group-avatar">
-
-                <img
-                        th:src="@{/api/dialogs/{id}/avatar(id=${dialog.id})}"
-                        alt="Аватар группы"
-                        onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
-                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-
-                <div
-                        style="display: none;
-                               width: 100%;
-                               height: 100%;
-                               align-items: center;
-                               justify-content: center;">
-                    👥
-                </div>
-
+            <div class="empty-icon">
+                💬
             </div>
 
-
-            <!-- Личный диалог / Избранное -->
-
-            <div th:unless="${dialog.groupChat}">
-
-                <div th:replace="~{fragments/avatar :: avatar(
-                    ${dialog.otherParty},
-                    48
-                )}">
-                </div>
-
+            <div class="empty-title">
+                Пока здесь пусто
             </div>
 
-
-            <!-- ========================= -->
-            <!-- Dialog content             -->
-            <!-- ========================= -->
-
-            <div class="dialog-content">
-
-                <div class="dialog-title">
-
-                    <!-- Группа -->
-
-                    <th:block th:if="${dialog.groupChat}">
-
-                        <span class="dialog-name"
-                              th:text="${dialog.dialogName}">
-                            Java Developers
-                        </span>
-
-                    </th:block>
-
-
-                    <!-- Избранное -->
-
-                    <th:block th:if="${!dialog.groupChat
-                                       and dialog.dialogName != null}">
-
-                        <span class="dialog-name"
-                              th:text="${dialog.dialogName}">
-                            Избранное
-                        </span>
-
-                    </th:block>
-
-
-                    <!-- Обычный личный диалог -->
-
-                    <th:block th:if="${!dialog.groupChat
-                                       and dialog.dialogName == null}">
-
-                        <span class="dialog-name"
-                              th:if="${dialog.otherParty != null
-                                      and dialog.otherParty.name != null
-                                      and !#strings.isEmpty(dialog.otherParty.name)}"
-                              th:text="${dialog.otherParty.name}">
-                            Иван Иванов
-                        </span>
-
-                        <span class="dialog-email"
-                              th:if="${dialog.otherParty != null
-                                      and dialog.otherParty.name != null
-                                      and !#strings.isEmpty(dialog.otherParty.name)}"
-                              th:text="'(' + ${dialog.otherParty.email} + ')'">
-                            (user@example.com)
-                        </span>
-
-                        <span class="dialog-name"
-                              th:if="${dialog.otherParty != null
-                                      and (dialog.otherParty.name == null
-                                      or #strings.isEmpty(dialog.otherParty.name))}"
-                              th:text="${dialog.otherParty.email}">
-                            user@example.com
-                        </span>
-
-                    </th:block>
-
-                </div>
-
-
-                <!-- Последнее сообщение -->
-
-                <div class="dialog-preview"
-                     th:if="${dialog.lastMessagePreview != null
-                             and !#strings.isEmpty(dialog.lastMessagePreview)}"
-                     th:text="${dialog.lastMessagePreview}">
-                    Последнее сообщение
-                </div>
-
-
-                <!-- Дата -->
-
-                <div class="dialog-date"
-                     th:if="${dialog.lastMessageAt != null}"
-                     th:text="${#temporals.format(
-                         dialog.lastMessageAt,
-                         'dd.MM.yyyy HH:mm'
-                     )}">
-                    03.11.2026 12:45
-                </div>
-
-                <div class="dialog-date"
-                     th:if="${dialog.lastMessageAt == null}">
-                    Нет сообщений
-                </div>
-
+            <div class="empty-description">
+                Создайте новый диалог, чтобы начать общение.
             </div>
 
+        </div>
 
-            <!-- Непрочитанные сообщения -->
 
-            <span th:if="${dialog.unreadCount > 0}"
-                  class="unread-badge"
-                  th:text="${dialog.unreadCount}">
-                3
-            </span>
+        <div th:unless="${#lists.isEmpty(dialogs)}"
+             class="dialog-list"
+             id="my-dialog-list">
 
-        </a>
+            <a class="dialog"
+               th:each="dialog : ${dialogs}"
+               th:attr="data-dialog-id=${dialog.id}"
+               th:href="@{/dialogs/{id}(id=${dialog.id})}">
 
-        <!-- Поиск ничего не нашёл -->
+                <!-- Группа -->
 
-        <div id="dialog-search-empty"
-             class="dialog-search-empty">
-            Ничего не найдено
+                <div th:if="${dialog.groupChat}"
+                     class="group-avatar">
+
+                    <img
+                            th:src="@{/api/dialogs/{id}/avatar(id=${dialog.id})}"
+                            alt="Аватар группы"
+                            onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                    <div
+                            style="display: none;
+                                   width: 100%;
+                                   height: 100%;
+                                   align-items: center;
+                                   justify-content: center;">
+                        👥
+                    </div>
+
+                </div>
+
+
+                <!-- Личный диалог / Избранное -->
+
+                <div th:unless="${dialog.groupChat}">
+
+                    <div th:replace="~{fragments/avatar :: avatar(
+                        ${dialog.otherParty},
+                        48
+                    )}">
+                    </div>
+
+                </div>
+
+
+                <!-- Dialog content -->
+
+                <div class="dialog-content">
+
+                    <div class="dialog-title">
+
+                        <!-- Группа -->
+
+                        <th:block th:if="${dialog.groupChat}">
+
+                            <span class="dialog-name"
+                                  th:text="${dialog.dialogName}">
+                                Java Developers
+                            </span>
+
+                        </th:block>
+
+
+                        <!-- Избранное -->
+
+                        <th:block th:if="${!dialog.groupChat
+                                           and dialog.dialogName != null}">
+
+                            <span class="dialog-name"
+                                  th:text="${dialog.dialogName}">
+                                Избранное
+                            </span>
+
+                        </th:block>
+
+
+                        <!-- Обычный личный диалог -->
+
+                        <th:block th:if="${!dialog.groupChat
+                                           and dialog.dialogName == null}">
+
+                            <span class="dialog-name"
+                                  th:if="${dialog.otherParty != null
+                                          and dialog.otherParty.name != null
+                                          and !#strings.isEmpty(dialog.otherParty.name)}"
+                                  th:text="${dialog.otherParty.name}">
+                                Иван Иванов
+                            </span>
+
+                            <span class="dialog-email"
+                                  th:if="${dialog.otherParty != null
+                                          and dialog.otherParty.name != null
+                                          and !#strings.isEmpty(dialog.otherParty.name)}"
+                                  th:text="'(' + ${dialog.otherParty.email} + ')'">
+                                (user@example.com)
+                            </span>
+
+                            <span class="dialog-name"
+                                  th:if="${dialog.otherParty != null
+                                          and (dialog.otherParty.name == null
+                                          or #strings.isEmpty(dialog.otherParty.name))}"
+                                  th:text="${dialog.otherParty.email}">
+                                user@example.com
+                            </span>
+
+                        </th:block>
+
+                    </div>
+
+
+                    <!-- Последнее сообщение -->
+
+                    <div class="dialog-preview"
+                         th:if="${dialog.lastMessagePreview != null
+                                 and !#strings.isEmpty(dialog.lastMessagePreview)}"
+                         th:text="${dialog.lastMessagePreview}">
+                        Последнее сообщение
+                    </div>
+
+
+                    <!-- Дата -->
+
+                    <div class="dialog-date"
+                         th:if="${dialog.lastMessageAt != null}"
+                         th:text="${#temporals.format(
+                             dialog.lastMessageAt,
+                             'dd.MM.yyyy HH:mm'
+                         )}">
+                        03.11.2026 12:45
+                    </div>
+
+                    <div class="dialog-date"
+                         th:if="${dialog.lastMessageAt == null}">
+                        Нет сообщений
+                    </div>
+
+                </div>
+
+
+                <!-- Непрочитанные сообщения -->
+
+                <span th:if="${dialog.unreadCount > 0}"
+                      class="unread-badge"
+                      th:text="${dialog.unreadCount}">
+                    3
+                </span>
+
+            </a>
+
+
+            <div id="dialog-search-empty"
+                 class="dialog-search-empty">
+                Ничего не найдено
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ====================================== -->
+    <!-- TELEGRAM DIALOGS                       -->
+    <!-- ====================================== -->
+
+    <div id="telegram-dialogs-content"
+         style="display: none;">
+
+        <div id="telegram-dialog-list"
+             class="dialog-list">
         </div>
 
     </div>
 
 </div>
 
-
-<!-- Message sound -->
 
 <audio id="messageSound"
        preload="auto">
@@ -867,26 +1033,491 @@
 </audio>
 
 
-<script>
+<!-- ВАЖНО: здесь должен быть th:inline="javascript" -->
+
+<script th:inline="javascript">
 
     /*
-     * Закрытие меню создания при клике
-     * вне него.
+     * Telegram connection state.
+     *
+     * Thymeleaf заменит это выражение
+     * на true или false.
+     */
+
+    const telegramConnected =
+        /*[[${telegramConnected}]]*/ false;
+
+
+    /*
+     * Tabs
+     */
+
+    const myDialogsTab =
+        document.getElementById(
+            'my-dialogs-tab'
+        );
+
+    const telegramDialogsTab =
+        document.getElementById(
+            'telegram-dialogs-tab'
+        );
+
+    const myDialogsContent =
+        document.getElementById(
+            'my-dialogs-content'
+        );
+
+    const telegramDialogsContent =
+        document.getElementById(
+            'telegram-dialogs-content'
+        );
+
+    const dialogSearchContainer =
+        document.getElementById(
+            'dialog-search-container'
+        );
+
+    const createMenu =
+        document.getElementById(
+            'create-menu'
+        );
+
+
+    let telegramDialogsLoaded = false;
+
+
+    if (myDialogsTab) {
+
+        myDialogsTab.addEventListener(
+            'click',
+            () => {
+                activateTab('my');
+            }
+        );
+
+    }
+
+
+    if (telegramDialogsTab) {
+
+        telegramDialogsTab.addEventListener(
+            'click',
+            () => {
+                activateTab('telegram');
+            }
+        );
+
+    }
+
+
+    function activateTab(tab) {
+
+        if (tab === 'telegram'
+                && !telegramConnected) {
+
+            return;
+        }
+
+
+        const telegram =
+            tab === 'telegram';
+
+
+        if (myDialogsTab) {
+
+            myDialogsTab.classList.toggle(
+                'active',
+                !telegram
+            );
+
+        }
+
+
+        if (telegramDialogsTab) {
+
+            telegramDialogsTab.classList.toggle(
+                'active',
+                telegram
+            );
+
+        }
+
+
+        if (myDialogsContent) {
+
+            myDialogsContent.style.display =
+                telegram
+                    ? 'none'
+                    : 'block';
+
+        }
+
+
+        if (telegramDialogsContent) {
+
+            telegramDialogsContent.style.display =
+                telegram
+                    ? 'block'
+                    : 'none';
+
+        }
+
+
+        /*
+         * Поиск относится только
+         * к Reley-чатам.
+         */
+
+        if (dialogSearchContainer) {
+
+            dialogSearchContainer.style.display =
+                telegram
+                    ? 'none'
+                    : 'block';
+
+        }
+
+
+        /*
+         * Создание диалогов относится
+         * только к Reley.
+         */
+
+        if (createMenu) {
+
+            createMenu.style.display =
+                telegram
+                    ? 'none'
+                    : '';
+
+        }
+
+
+        if (telegram) {
+
+            loadTelegramDialogs();
+
+        }
+
+    }
+
+
+    /*
+     * Telegram dialogs
+     */
+
+    async function loadTelegramDialogs() {
+
+        if (telegramDialogsLoaded) {
+            return;
+        }
+
+
+        const container =
+            document.getElementById(
+                'telegram-dialog-list'
+            );
+
+        if (!container) {
+            return;
+        }
+
+
+        container.innerHTML =
+            '<div class="telegram-loading">' +
+                'Загрузка Telegram-чатов...' +
+            '</div>';
+
+
+        try {
+
+            const response =
+                await fetch(
+                    '/api/tg/dialogs'
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    'Не удалось загрузить Telegram-чаты'
+                );
+
+            }
+
+
+            const dialogs =
+                await response.json();
+
+
+            renderTelegramDialogs(
+                dialogs
+            );
+
+
+            telegramDialogsLoaded = true;
+
+
+        } catch (error) {
+
+            console.error(
+                'Telegram dialogs error:',
+                error
+            );
+
+
+            container.innerHTML =
+                '<div class="telegram-error">' +
+                    'Не удалось загрузить Telegram-чаты' +
+                '</div>';
+
+        }
+
+    }
+
+
+    function renderTelegramDialogs(
+        dialogs
+    ) {
+
+        const container =
+            document.getElementById(
+                'telegram-dialog-list'
+            );
+
+
+        if (!container) {
+            return;
+        }
+
+
+        if (!Array.isArray(dialogs)
+                || dialogs.length === 0) {
+
+            container.innerHTML =
+                '<div class="empty-state">' +
+
+                    '<div class="empty-icon">' +
+                        '✈️' +
+                    '</div>' +
+
+                    '<div class="empty-title">' +
+                        'Пока нет выбранных чатов' +
+                    '</div>' +
+
+                    '<div class="empty-description">' +
+                        'Выберите чаты, которые хотите видеть здесь, в ' +
+                        '<a href="/profile/tg/chats" ' +
+                           'class="telegram-settings-inline-link">' +
+                            'настройках' +
+                        '</a>.' +
+                    '</div>' +
+
+                '</div>';
+
+            return;
+        }
+
+
+        container.innerHTML =
+            dialogs
+                .map(renderTelegramDialog)
+                .join('');
+
+    }
+
+
+    function renderTelegramDialog(
+        dialog
+    ) {
+
+        const title =
+            escapeHtml(
+                dialog.title || 'Без названия'
+            );
+
+
+        const preview =
+            dialog.lastMessage
+                ? escapeHtml(
+                    dialog.lastMessage
+                )
+                : 'Нет сообщений';
+
+
+        const date =
+            dialog.lastMessageAt
+                ? formatTelegramDate(
+                    dialog.lastMessageAt
+                )
+                : '';
+
+
+        const type =
+            getTelegramDialogType(
+                dialog.type
+            );
+
+
+        const chatUrl =
+            `/tg/dialogs/${encodeURIComponent(dialog.chatId)}`;
+
+
+        return `
+
+            <a class="dialog telegram-dialog"
+               data-tg-chat-id="${escapeHtml(dialog.chatId)}"
+               href="${chatUrl}">
+
+                <div class="telegram-avatar">
+                    ${getTelegramAvatar(dialog.type)}
+                </div>
+
+                <div class="dialog-content">
+
+                    <div class="dialog-title">
+
+                        ${title}
+
+                        <span class="telegram-type">
+                            ${type}
+                        </span>
+
+                    </div>
+
+                    <div class="dialog-preview">
+                        ${preview}
+                    </div>
+
+                    ${
+                        date
+                            ? `
+                                <div class="dialog-date">
+                                    ${date}
+                                </div>
+                              `
+                            : ''
+                    }
+
+                </div>
+
+            </a>
+
+        `;
+
+    }
+
+
+    function getTelegramAvatar(
+        type
+    ) {
+
+        switch (type) {
+
+            case 'PRIVATE':
+                return '👤';
+
+            case 'GROUP':
+                return '👥';
+
+            case 'SUPERGROUP':
+                return '👥';
+
+            case 'SECRET':
+                return '🔒';
+
+            default:
+                return '✈️';
+
+        }
+
+    }
+
+
+    function getTelegramDialogType(
+        type
+    ) {
+
+        switch (type) {
+
+            case 'PRIVATE':
+                return 'Личный';
+
+            case 'GROUP':
+                return 'Группа';
+
+            case 'SUPERGROUP':
+                return 'Группа';
+
+            case 'SECRET':
+                return 'Секретный';
+
+            default:
+                return 'Чат';
+
+        }
+
+    }
+
+
+    function formatTelegramDate(
+        value
+    ) {
+
+        const date =
+            new Date(value);
+
+
+        if (Number.isNaN(
+            date.getTime()
+        )) {
+
+            return '';
+
+        }
+
+
+        return date.toLocaleString(
+            'ru-RU',
+            {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }
+        );
+
+    }
+
+
+    /*
+     * Закрытие меню создания
      */
 
     document.addEventListener(
         'click',
         event => {
 
-            const createMenu =
-                document.querySelector('.create-menu');
+            const menu =
+                document.querySelector(
+                    '.create-menu'
+                );
 
-            if (!createMenu) {
+
+            if (!menu) {
                 return;
             }
 
-            if (!createMenu.contains(event.target)) {
-                createMenu.removeAttribute('open');
+
+            if (!menu.contains(
+                event.target
+            )) {
+
+                menu.removeAttribute(
+                    'open'
+                );
+
             }
 
         }
@@ -894,17 +1525,7 @@
 
 
     /*
-     * Поиск
-     *
-     * По пустому полю показываем обычный список диалогов.
-     * При вводе отправляем запрос на backend:
-     *
-     * GET /api/search?q=...
-     *
-     * Backend возвращает:
-     * - users
-     * - dialogs
-     * - messages
+     * Search
      */
 
     const dialogSearchInput =
@@ -936,11 +1557,16 @@
                 const query =
                     dialogSearchInput.value.trim();
 
+
                 updateSearchClearButton(
                     query
                 );
 
-                clearTimeout(searchTimer);
+
+                clearTimeout(
+                    searchTimer
+                );
+
 
                 if (!query) {
 
@@ -949,14 +1575,18 @@
                     return;
                 }
 
+
                 searchTimer =
                     setTimeout(
-                        () => searchBackend(query),
+                        () => searchBackend(
+                            query
+                        ),
                         250
                     );
 
             }
         );
+
 
         dialogSearchInput.addEventListener(
             'focus',
@@ -965,8 +1595,13 @@
                 const query =
                     dialogSearchInput.value.trim();
 
+
                 if (query) {
-                    searchBackend(query);
+
+                    searchBackend(
+                        query
+                    );
+
                 }
 
             }
@@ -1004,22 +1639,30 @@
                     '.dialog-search'
                 );
 
+
             if (
                 search
-                && !search.contains(event.target)
+                && !search.contains(
+                    event.target
+                )
             ) {
+
                 hideSearchResults();
+
             }
 
         }
     );
 
 
-    function updateSearchClearButton(query) {
+    function updateSearchClearButton(
+        query
+    ) {
 
         if (!dialogSearchClear) {
             return;
         }
+
 
         dialogSearchClear.style.display =
             query
@@ -1029,16 +1672,21 @@
     }
 
 
-    async function searchBackend(query) {
+    async function searchBackend(
+        query
+    ) {
 
         if (!searchResults) {
             return;
         }
 
+
         const requestId =
             ++searchRequestId;
 
+
         showSearchLoading();
+
 
         try {
 
@@ -1047,11 +1695,14 @@
                     `/api/search?q=${encodeURIComponent(query)}`
                 );
 
+
             if (
                 requestId !== searchRequestId
             ) {
+
                 return;
             }
+
 
             if (!response.ok) {
 
@@ -1061,26 +1712,37 @@
 
             }
 
+
             const result =
                 await response.json();
 
-            renderSearchResults(result);
+
+            renderSearchResults(
+                result
+            );
+
 
         } catch (error) {
 
             if (
                 requestId !== searchRequestId
             ) {
+
                 return;
             }
+
 
             console.error(
                 'Search error:',
                 error
             );
 
+
             searchResults.innerHTML =
-                '<div class="search-empty">Не удалось выполнить поиск</div>';
+                '<div class="search-empty">' +
+                    'Не удалось выполнить поиск' +
+                '</div>';
+
 
             searchResults.classList.add(
                 'visible'
@@ -1094,7 +1756,10 @@
     function showSearchLoading() {
 
         searchResults.innerHTML =
-            '<div class="search-loading">Поиск...</div>';
+            '<div class="search-loading">' +
+                'Поиск...' +
+            '</div>';
+
 
         searchResults.classList.add(
             'visible'
@@ -1109,35 +1774,43 @@
             return;
         }
 
+
         searchResults.classList.remove(
             'visible'
         );
+
 
         searchResults.innerHTML = '';
 
     }
 
 
-    function renderSearchResults(result) {
+    function renderSearchResults(
+        result
+    ) {
 
         if (!searchResults) {
             return;
         }
+
 
         const users =
             Array.isArray(result.users)
                 ? result.users
                 : [];
 
+
         const dialogs =
             Array.isArray(result.dialogs)
                 ? result.dialogs
                 : [];
 
+
         const messages =
             Array.isArray(result.messages)
                 ? result.messages
                 : [];
+
 
         const hasResults =
             users.length > 0
@@ -1148,11 +1821,15 @@
         if (!hasResults) {
 
             searchResults.innerHTML =
-                '<div class="search-empty">Ничего не найдено</div>';
+                '<div class="search-empty">' +
+                    'Ничего не найдено' +
+                '</div>';
+
 
             searchResults.classList.add(
                 'visible'
             );
+
 
             return;
         }
@@ -1165,22 +1842,38 @@
 
             html +=
                 '<div class="search-section">' +
-                    '<div class="search-section-title">Пользователи</div>';
+                    '<div class="search-section-title">' +
+                        'Пользователи' +
+                    '</div>';
 
-            users.forEach(user => {
-                const title =
-                    user.name
-                    && user.name.trim()
-                        ? user.name
-                        : user.email;
 
-                html +=
-                    `<a class="search-result"
-                        href="/dialogs/open/${encodeURIComponent(user.userId)}">` +
-                        `<div class="search-result-title">${escapeHtml(title)}</div>` +
-                        `<div class="search-result-subtitle">${escapeHtml(user.email || '')}</div>` +
-                    `</a>`;
-            });
+            users.forEach(
+                user => {
+
+                    const title =
+                        user.name
+                        && user.name.trim()
+                            ? user.name
+                            : user.email;
+
+
+                    html +=
+                        `<a class="search-result"
+                            href="/dialogs/open/${encodeURIComponent(user.userId)}">` +
+
+                            `<div class="search-result-title">` +
+                                `${escapeHtml(title)}` +
+                            `</div>` +
+
+                            `<div class="search-result-subtitle">` +
+                                `${escapeHtml(user.email || '')}` +
+                            `</div>` +
+
+                        `</a>`;
+
+                }
+            );
+
 
             html += '</div>';
 
@@ -1191,20 +1884,28 @@
 
             html +=
                 '<div class="search-section">' +
-                    '<div class="search-section-title">Диалоги</div>';
+                    '<div class="search-section-title">' +
+                        'Диалоги' +
+                    '</div>';
 
-            dialogs.forEach(dialog => {
 
-                html +=
-                    `<a class="search-result"
-                        href="/dialogs/${encodeURIComponent(dialog.dialogId)}">` +
-                        `<div class="search-result-title">` +
-                            `${dialog.groupChat ? '👥 ' : '💬 '}` +
-                            `${escapeHtml(dialog.dialogName || 'Диалог')}` +
-                        `</div>` +
-                    `</a>`;
+            dialogs.forEach(
+                dialog => {
 
-            });
+                    html +=
+                        `<a class="search-result"
+                            href="/dialogs/${encodeURIComponent(dialog.dialogId)}">` +
+
+                            `<div class="search-result-title">` +
+                                `${dialog.groupChat ? '👥 ' : '💬 '}` +
+                                `${escapeHtml(dialog.dialogName || 'Диалог')}` +
+                            `</div>` +
+
+                        `</a>`;
+
+                }
+            );
+
 
             html += '</div>';
 
@@ -1215,36 +1916,48 @@
 
             html +=
                 '<div class="search-section">' +
-                    '<div class="search-section-title">Сообщения</div>';
+                    '<div class="search-section-title">' +
+                        'Сообщения' +
+                    '</div>';
 
-            messages.forEach(message => {
 
-                const sender =
-                    message.senderName
-                    && message.senderName.trim()
-                        ? message.senderName
-                        : message.senderEmail;
+            messages.forEach(
+                message => {
 
-                html +=
-                    `<a class="search-result"
-                        href="/dialogs/${encodeURIComponent(message.dialogId)}">` +
-                        `<div class="search-result-title">` +
-                            `${escapeHtml(sender || 'Участник')}` +
-                            ` · ${escapeHtml(message.dialogName || 'Диалог')}` +
-                        `</div>` +
-                        `<div class="search-result-message">` +
-                            `${escapeHtml(message.content || '')}` +
-                        `</div>` +
-                    `</a>`;
+                    const sender =
+                        message.senderName
+                        && message.senderName.trim()
+                            ? message.senderName
+                            : message.senderEmail;
 
-            });
+
+                    html +=
+                        `<a class="search-result"
+                            href="/dialogs/${encodeURIComponent(message.dialogId)}">` +
+
+                            `<div class="search-result-title">` +
+                                `${escapeHtml(sender || 'Участник')}` +
+                                ` · ${escapeHtml(message.dialogName || 'Диалог')}` +
+                            `</div>` +
+
+                            `<div class="search-result-message">` +
+                                `${escapeHtml(message.content || '')}` +
+                            `</div>` +
+
+                        `</a>`;
+
+                }
+            );
+
 
             html += '</div>';
 
         }
 
 
-        searchResults.innerHTML = html;
+        searchResults.innerHTML =
+            html;
+
 
         searchResults.classList.add(
             'visible'
@@ -1253,44 +1966,34 @@
     }
 
 
-    function escapeHtml(value) {
+    function escapeHtml(
+        value
+    ) {
 
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        return String(
+            value ?? ''
+        )
+        .replace(
+            /&/g,
+            '&amp;'
+        )
+        .replace(
+            /</g,
+            '&lt;'
+        )
+        .replace(
+            />/g,
+            '&gt;'
+        )
+        .replace(
+            /"/g,
+            '&quot;'
+        )
+        .replace(
+            /'/g,
+            '&#039;'
+        );
 
-    }
-
-    function escapeJs(value) {
-        return String(value ?? '')
-            .replace(/\\/g, '\\\\')
-            .replace(/'/g, "\\'");
-    }
-
-    function openUserChat(event, email) {
-        event.preventDefault();
-
-        const form =
-            document.createElement('form');
-
-        form.method = 'POST';
-        form.action = '/dialogs/new';
-
-        const input =
-            document.createElement('input');
-
-        input.type = 'hidden';
-        input.name = 'email';
-        input.value = email;
-
-        form.appendChild(input);
-
-        document.body.appendChild(form);
-
-        form.submit();
     }
 
 
@@ -1302,6 +2005,7 @@
         window.location.protocol === 'https:'
             ? 'wss:'
             : 'ws:';
+
 
     const socket =
         new WebSocket(
@@ -1342,7 +2046,10 @@
         try {
 
             const wsEvent =
-                JSON.parse(event.data);
+                JSON.parse(
+                    event.data
+                );
+
 
             console.log(
                 'WebSocket event:',
@@ -1351,7 +2058,8 @@
 
 
             if (
-                wsEvent.type === 'DIALOG_UPDATED'
+                wsEvent.type ===
+                'DIALOG_UPDATED'
             ) {
 
                 handleDialogUpdated(
@@ -1362,12 +2070,14 @@
 
 
             if (
-                wsEvent.type === 'NEW_MESSAGE'
+                wsEvent.type ===
+                'NEW_MESSAGE'
             ) {
 
                 playMessageSound();
 
             }
+
 
         } catch (error) {
 
@@ -1383,10 +2093,10 @@
 
     /*
      * Звуковое уведомление
-     * о новом сообщении
      */
 
-    let audioUnlocked = false;
+    let audioUnlocked =
+        false;
 
 
     function playMessageSound() {
@@ -1402,26 +2112,24 @@
         }
 
 
-        sound.currentTime = 0;
+        sound.currentTime =
+            0;
 
 
         sound.play()
-            .catch(error => {
+            .catch(
+                error => {
 
-                console.debug(
-                    'Message sound was blocked by browser:',
-                    error
-                );
+                    console.debug(
+                        'Message sound was blocked by browser:',
+                        error
+                    );
 
-            });
+                }
+            );
 
     }
 
-
-    /*
-     * Разрешаем браузеру воспроизводить звук
-     * после первого взаимодействия пользователя
-     */
 
     document.addEventListener(
         'click',
@@ -1443,38 +2151,51 @@
             }
 
 
-            sound.volume = 0;
+            sound.volume =
+                0;
 
 
             sound.play()
-                .then(() => {
+                .then(
+                    () => {
 
-                    sound.pause();
-                    sound.currentTime = 0;
-                    sound.volume = 1;
+                        sound.pause();
 
-                    audioUnlocked = true;
+                        sound.currentTime =
+                            0;
 
-                })
-                .catch(() => {
+                        sound.volume =
+                            1;
 
-                    // Браузер пока не разрешил воспроизведение
+                        audioUnlocked =
+                            true;
 
-                });
+                    }
+                )
+                .catch(
+                    () => {
+                    }
+                );
 
         },
-        { once: true }
+        {
+            once: true
+        }
     );
 
 
     /*
-     * Обработка обновления диалога
+     * Обновление диалога через WebSocket
      */
 
-    function handleDialogUpdated(wsEvent) {
+    function handleDialogUpdated(
+        wsEvent
+    ) {
 
         const dialogId =
-            Number(wsEvent.dialogId);
+            Number(
+                wsEvent.dialogId
+            );
 
 
         const payload =
@@ -1491,17 +2212,6 @@
                 `[data-dialog-id="${dialogId}"]`
             );
 
-
-        /*
-         * Диалог уже есть в списке.
-         *
-         * Обновляем:
-         * - название
-         * - preview последнего сообщения
-         * - дату
-         * - unread
-         * - порядок в списке
-         */
 
         if (dialogElement) {
 
@@ -1534,38 +2244,14 @@
             );
 
 
-            /*
-             * Если пользователь сейчас ищет —
-             * повторяем фильтрацию после обновления
-             * preview.
-             */
-
-
-
             return;
         }
 
-
-        /*
-         * Диалога ещё нет.
-         *
-         * Например, пользователь получил
-         * первое сообщение от нового пользователя.
-         *
-         * Здесь всё ещё нужна перезагрузка,
-         * потому что WebSocket event не содержит
-         * данных otherParty для создания полного
-         * элемента личного диалога.
-         */
 
         window.location.reload();
 
     }
 
-
-    /*
-     * Обновление названия диалога
-     */
 
     function updateDialogName(
         dialogElement,
@@ -1576,6 +2262,7 @@
             dialogName === null
             || dialogName === undefined
         ) {
+
             return;
         }
 
@@ -1597,10 +2284,6 @@
     }
 
 
-    /*
-     * Обновление preview последнего сообщения
-     */
-
     function updateDialogPreview(
         dialogElement,
         preview
@@ -1612,17 +2295,16 @@
             );
 
 
-        /*
-         * Если preview ещё нет в DOM,
-         * создаём его.
-         */
-
-        if (!previewElement && preview) {
+        if (
+            !previewElement
+            && preview
+        ) {
 
             const dialogContent =
                 dialogElement.querySelector(
                     '.dialog-content'
                 );
+
 
             const dialogDate =
                 dialogContent?.querySelector(
@@ -1674,10 +2356,6 @@
     }
 
 
-    /*
-     * Обновление даты последнего сообщения
-     */
-
     function updateDialogDate(
         dialogElement,
         lastMessageAt
@@ -1700,7 +2378,9 @@
 
 
         const date =
-            new Date(lastMessageAt);
+            new Date(
+                lastMessageAt
+            );
 
 
         dateElement.textContent =
@@ -1718,17 +2398,15 @@
     }
 
 
-    /*
-     * Обновление unread badge
-     */
-
     function updateDialogUnreadCount(
         dialogElement,
         unreadCount
     ) {
 
         const count =
-            Number(unreadCount) || 0;
+            Number(
+                unreadCount
+            ) || 0;
 
 
         let badge =
@@ -1736,10 +2414,6 @@
                 '.unread-badge'
             );
 
-
-        /*
-         * unread = 0
-         */
 
         if (count === 0) {
 
@@ -1751,10 +2425,6 @@
         }
 
 
-        /*
-         * Badge уже существует.
-         */
-
         if (badge) {
 
             badge.textContent =
@@ -1763,10 +2433,6 @@
             return;
         }
 
-
-        /*
-         * Badge отсутствует.
-         */
 
         badge =
             document.createElement(
@@ -1789,46 +2455,35 @@
     }
 
 
-    /*
-     * Перемещение диалога наверх списка
-     */
-
     function moveDialogToTop(
         dialogElement
     ) {
 
-        const dialogList =
-            document.querySelector(
-                '.dialog-list'
+        const list =
+            document.getElementById(
+                'my-dialog-list'
             );
 
 
-        if (!dialogList) {
+        if (!list) {
             return;
         }
 
-
-        /*
-         * Если диалог уже первый —
-         * ничего делать не нужно.
-         */
 
         if (
-            dialogList.firstElementChild ===
-            dialogElement
+            list.firstElementChild
+            !== dialogElement
         ) {
-            return;
+
+            list.prepend(
+                dialogElement
+            );
+
         }
-
-
-        dialogList.prepend(
-            dialogElement
-        );
 
     }
 
 </script>
 
 </body>
-
 </html>

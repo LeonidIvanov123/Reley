@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ru"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Telegram чаты — Reley Messenger</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #222;
+        }
+
+        .page {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #3978d5;
+            font-size: 24px;
+            transition: background 0.15s;
+        }
+
+        .back-button:hover {
+            background: #f0f4fa;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .description {
+            margin: 0 0 20px;
+            color: #777;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .search {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #d8dce5;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 15px;
+        }
+
+        .search:focus {
+            border-color: #3978d5;
+        }
+
+        .chat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 550px;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid #e3e6ec;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .chat-item:hover {
+            background: #f5f8fd;
+            border-color: #cfd8e8;
+        }
+
+        .chat-item input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+            accent-color: #3978d5;
+        }
+
+        .chat-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #3978d5;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .chat-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .chat-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chat-type {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 35px 10px;
+            color: #888;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 35px 10px;
+            color: #888;
+        }
+
+        .error {
+            display: none;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #fff0f0;
+            color: #c62828;
+            font-size: 14px;
+        }
+
+        .selected-count {
+            margin-top: 12px;
+            color: #777;
+            font-size: 13px;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .footer-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .button-secondary {
+            background: #eef1f6;
+            color: #333;
+        }
+
+        .button-secondary:hover {
+            background: #e4e8ef;
+        }
+
+        .button-primary {
+            background: #3978d5;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #2f69c0;
+        }
+
+        .button-primary:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+
+        .disabled-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #777;
+        }
+
+        @media (max-width: 600px) {
+
+            .page {
+                margin: 15px auto;
+                padding: 0 10px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .footer {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .footer-buttons {
+                width: 100%;
+            }
+
+            .footer-buttons .button {
+                flex: 1;
+            }
+
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="card">
+
+        <div class="header">
+
+            <a href="/"
+               class="back-button"
+               title="Назад">
+                ←
+            </a>
+
+            <h1>Telegram чаты</h1>
+
+        </div>
+
+        <div th:if="${!telegramEnabled}"
+             class="disabled-message">
+
+            Telegram-интеграция отключена.
+
+        </div>
+
+        <div th:if="${telegramEnabled}"
+             id="telegram-content">
+
+            <p class="description">
+                Выберите Telegram-чаты, которые хотите отображать
+                во вкладке «Telegram чаты».
+            </p>
+
+            <div id="error"
+                 class="error"></div>
+
+            <input id="search"
+                   class="search"
+                   type="text"
+                   placeholder="Поиск по чатам...">
+
+            <div id="chat-list"
+                 class="chat-list">
+
+                <div class="loading">
+                    Загрузка Telegram-чатов...
+                </div>
+
+            </div>
+
+            <div class="footer">
+
+                <div id="selected-count"
+                     class="selected-count">
+                    Выбрано: 0
+                </div>
+
+                <div class="footer-buttons">
+
+                    <a href="/"
+                       class="button button-secondary">
+                        Отмена
+                    </a>
+
+                    <button id="save-button"
+                            class="button button-primary"
+                            type="button"
+                            onclick="saveSettings()">
+                        Сохранить
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+
+    const telegramEnabled =
+        /*[[${telegramEnabled}]]*/ false;
+
+    const chatList =
+        document.getElementById('chat-list');
+
+    const searchInput =
+        document.getElementById('search');
+
+    const selectedCount =
+        document.getElementById('selected-count');
+
+    const errorElement =
+        document.getElementById('error');
+
+    const saveButton =
+        document.getElementById('save-button');
+
+    /*
+     * Все доступные Telegram-чаты.
+     */
+    let dialogs = [];
+
+    /*
+     * ID уже выбранных пользователем чатов.
+     */
+    const selectedChatIds = new Set();
+
+
+    async function loadChats() {
+
+        if (!telegramEnabled) {
+            return;
+        }
+
+        console.log('[TG CHATS] Loading available dialogs...');
+
+        try {
+
+            /*
+             * 1. Получаем ВСЕ доступные чаты из Telegram.
+             */
+            const availableResponse =
+                await fetch('/api/tg/dialogs/available');
+
+            console.log(
+                '[TG CHATS] Available dialogs response:',
+                availableResponse.status,
+                availableResponse.statusText
+            );
+
+            if (!availableResponse.ok) {
+                throw new Error(
+                    'Не удалось загрузить доступные Telegram-чаты'
+                );
+            }
+
+            const availableDialogs =
+                await availableResponse.json();
+
+            console.log(
+                '[TG CHATS] Available dialogs:',
+                availableDialogs.length
+            );
+
+
+            /*
+             * 2. Получаем чаты, выбранные пользователем.
+             */
+            const selectedResponse =
+                await fetch('/api/tg/dialogs');
+
+            console.log(
+                '[TG CHATS] Selected dialogs response:',
+                selectedResponse.status,
+                selectedResponse.statusText
+            );
+
+            if (!selectedResponse.ok) {
+                throw new Error(
+                    'Не удалось загрузить выбранные Telegram-чаты'
+                );
+            }
+
+            const selectedDialogs =
+                await selectedResponse.json();
+
+            console.log(
+                '[TG CHATS] Selected dialogs:',
+                selectedDialogs.length
+            );
+
+
+            /*
+             * 3. Запоминаем ID выбранных чатов.
+             */
+            selectedDialogs.forEach(dialog => {
+
+                selectedChatIds.add(
+                    String(dialog.chatId)
+                );
+
+            });
+
+
+            /*
+             * 4. Основным списком являются ВСЕ доступные чаты.
+             */
+            dialogs = availableDialogs;
+
+            renderChats();
+
+        } catch (error) {
+
+            console.error(
+                '[TG CHATS] Failed to load dialogs',
+                error
+            );
+
+            chatList.innerHTML = '';
+
+            showError(
+                'Не удалось загрузить список Telegram-чатов.'
+            );
+
+        }
+
+    }
+
+    async function saveSettings() {
+        const chatIds = Array.from(selectedChatIds)
+            .map(id => Number(id));
+
+        try {
+            const response = await fetch('/api/tg/dialogs/selected', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    chatIds: chatIds
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    `Ошибка сохранения: HTTP ${response.status}`
+                );
+            }
+
+            window.location.href = '/profile/tg/chats';
+
+        } catch (error) {
+            console.error('Failed to save Telegram chat settings:', error);
+            alert('Не удалось сохранить настройки');
+        }
+    }
+
+
+    function renderChats() {
+
+        const search =
+            searchInput
+                .value
+                .trim()
+                .toLowerCase();
+
+        const filtered =
+            dialogs.filter(dialog => {
+
+                const title =
+                    (dialog.title || '')
+                        .toLowerCase();
+
+                return title.includes(search);
+
+            });
+
+
+        if (filtered.length === 0) {
+
+            chatList.innerHTML = `
+                <div class="empty">
+                    ${search
+                        ? 'Чаты не найдены'
+                        : 'Telegram-чатов пока нет'}
+                </div>
+            `;
+
+            updateSelectedCount();
+
+            return;
+        }
+
+
+        chatList.innerHTML =
+            filtered
+                .map(dialog => {
+
+                    const chatId =
+                        String(dialog.chatId);
+
+                    const selected =
+                        selectedChatIds.has(chatId);
+
+                    return `
+                        <label class="chat-item">
+
+                            <input
+                                type="checkbox"
+                                data-chat-id="${chatId}"
+                                ${selected ? 'checked' : ''}
+                            >
+
+                            <div class="chat-avatar">
+                                ${getChatIcon(dialog.type)}
+                            </div>
+
+                            <div class="chat-info">
+
+                                <div class="chat-title">
+                                    ${escapeHtml(
+                                        dialog.title || 'Без названия'
+                                    )}
+                                </div>
+
+                                <div class="chat-type">
+                                    ${getChatTypeName(dialog.type)}
+                                </div>
+
+                            </div>
+
+                        </label>
+                    `;
+
+                })
+                .join('');
+
+
+        chatList
+            .querySelectorAll(
+                'input[type="checkbox"]'
+            )
+            .forEach(checkbox => {
+
+                checkbox.addEventListener(
+                    'change',
+                    onChatSelectionChanged
+                );
+
+            });
+
+
+        updateSelectedCount();
+
+    }
+
+
+    function onChatSelectionChanged(event) {
+
+        const chatId =
+            event.target.dataset.chatId;
+
+        if (event.target.checked) {
+
+            selectedChatIds.add(chatId);
+
+        } else {
+
+            selectedChatIds.delete(chatId);
+
+        }
+
+        updateSelectedCount();
+
+    }
+
+
+    function updateSelectedCount() {
+
+        if (!selectedCount) {
+            return;
+        }
+
+        selectedCount.textContent =
+            `Выбрано: ${selectedChatIds.size}`;
+
+    }
+
+
+    function getChatIcon(type) {
+
+        switch (type) {
+
+            case 'PRIVATE':
+                return '👤';
+
+            case 'GROUP':
+                return '👥';
+
+            case 'SUPERGROUP':
+                return '👥';
+
+            case 'SECRET':
+                return '🔒';
+
+            default:
+                return '💬';
+
+        }
+
+    }
+
+
+    function getChatTypeName(type) {
+
+        switch (type) {
+
+            case 'PRIVATE':
+                return 'Личный чат';
+
+            case 'GROUP':
+                return 'Группа';
+
+            case 'SUPERGROUP':
+                return 'Супергруппа';
+
+            case 'SECRET':
+                return 'Секретный чат';
+
+            default:
+                return 'Чат';
+
+        }
+
+    }
+
+
+    function escapeHtml(value) {
+
+        const div =
+            document.createElement('div');
+
+        div.textContent = value;
+
+        return div.innerHTML;
+
+    }
+
+
+    function showError(message) {
+
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+
+    }
+
+
+    searchInput.addEventListener(
+        'input',
+        renderChats
+    );
+
+
+    if (telegramEnabled) {
+        loadChats();
+    }
+
+</script>
+
+</body>
+</html>
