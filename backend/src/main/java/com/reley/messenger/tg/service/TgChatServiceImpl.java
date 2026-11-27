@@ -1,5 +1,7 @@
 package com.reley.messenger.tg.service;
 
+import com.reley.messenger.tg.dto.TgChatInfo;
+import com.reley.messenger.tg.dto.TgChatSendStatus;
 import com.reley.messenger.tg.dto.TgDialogResponse;
 import com.reley.messenger.tg.dto.TgMessageResponse;
 import com.reley.messenger.tg.entity.TgDialog;
@@ -212,6 +214,94 @@ public class TgChatServiceImpl implements TgChatService {
                                 .map(TgCodeUtil::toMessageResponse)
                                 .toList()
                 );
+    }
+
+    @Override
+    public Mono<TgMessageResponse> sendMessage(
+            Long userId,
+            Long chatId,
+            String text
+    ) {
+        SimpleTelegramClient client = clientManager.get(userId);
+
+        if (client == null) {
+            return Mono.error(
+                    new IllegalStateException(
+                            "Telegram client is not connected"
+                    )
+            );
+        }
+
+        if (text == null || text.isBlank()) {
+            return Mono.error(
+                    new IllegalArgumentException(
+                            "Message text must not be empty"
+                    )
+            );
+        }
+
+        TdApi.InputMessageText inputMessageText =
+                new TdApi.InputMessageText(
+                        new TdApi.FormattedText(text, null),
+                        null,
+                        false
+                );
+
+        TdApi.SendMessage request =
+                new TdApi.SendMessage(
+                        chatId,
+                        null,
+                        null,
+                        new TdApi.MessageSendOptions(),
+                        null,
+                        inputMessageText
+                );
+
+        return Mono.fromFuture(client.send(request))
+                .map(TgCodeUtil::toMessageResponse);
+    }
+
+    @Override
+    public Mono<TgChatInfo> getChatInfo(Long userId, Long chatId) {
+
+        SimpleTelegramClient client = clientManager.get(userId);
+
+        if (client == null) {
+            return Mono.error(
+                    new IllegalStateException("Telegram client is not connected")
+            );
+        }
+
+        return Mono.fromFuture(
+                client.send(new TdApi.GetChat(chatId))
+        ).map(chat -> {
+
+            TdApi.ChatType type = chat.type;
+
+            if (type instanceof TdApi.ChatTypeSupergroup supergroup
+                    && supergroup.isChannel) {
+
+                return new TgChatInfo(
+                        chat.id,
+                        chat.title,
+                        TgChatSendStatus.CHANNEL,
+                        false
+                );
+            }
+
+            boolean canSend =
+                    chat.permissions != null
+                            && chat.permissions.canSendBasicMessages;
+
+            return new TgChatInfo(
+                    chat.id,
+                    chat.title,
+                    canSend
+                            ? TgChatSendStatus.ALLOWED
+                            : TgChatSendStatus.READ_ONLY,
+                    canSend
+            );
+        });
     }
 
 }

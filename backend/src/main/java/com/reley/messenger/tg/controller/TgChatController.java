@@ -1,14 +1,18 @@
 package com.reley.messenger.tg.controller;
 
+import com.reley.messenger.tg.dto.TgChatInfo;
 import com.reley.messenger.tg.dto.TgDialogResponse;
 import com.reley.messenger.tg.dto.TgMessageResponse;
 import com.reley.messenger.tg.dto.TgSelectedDialogsRequest;
 import com.reley.messenger.tg.dto.TgSelectedDialogsResponse;
+import com.reley.messenger.tg.dto.TgSendMessageRequest;
 import com.reley.messenger.tg.service.TgChatService;
 import com.reley.messenger.user.service.HydrateUserInfoApi;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -125,5 +129,44 @@ public class TgChatController {
                 );
     }
 
+    @PostMapping("/dialogs/{chatId}/messages")
+    public Mono<TgMessageResponse> sendMessage(@PathVariable Long chatId, @RequestBody TgSendMessageRequest request) {
+
+        if (tgChatService.isEmpty()) {
+            return Mono.empty();
+        }
+
+        if (request == null || request.text() == null || request.text().isBlank()) {
+            return Mono.error(
+                    new IllegalArgumentException("Message text must not be empty")
+            );
+        }
+
+        return userServiceInfo
+                .getCurrentUserId()
+                .flatMap(userId ->
+                        tgChatService.get()
+                                .sendMessage(
+                                        userId,
+                                        chatId,
+                                        request.text()
+                                )
+                );
+    }
+
+    @GetMapping("/dialogs/{chatId}/info")
+    public Mono<TgChatInfo> getChatInfo(@PathVariable Long chatId) {
+
+        if (tgChatService.isEmpty()) {
+            return Mono.empty();
+        }
+
+        return userServiceInfo
+                .getCurrentUserId()
+                .flatMap(userId ->
+                        tgChatService.get()
+                                .getChatInfo(userId, chatId)
+                );
+    }
 
 }

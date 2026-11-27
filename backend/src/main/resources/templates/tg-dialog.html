@@ -61,7 +61,9 @@
                     0 4px 20px rgba(0, 0, 0, 0.06);
         }
 
-        /* HEADER */
+        /* =========================
+           HEADER
+           ========================= */
 
         .header {
             height: 64px;
@@ -76,7 +78,8 @@
 
             padding: 0 20px;
 
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            box-shadow:
+                    0 1px 3px rgba(0, 0, 0, 0.04);
 
             z-index: 10;
         }
@@ -125,7 +128,9 @@
             color: #8a8f98;
         }
 
-        /* MESSAGES */
+        /* =========================
+           MESSAGES
+           ========================= */
 
         .messages-container {
             flex: 1;
@@ -208,7 +213,9 @@
             color: #777;
         }
 
-        /* LOADING */
+        /* =========================
+           LOADING / EMPTY / ERROR
+           ========================= */
 
         .loading {
             text-align: center;
@@ -243,28 +250,116 @@
             padding: 40px 20px;
         }
 
-        /* FOOTER */
+        /* =========================
+           COMPOSER
+           ========================= */
 
         .footer {
             flex-shrink: 0;
-
-            min-height: 58px;
 
             background: #fff;
 
             border-top: 1px solid #e5e7eb;
 
+            padding: 10px 20px;
+        }
+
+        .composer {
+            width: 100%;
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            display: flex;
+            align-items: flex-end;
+
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+
+            min-height: 42px;
+            max-height: 140px;
+
+            resize: none;
+
+            border: 1px solid #d9dee7;
+            border-radius: 12px;
+
+            padding: 10px 12px;
+
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.4;
+
+            outline: none;
+
+            background: #fff;
+        }
+
+        .message-input:focus {
+            border-color: #3978d5;
+
+            box-shadow:
+                    0 0 0 2px rgba(57, 120, 213, 0.10);
+        }
+
+        .message-input:disabled {
+            background: #f4f5f7;
+            cursor: not-allowed;
+        }
+
+        .send-button {
+            flex-shrink: 0;
+
+            height: 42px;
+
+            border: none;
+            border-radius: 10px;
+
+            padding: 0 18px;
+
+            background: #3978d5;
+            color: #fff;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .send-button:hover {
+            background: #2f69c0;
+        }
+
+        .send-button:disabled {
+            background: #b8c2d1;
+            cursor: not-allowed;
+        }
+
+        .cannot-send {
+            width: 100%;
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            min-height: 38px;
+
             display: flex;
             align-items: center;
             justify-content: center;
 
-            padding: 12px 20px;
+            text-align: center;
 
-            color: #999;
+            color: #8a8f98;
+
             font-size: 13px;
         }
 
-        /* MOBILE */
+        /* =========================
+           MOBILE
+           ========================= */
 
         @media (max-width: 600px) {
 
@@ -311,7 +406,21 @@
             }
 
             .footer {
-                min-height: 50px;
+                padding: 8px;
+            }
+
+            .composer {
+                gap: 6px;
+            }
+
+            .message-input {
+                min-height: 40px;
+                padding: 9px 10px;
+            }
+
+            .send-button {
+                height: 40px;
+                padding: 0 14px;
             }
         }
 
@@ -322,7 +431,9 @@
 
 <div class="page">
 
-    <!-- HEADER -->
+    <!-- =========================
+         HEADER
+         ========================= -->
 
     <header class="header">
 
@@ -342,8 +453,10 @@
                 Telegram
             </div>
 
-            <div class="chat-subtitle">
-                Telegram чат
+            <div
+                    class="chat-subtitle"
+                    id="chat-subtitle">
+                Загрузка...
             </div>
 
         </div>
@@ -351,7 +464,9 @@
     </header>
 
 
-    <!-- MESSAGES -->
+    <!-- =========================
+         MESSAGES
+         ========================= -->
 
     <main
             class="messages-container"
@@ -360,7 +475,7 @@
         <div
                 class="loading"
                 id="loading">
-            Загрузка сообщений...
+            Загрузка чата...
         </div>
 
         <div
@@ -371,10 +486,39 @@
     </main>
 
 
-    <!-- FOOTER -->
+    <!-- =========================
+         FOOTER / COMPOSER
+         ========================= -->
 
     <footer class="footer">
-        Просмотр Telegram-чата
+
+        <div
+                class="composer"
+                id="composer"
+                style="display: none;">
+
+            <textarea
+                    id="message-input"
+                    class="message-input"
+                    rows="1"
+                    placeholder="Введите сообщение..."
+                    autocomplete="off"></textarea>
+
+            <button
+                    type="button"
+                    id="send-button"
+                    class="send-button">
+                Отправить
+            </button>
+
+        </div>
+
+        <div
+                id="cannot-send"
+                class="cannot-send"
+                style="display: none;">
+        </div>
+
     </footer>
 
 </div>
@@ -411,6 +555,24 @@
     const loadingElement =
         document.getElementById('loading');
 
+    const chatTitleElement =
+        document.getElementById('chat-title');
+
+    const chatSubtitleElement =
+        document.getElementById('chat-subtitle');
+
+    const composerElement =
+        document.getElementById('composer');
+
+    const cannotSendElement =
+        document.getElementById('cannot-send');
+
+    const messageInput =
+        document.getElementById('message-input');
+
+    const sendButton =
+        document.getElementById('send-button');
+
 
     /*
      * =========================
@@ -428,11 +590,16 @@
 
     let initialLoading = true;
 
-    // Нужно ли восстанавливать позицию прокрутки
-    // после добавления старых сообщений.
+    let sendingMessage = false;
+
+    let canSend = false;
+
+    let chatInfo = null;
+
     let restoreScroll = false;
 
     let previousScrollHeight = 0;
+
     let previousScrollTop = 0;
 
 
@@ -442,7 +609,7 @@
      * =========================
      */
 
-    async function loadMessages() {
+    async function init() {
 
         if (!chatId) {
 
@@ -459,6 +626,185 @@
             return;
         }
 
+        try {
+
+            /*
+             * Сначала получаем информацию о чате.
+             */
+
+            await loadChatInfo();
+
+            /*
+             * Затем загружаем сообщения.
+             */
+
+            await loadMessages();
+
+        } catch (error) {
+
+            console.error(
+                '[TG DIALOG] Initialization failed:',
+                error
+            );
+
+            loadingElement.style.display = 'none';
+
+            showError(
+                'Не удалось загрузить Telegram-чат.'
+            );
+        }
+    }
+
+
+    /*
+     * =========================
+     * CHAT INFO
+     * =========================
+     */
+
+    async function loadChatInfo() {
+
+        const url =
+            `/api/tg/dialogs/${encodeURIComponent(chatId)}/info`;
+
+        console.log(
+            '[TG DIALOG] Loading chat info:',
+            url
+        );
+
+        const response =
+            await fetch(url);
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+        const info =
+            await response.json();
+
+        if (!info) {
+
+            throw new Error(
+                'Empty chat info response'
+            );
+        }
+
+        chatInfo = info;
+
+        canSend = info.canSend === true;
+
+        /*
+         * Заголовок.
+         */
+
+        chatTitleElement.textContent =
+            info.title || 'Telegram';
+
+        /*
+         * Отображаем composer или информацию,
+         * почему отправка недоступна.
+         */
+
+        updateComposer(info);
+
+        console.log(
+            '[TG DIALOG] Chat info:',
+            info
+        );
+    }
+
+
+    /*
+     * =========================
+     * COMPOSER
+     * =========================
+     */
+
+    function updateComposer(info) {
+
+        if (info.canSend === true) {
+
+            composerElement.style.display =
+                'flex';
+
+            cannotSendElement.style.display =
+                'none';
+
+            chatSubtitleElement.textContent =
+                'Telegram чат';
+
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+
+            return;
+        }
+
+        composerElement.style.display =
+            'none';
+
+        cannotSendElement.style.display =
+            'flex';
+
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+
+        chatSubtitleElement.textContent =
+            'Telegram чат';
+
+        cannotSendElement.textContent =
+            getSendDisabledText(info.sendStatus);
+    }
+
+
+    /*
+     * =========================
+     * SEND STATUS TEXT
+     * =========================
+     */
+
+    function getSendDisabledText(status) {
+
+        if (!status) {
+            return 'Отправка сообщений недоступна.';
+        }
+
+        const normalized =
+            String(status).toUpperCase();
+
+        switch (normalized) {
+
+            case 'CHANNEL':
+                return 'В этот Telegram-чат нельзя отправлять сообщения.';
+
+            case 'READ_ONLY':
+                return 'Этот Telegram-чат доступен только для чтения.';
+
+            case 'FORBIDDEN':
+                return 'У вас нет права отправлять сообщения в этот чат.';
+
+            case 'RESTRICTED':
+                return 'Отправка сообщений ограничена.';
+
+            case 'NOT_MEMBER':
+                return 'Вы не можете отправлять сообщения в этот чат.';
+
+            default:
+                return 'Отправка сообщений в этот чат недоступна.';
+        }
+    }
+
+
+    /*
+     * =========================
+     * LOAD MESSAGES
+     * =========================
+     */
+
+    async function loadMessages() {
+
         console.log(
             '[TG DIALOG] Loading initial messages:',
             chatId
@@ -474,11 +820,15 @@
      * =========================
      *
      * fromMessageId:
+     *
      * null - последние сообщения
      * ID   - сообщения старше указанного ID
      */
 
-    async function fetchMessages(fromMessageId, initial) {
+    async function fetchMessages(
+        fromMessageId,
+        initial
+    ) {
 
         if (loadingMessages) {
             return;
@@ -506,20 +856,23 @@
             restoreScroll = true;
         }
 
-
-        loadingElement.style.display = 'block';
+        loadingElement.style.display =
+            'block';
 
         loadingElement.textContent =
             initial
                 ? 'Загрузка сообщений...'
                 : 'Загрузка предыдущих сообщений...';
 
-
         try {
 
-            const params = new URLSearchParams();
+            const params =
+                new URLSearchParams();
 
-            params.set('limit', PAGE_SIZE);
+            params.set(
+                'limit',
+                PAGE_SIZE
+            );
 
             if (fromMessageId !== null) {
 
@@ -529,19 +882,16 @@
                 );
             }
 
-
             const url =
                 `/api/tg/dialogs/${encodeURIComponent(chatId)}/messages?${params.toString()}`;
-
 
             console.log(
                 '[TG DIALOG] Request:',
                 url
             );
 
-
-            const response = await fetch(url);
-
+            const response =
+                await fetch(url);
 
             if (!response.ok) {
 
@@ -550,9 +900,8 @@
                 );
             }
 
-
-            const messages = await response.json();
-
+            const messages =
+                await response.json();
 
             console.log(
                 '[TG DIALOG] Received:',
@@ -560,14 +909,12 @@
                 'messages'
             );
 
-
             if (!Array.isArray(messages)) {
 
                 throw new Error(
                     'Invalid messages response'
                 );
             }
-
 
             /*
              * История закончилась.
@@ -584,15 +931,12 @@
                 return;
             }
 
-
             /*
-             * Находим минимальный ID
-             * непосредственно во всём ответе.
+             * Находим минимальный ID.
              */
 
             const newOldestMessageId =
                 getOldestMessageId(messages);
-
 
             if (newOldestMessageId === null) {
 
@@ -609,17 +953,18 @@
                 return;
             }
 
-
             /*
              * Проверяем, что курсор движется назад.
              */
 
-            if (!initial &&
+            if (
+                !initial &&
                 oldestMessageId !== null &&
                 compareMessageIds(
                     newOldestMessageId,
                     oldestMessageId
-                ) >= 0) {
+                ) >= 0
+            ) {
 
                 console.warn(
                     '[TG DIALOG] Pagination cursor did not move:',
@@ -632,22 +977,21 @@
                 return;
             }
 
-
             oldestMessageId =
                 newOldestMessageId;
 
-
             /*
              * TDLib возвращает:
+             *
              * новые -> старые
              *
              * Интерфейс:
+             *
              * старые -> новые
              */
 
             const sortedMessages =
                 [...messages].reverse();
-
 
             /*
              * Исключаем уже отображённые сообщения.
@@ -656,7 +1000,8 @@
             const uniqueMessages =
                 sortedMessages.filter(message => {
 
-                    const id = String(message.id);
+                    const id =
+                        String(message.id);
 
                     if (loadedMessageIds.has(id)) {
                         return false;
@@ -666,7 +1011,6 @@
 
                     return true;
                 });
-
 
             /*
              * ПЕРВАЯ ЗАГРУЗКА
@@ -681,13 +1025,14 @@
                     return;
                 }
 
-                appendMessages(uniqueMessages);
+                appendMessages(
+                    uniqueMessages
+                );
 
                 scrollToBottom();
 
                 return;
             }
-
 
             /*
              * ЗАГРУЗКА СТАРЫХ СООБЩЕНИЙ
@@ -695,7 +1040,9 @@
 
             if (uniqueMessages.length > 0) {
 
-                prependMessages(uniqueMessages);
+                prependMessages(
+                    uniqueMessages
+                );
 
             } else {
 
@@ -722,14 +1069,13 @@
 
             loadingMessages = false;
 
-            loadingElement.style.display = 'none';
+            loadingElement.style.display =
+                'none';
 
             initialLoading = false;
 
-
             /*
-             * Восстанавливаем прокрутку после того,
-             * как индикатор загрузки уже скрыт.
+             * Восстанавливаем прокрутку.
              */
 
             if (restoreScroll) {
@@ -740,28 +1086,20 @@
                         messagesContainer.scrollHeight;
 
                     const heightDifference =
-                        newScrollHeight - previousScrollHeight;
+                        newScrollHeight -
+                        previousScrollHeight;
 
                     messagesContainer.scrollTop =
-                        previousScrollTop + heightDifference;
+                        previousScrollTop +
+                        heightDifference;
 
                     restoreScroll = false;
-
-                    /*
-                     * Если контента всё ещё недостаточно,
-                     * загружаем следующую страницу.
-                     */
 
                     fillMessagesContainer();
 
                 });
 
             } else if (initial) {
-
-                /*
-                 * После первой загрузки проверяем,
-                 * достаточно ли сообщений для прокрутки.
-                 */
 
                 requestAnimationFrame(() => {
 
@@ -770,10 +1108,187 @@
                     fillMessagesContainer();
 
                 });
-
             }
         }
     }
+
+
+    /*
+     * =========================
+     * SEND MESSAGE
+     * =========================
+     */
+
+    async function sendMessage() {
+
+        if (!canSend) {
+            return;
+        }
+
+        if (sendingMessage) {
+            return;
+        }
+
+        const text =
+            messageInput.value.trim();
+
+        if (!text) {
+            return;
+        }
+
+        sendingMessage = true;
+
+        messageInput.disabled = true;
+        sendButton.disabled = true;
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/tg/dialogs/${encodeURIComponent(chatId)}/messages`,
+                    {
+                        method: 'POST',
+
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
+
+                        body: JSON.stringify({
+                            text: text
+                        })
+                    }
+                );
+
+            if (!response.ok) {
+
+                let errorText =
+                    `HTTP ${response.status}`;
+
+                try {
+
+                    const errorBody =
+                        await response.text();
+
+                    if (errorBody) {
+                        errorText = errorBody;
+                    }
+
+                } catch (ignored) {
+                }
+
+                throw new Error(errorText);
+            }
+
+            const message =
+                await response.json();
+
+            if (!message) {
+
+                throw new Error(
+                    'Empty send message response'
+                );
+            }
+
+            /*
+             * Добавляем отправленное сообщение
+             * в конец списка.
+             */
+
+            const id =
+                String(message.id);
+
+            if (!loadedMessageIds.has(id)) {
+
+                loadedMessageIds.add(id);
+
+                appendMessages([
+                    message
+                ]);
+            }
+
+            messageInput.value = '';
+
+            resizeMessageInput();
+
+            scrollToBottom();
+
+        } catch (error) {
+
+            console.error(
+                '[TG DIALOG] Failed to send message:',
+                error
+            );
+
+            alert(
+                'Не удалось отправить сообщение.'
+            );
+
+        } finally {
+
+            sendingMessage = false;
+
+            messageInput.disabled =
+                !canSend;
+
+            sendButton.disabled =
+                !canSend;
+
+            if (canSend) {
+                messageInput.focus();
+            }
+        }
+    }
+
+
+    /*
+     * =========================
+     * MESSAGE INPUT
+     * =========================
+     */
+
+    messageInput.addEventListener(
+        'keydown',
+        function (event) {
+
+            if (
+                event.key === 'Enter' &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                sendMessage();
+            }
+        }
+    );
+
+
+    messageInput.addEventListener(
+        'input',
+        resizeMessageInput
+    );
+
+
+    function resizeMessageInput() {
+
+        messageInput.style.height =
+            'auto';
+
+        const maxHeight = 140;
+
+        messageInput.style.height =
+            Math.min(
+                messageInput.scrollHeight,
+                maxHeight
+            ) + 'px';
+    }
+
+
+    sendButton.addEventListener(
+        'click',
+        sendMessage
+    );
 
 
     /*
@@ -788,21 +1303,26 @@
 
         for (const message of messages) {
 
-            if (message.id === null ||
-                message.id === undefined) {
+            if (
+                message.id === null ||
+                message.id === undefined
+            ) {
                 continue;
             }
 
             const currentId =
                 String(message.id);
 
-            if (oldestId === null ||
+            if (
+                oldestId === null ||
                 compareMessageIds(
                     currentId,
                     oldestId
-                ) < 0) {
+                ) < 0
+            ) {
 
-                oldestId = currentId;
+                oldestId =
+                    currentId;
             }
         }
 
@@ -816,15 +1336,26 @@
      * =========================
      */
 
-    function compareMessageIds(first, second) {
+    function compareMessageIds(
+        first,
+        second
+    ) {
 
         try {
 
-            const firstId = BigInt(String(first));
-            const secondId = BigInt(String(second));
+            const firstId =
+                BigInt(String(first));
 
-            if (firstId < secondId) return -1;
-            if (firstId > secondId) return 1;
+            const secondId =
+                BigInt(String(second));
+
+            if (firstId < secondId) {
+                return -1;
+            }
+
+            if (firstId > secondId) {
+                return 1;
+            }
 
             return 0;
 
@@ -860,7 +1391,9 @@
 
         });
 
-        messagesElement.appendChild(fragment);
+        messagesElement.appendChild(
+            fragment
+        );
     }
 
 
@@ -894,17 +1427,15 @@
      * =========================
      * AUTO FILL CONTAINER
      * =========================
-     *
-     * Если сообщений недостаточно,
-     * чтобы появилась прокрутка,
-     * автоматически загружаем ещё.
      */
 
     function fillMessagesContainer() {
 
-        if (loadingMessages ||
+        if (
+            loadingMessages ||
             !hasMoreMessages ||
-            initialLoading) {
+            initialLoading
+        ) {
             return;
         }
 
@@ -942,13 +1473,18 @@
         'scroll',
         function () {
 
-            if (initialLoading ||
+            if (
+                initialLoading ||
                 loadingMessages ||
-                !hasMoreMessages) {
+                !hasMoreMessages
+            ) {
                 return;
             }
 
-            if (messagesContainer.scrollTop <= SCROLL_THRESHOLD) {
+            if (
+                messagesContainer.scrollTop <=
+                SCROLL_THRESHOLD
+            ) {
 
                 if (oldestMessageId === null) {
                     return;
@@ -1003,13 +1539,11 @@
         wrapper.dataset.messageId =
             String(message.id);
 
-
         const bubble =
             document.createElement('div');
 
         bubble.className =
             'message-bubble';
-
 
         /*
          * Отправитель
@@ -1028,7 +1562,6 @@
 
             bubble.appendChild(sender);
         }
-
 
         /*
          * Текст сообщения
@@ -1074,7 +1607,6 @@
             bubble.appendChild(text);
         }
 
-
         /*
          * Нижняя строка
          */
@@ -1084,7 +1616,6 @@
 
         footer.className =
             'message-footer';
-
 
         /*
          * Вложение
@@ -1101,9 +1632,10 @@
             attachment.textContent =
                 '📎 Вложение';
 
-            footer.appendChild(attachment);
+            footer.appendChild(
+                attachment
+            );
         }
-
 
         /*
          * Дата
@@ -1120,13 +1652,18 @@
             time.textContent =
                 formatDate(message.date);
 
-            footer.appendChild(time);
+            footer.appendChild(
+                time
+            );
         }
 
+        bubble.appendChild(
+            footer
+        );
 
-        bubble.appendChild(footer);
-
-        wrapper.appendChild(bubble);
+        wrapper.appendChild(
+            bubble
+        );
 
         return wrapper;
     }
@@ -1140,9 +1677,14 @@
 
     function formatDate(value) {
 
-        const date = new Date(value);
+        const date =
+            new Date(value);
 
-        if (Number.isNaN(date.getTime())) {
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
             return '';
         }
 
@@ -1166,7 +1708,8 @@
 
     function showEmpty() {
 
-        messagesElement.innerHTML = '';
+        messagesElement.innerHTML =
+            '';
 
         const empty =
             document.createElement('div');
@@ -1177,7 +1720,9 @@
         empty.textContent =
             'В этом чате пока нет сообщений.';
 
-        messagesElement.appendChild(empty);
+        messagesElement.appendChild(
+            empty
+        );
     }
 
 
@@ -1189,7 +1734,8 @@
 
     function showError(message) {
 
-        messagesElement.innerHTML = '';
+        messagesElement.innerHTML =
+            '';
 
         const error =
             document.createElement('div');
@@ -1200,7 +1746,9 @@
         error.textContent =
             message;
 
-        messagesElement.appendChild(error);
+        messagesElement.appendChild(
+            error
+        );
     }
 
 
@@ -1239,7 +1787,7 @@
      * =========================
      */
 
-    loadMessages();
+    init();
 
 </script>
 
